@@ -1,0 +1,31 @@
+{
+  "name": "traveling-world",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.worker.json",
+    "build": "vite build",
+    "test": "vitest run",
+    "e2e": "playwright test --pass-with-no-tests",
+    "sim": "node scripts/sim.mjs",
+    "check:sources": "bash scripts/check-sources.sh",
+    "check:bundle": "node scripts/check-bundle-size.mjs --max-kb 3072"
+  },
+  "dependencies": {
+    "preact": "^11.0.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.23.0",
+    "@cloudflare/workers-types": "^5.20261022.1",
+    "@playwright/test": "^1.64.1",
+    "@preact/preset-vite": "^2.10.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12",
+    "wrangler": "^4.151.3"
+  }
+}

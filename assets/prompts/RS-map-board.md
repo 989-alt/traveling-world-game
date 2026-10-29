@@ -1,0 +1,7 @@
+# RS-map-board results map plate, a wide rounded cream-framed board of plain turquoise sea with pale wave lines, land kept off, sprite source on magenta
+Scene: one flat map board alone, seen straight on: a wide rounded rectangle exactly two units wide and one unit tall, a thick cream frame with a thin gold line inside it, the inner face a flat light turquoise-blue sea with soft pale wave lines and three faint drifting cloud shadows, the whole sea kept plain and open as one even field so a map can be laid over it, a thin shadow line under the board, the board centered and filling about 92 percent of the frame width. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered and level.
+Lighting: soft top light with a faint glossy highlight along the upper edge of the frame, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #CFE8F5 sea, #9ED4EC wave shade, #FBF3DC cream frame, #F2B21C gold line, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 16:9

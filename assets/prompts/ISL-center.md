@@ -1,0 +1,7 @@
+# ISL-center board center island with the giant dice, sprite source on magenta
+Scene: one larger floating island alone, seen from a three-quarter top-down angle with parallel lines kept parallel: a round stone plaza on top with a giant white die showing a five face with blue pips standing in the middle, crisp hard edges on the die and small solid gold four-point sparkle shapes around it, a ring of small round trees and a thin waterfall at the edge, a warm brown rock cliff tapering below. The island fills about 90 percent of the frame width. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: three-quarter top-down view, orthographic feel, centered.
+Lighting: bright midday sun from the upper left, warm highlights on the plaza, cool blue shadow on the cliff, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #7DCB4E grass, #8A6A4C cliff, #F6FBFF die, #2F7CF6 pips, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

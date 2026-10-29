@@ -1,0 +1,1499 @@
+[
+  {
+    "analytic": false,
+    "explain": "지하자원이 많은 산에서는 광업을, 경관이 아름다운 산에서는 관광업을 해요. 산지의 조건에 따라 사람들이 하는 일이 달라요.",
+    "id": "m-01",
+    "mTags": [
+      "M8"
+    ],
+    "pairs": [
+      {
+        "left": "아름다운 경관",
+        "right": "관광업"
+      },
+      {
+        "left": "넓고 평평한 고원",
+        "right": "목축업"
+      },
+      {
+        "left": "풍부한 지하자원",
+        "right": "광업"
+      },
+      {
+        "left": "경사진 땅",
+        "right": "계단식 농사"
+      }
+    ],
+    "prompt": "산지의 조건과 사람들의 생활 모습을 알맞게 이어 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M8"
+      ],
+      "text": "지하자원이 많은 산에는 스키장이 생겨요."
+    },
+    "title": "산지 생활 잇기",
+    "topics": [
+      "3.6",
+      "3.3"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": true,
+    "explain": "염전은 갯벌이 넓은 해안에, 항구는 배가 드나들기 좋은 해안에 생겨요. 배 다니는 곳에 소금밭은 안 맞아요.",
+    "id": "m-02",
+    "mTags": [
+      "M11"
+    ],
+    "pairs": [
+      {
+        "left": "넓게 펼쳐진 갯벌",
+        "right": "염전"
+      },
+      {
+        "left": "배가 드나들기 좋은 해안",
+        "right": "항구"
+      },
+      {
+        "left": "경관이 아름다운 해안",
+        "right": "관광지"
+      }
+    ],
+    "prompt": "해안의 조건에 맞는 산업을 이어 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M11"
+      ],
+      "text": "배가 드나드는 해안에 염전을 만들어요."
+    },
+    "title": "해안 조건과 산업",
+    "topics": [
+      "5.3"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": true,
+    "explain": "저위도는 햇볕이 수직으로 집중돼 더워요. 고위도는 햇볕이 비스듬히 퍼져서 추워요.",
+    "id": "m-03",
+    "mTags": [
+      "M5"
+    ],
+    "pairs": [
+      {
+        "left": "저위도",
+        "right": "햇볕이 수직에 가까워요"
+      },
+      {
+        "left": "고위도",
+        "right": "햇볕이 비스듬해요"
+      },
+      {
+        "left": "적도 부근",
+        "right": "기온이 높아요"
+      },
+      {
+        "left": "극지방",
+        "right": "기온이 낮아요"
+      }
+    ],
+    "prompt": "위도에 따라 햇볕과 기온이 어떻게 다른지 이어 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M5"
+      ],
+      "text": "고위도일수록 햇볕을 많이 받아요."
+    },
+    "title": "위도와 햇볕",
+    "topics": [
+      "B3.2",
+      "7.3"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": false,
+    "explain": "집은 그곳 기후에 맞춰 지어요. 더운 열대는 바닥을 띄운 집, 건조한 곳은 창이 작은 흙벽돌 집이에요.",
+    "id": "m-04",
+    "mTags": [
+      "M14"
+    ],
+    "pairs": [
+      {
+        "left": "열대",
+        "right": "바닥을 띄운 고상 가옥"
+      },
+      {
+        "left": "건조",
+        "right": "창이 작은 흙벽돌 집"
+      },
+      {
+        "left": "냉대",
+        "right": "통나무집"
+      },
+      {
+        "left": "한대",
+        "right": "얼음집"
+      }
+    ],
+    "prompt": "기후와 그 지역의 집을 이어 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M14"
+      ],
+      "text": "건조 기후에서는 통나무집을 많이 지어요."
+    },
+    "title": "기후와 집",
+    "topics": [
+      "8.2",
+      "8.5",
+      "9.4",
+      "10.2"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": true,
+    "explain": "옷은 기후에 맞춰 입어요. 사우디아라비아에서는 햇볕과 모래바람을 막는 옷을 입고, 캐나다에서는 긴 겨울 추위를 막는 옷을 입어요.",
+    "id": "m-05",
+    "mTags": [],
+    "pairs": [
+      {
+        "left": "사우디아라비아의 긴 옷",
+        "right": "햇볕과 모래바람을 막아요"
+      },
+      {
+        "left": "페루의 망토와 모자",
+        "right": "낮밤 기온 차에 맞춰요"
+      },
+      {
+        "left": "캐나다의 털옷",
+        "right": "긴 겨울 추위를 막아 줘요"
+      }
+    ],
+    "prompt": "전통 의상과 그렇게 입는 까닭을 이어 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "사람들은 기후에 맞춰 옷을 입어요."
+    },
+    "title": "전통 의상의 까닭",
+    "topics": [
+      "7.8",
+      "8.5",
+      "10.4",
+      "9.4"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": false,
+    "explain": "기후에 따라 생활 문화가 달라요. 추운 핀란드에서는 빙판 운전을 연습하고, 더운 에스파냐에서는 한낮에 낮잠을 자요.",
+    "id": "m-06",
+    "mTags": [],
+    "pairs": [
+      {
+        "left": "핀란드",
+        "right": "빙판 위 운전면허 시험"
+      },
+      {
+        "left": "에스파냐",
+        "right": "한낮의 낮잠 시에스타"
+      },
+      {
+        "left": "프랑스 파리",
+        "right": "센강 변에서 햇볕 쬐기"
+      }
+    ],
+    "prompt": "나라와 그곳의 기후 때문에 생긴 독특한 문화를 이어 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "흐린 날이 많은 곳에서는 맑은 날 햇볕을 즐겨요."
+    },
+    "title": "기후가 만든 문화",
+    "topics": [
+      "9.5"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": false,
+    "explain": "물살이 빠른 콩고강에서도 통발을 놓아 물고기를 잡아요. 강의 모습에 맞게 사는 법을 찾은 거예요.",
+    "id": "m-07",
+    "mTags": [
+      "M10"
+    ],
+    "pairs": [
+      {
+        "left": "콩고강의 급류",
+        "right": "통발 어업"
+      },
+      {
+        "left": "일리노이강의 평야",
+        "right": "대규모 농사"
+      },
+      {
+        "left": "노르웨이의 하천",
+        "right": "수력 발전"
+      },
+      {
+        "left": "짜오프라야강",
+        "right": "수상 시장"
+      }
+    ],
+    "prompt": "하천의 모습과 사람들의 생활을 이어 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M10"
+      ],
+      "text": "물살이 빠른 강에서는 물고기를 잡을 수 없어요."
+    },
+    "title": "하천과 생활",
+    "topics": [
+      "4.4"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": false,
+    "explain": "멕시코는 북아메리카 남쪽에 있는 나라예요. 남아메리카가 아니에요.",
+    "id": "m-08",
+    "mTags": [
+      "M18"
+    ],
+    "pairs": [
+      {
+        "left": "멕시코",
+        "right": "북아메리카"
+      },
+      {
+        "left": "이집트",
+        "right": "아프리카"
+      },
+      {
+        "left": "브라질",
+        "right": "남아메리카"
+      },
+      {
+        "left": "네팔",
+        "right": "아시아"
+      }
+    ],
+    "prompt": "나라가 속한 대륙을 이어 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M18"
+      ],
+      "text": "멕시코는 남아메리카에 있는 나라예요."
+    },
+    "title": "나라와 대륙 잇기",
+    "topics": [
+      "B2.5",
+      "B2.4",
+      "B2.6",
+      "B2.1"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": false,
+    "explain": "가장 넓은 아시아는 지도 오른쪽 위, 얼음으로 덮인 남극 대륙은 맨 아래예요. 아프리카는 유럽 바로 아래예요.",
+    "id": "m-09",
+    "image": "mi_continents.png",
+    "mTags": [],
+    "pairs": [
+      {
+        "left": "아시아",
+        "right": "㉠ 자리"
+      },
+      {
+        "left": "아프리카",
+        "right": "㉡ 자리"
+      },
+      {
+        "left": "남아메리카",
+        "right": "㉢ 자리"
+      },
+      {
+        "left": "남극 대륙",
+        "right": "㉣ 자리"
+      }
+    ],
+    "prompt": "대륙 이름 블록을 지도의 알맞은 자리에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "남극 대륙은 사람이 살기 어려운 얼음 땅이에요."
+    },
+    "title": "대륙 블록 놓기",
+    "topics": [
+      "B1.1",
+      "B1.2"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": false,
+    "explain": "가장 넓은 태평양은 아시아와 아메리카 사이예요. 북극해는 지도 맨 위, 인도양은 아프리카와 오스트레일리아 사이예요.",
+    "id": "m-10",
+    "image": "mi_oceans.png",
+    "mTags": [],
+    "pairs": [
+      {
+        "left": "태평양",
+        "right": "㉠ 자리"
+      },
+      {
+        "left": "대서양",
+        "right": "㉡ 자리"
+      },
+      {
+        "left": "인도양",
+        "right": "㉢ 자리"
+      },
+      {
+        "left": "북극해",
+        "right": "㉣ 자리"
+      }
+    ],
+    "prompt": "대양 이름 블록을 지도의 알맞은 자리에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "가장 넓은 대양은 태평양이에요."
+    },
+    "title": "대양 블록 놓기",
+    "topics": [
+      "B1.1",
+      "B1.2"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": true,
+    "explain": "기후는 위도를 따라 띠처럼 나타나요. 적도 쪽은 열대, 극지방 쪽은 한대, 냉대는 주로 북반구예요.",
+    "id": "m-11",
+    "image": "mi_climate_zones.png",
+    "mTags": [],
+    "pairs": [
+      {
+        "left": "열대 기후",
+        "right": "적도 부근"
+      },
+      {
+        "left": "건조 기후",
+        "right": "비가 적은 저·중위도"
+      },
+      {
+        "left": "냉대 기후",
+        "right": "북반구 중·고위도"
+      },
+      {
+        "left": "한대 기후",
+        "right": "극지방 부근"
+      }
+    ],
+    "prompt": "기후 블록을 주로 나타나는 곳에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "냉대 기후는 주로 북반구에 나타나요."
+    },
+    "title": "기후 블록 놓기",
+    "topics": [
+      "7.6",
+      "8.7"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": false,
+    "explain": "사우디아라비아는 더워도 비가 거의 안 오는 건조 기후예요. 덥다고 다 열대는 아니에요.",
+    "id": "m-12",
+    "mTags": [
+      "M14"
+    ],
+    "pairs": [
+      {
+        "left": "타이",
+        "right": "열대 기후"
+      },
+      {
+        "left": "사우디아라비아",
+        "right": "건조 기후"
+      },
+      {
+        "left": "노르웨이",
+        "right": "냉대 기후"
+      },
+      {
+        "left": "그린란드",
+        "right": "한대 기후"
+      }
+    ],
+    "prompt": "나라 블록을 그 나라의 대표 기후 칸에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M14"
+      ],
+      "text": "사우디아라비아는 열대 기후 나라예요."
+    },
+    "title": "나라를 기후 칸에",
+    "topics": [
+      "7.7",
+      "8.7"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": true,
+    "explain": "평면 지도에서는 극지방 가까운 땅이 실제보다 크게 그려져요. 그린란드 실제 크기는 남아메리카의 8분의 1쯤이에요.",
+    "id": "m-13",
+    "image": "mi_true_size.png",
+    "mTags": [
+      "M17"
+    ],
+    "pairs": [
+      {
+        "left": "지도 속 그린란드",
+        "right": "실제보다 크게 보여요"
+      },
+      {
+        "left": "실제 그린란드",
+        "right": "남아메리카의 약 8분의 1"
+      },
+      {
+        "left": "실제 러시아",
+        "right": "아프리카보다 작아요"
+      }
+    ],
+    "prompt": "설명 블록을 알맞은 자리에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M17"
+      ],
+      "text": "그린란드는 실제로 남아메리카만큼 넓어요."
+    },
+    "title": "지도와 실제 크기",
+    "topics": [
+      "B4.2"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": false,
+    "explain": "고산 도시는 적도 근처라도 해발 고도가 높아 서늘해요. 키토는 에콰도르, 쿠스코는 페루에 있어요.",
+    "id": "m-14",
+    "mTags": [],
+    "pairs": [
+      {
+        "left": "키토",
+        "right": "에콰도르"
+      },
+      {
+        "left": "쿠스코",
+        "right": "페루"
+      },
+      {
+        "left": "아디스아바바",
+        "right": "에티오피아"
+      },
+      {
+        "left": "멕시코시티",
+        "right": "멕시코"
+      }
+    ],
+    "prompt": "고산 도시 블록을 그 도시가 있는 나라에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "고산 도시는 해발 고도가 높은 곳에 있어요."
+    },
+    "title": "고산 도시 찾기",
+    "topics": [
+      "10.5",
+      "10.3"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": false,
+    "explain": "오세아니아는 대부분 남반구에 있어요. 가장 큰 나라는 오스트레일리아, 뉴질랜드는 큰 섬 두 개로 된 나라예요.",
+    "id": "m-15",
+    "mTags": [
+      "M18"
+    ],
+    "pairs": [
+      {
+        "left": "오스트레일리아",
+        "right": "오세아니아의 가장 큰 나라"
+      },
+      {
+        "left": "뉴질랜드",
+        "right": "큰 섬 두 개로 이루어진 나라"
+      },
+      {
+        "left": "니우에",
+        "right": "태평양의 작은 섬나라"
+      }
+    ],
+    "prompt": "나라 블록을 알맞은 설명 칸에 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M18"
+      ],
+      "text": "오세아니아는 대부분 북반구에 있어요."
+    },
+    "title": "오세아니아의 나라",
+    "topics": [
+      "B2.2"
+    ],
+    "type": "block"
+  },
+  {
+    "analytic": true,
+    "explain": "적도에서 극지방으로 갈수록 기온이 낮아져요. 그래서 열대, 건조, 온대, 냉대, 한대 순서로 나타나요.",
+    "id": "m-16",
+    "mTags": [],
+    "prompt": "적도에서 극지방으로 가며 나타나는 기후를 순서대로 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "적도 부근에는 주로 열대 기후가 나타나요."
+    },
+    "steps": [
+      "열대 기후",
+      "건조 기후",
+      "온대 기후",
+      "냉대 기후",
+      "한대 기후"
+    ],
+    "title": "적도에서 극지방으로",
+    "topics": [
+      "7.6",
+      "7.5"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": true,
+    "explain": "적도에 가까울수록 연평균 기온이 높아요. 기온 차이는 위도 때문이고, 시차는 경도 때문이에요.",
+    "id": "m-17",
+    "mTags": [
+      "M6"
+    ],
+    "prompt": "연평균 기온을 보고 적도에서 가까운 도시부터 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M6"
+      ],
+      "text": "위도가 다르면 시차가 달라져요."
+    },
+    "steps": [
+      "아부자 26.6℃",
+      "리옹 11.9℃",
+      "키루나 -0.5℃"
+    ],
+    "title": "기온으로 위도 찾기",
+    "topics": [
+      "7.3",
+      "B3.1"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": false,
+    "explain": "강물이 실어 온 흙이 쌓여 넓은 평야가 돼요. 평야에서는 대규모 농사를 짓고, 계단식 농사는 가파른 산지에서 해요.",
+    "id": "m-18",
+    "mTags": [
+      "M9"
+    ],
+    "prompt": "강이 평야를 만들어 사람이 살기까지 순서대로 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M9"
+      ],
+      "text": "넓은 평야에서는 계단식으로 농사를 지어요."
+    },
+    "steps": [
+      "강물이 흙과 모래를 실어 와요",
+      "강가에 흙이 차곡차곡 쌓여요",
+      "넓은 평야가 생겨요",
+      "사람들이 농사를 지어요"
+    ],
+    "title": "평야가 생기는 순서",
+    "topics": [
+      "4.2",
+      "4.4"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": false,
+    "explain": "화전 농업은 나무와 풀을 베어 태운 재를 거름으로 써요. 그래서 베기, 태우기, 농사 순서예요.",
+    "id": "m-19",
+    "mTags": [],
+    "prompt": "열대 지역의 화전 농업을 순서대로 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "화전 농업은 태운 재를 거름으로 써요."
+    },
+    "steps": [
+      "나무와 풀을 베어요",
+      "베어 낸 것을 태워 재를 만들어요",
+      "재를 거름 삼아 농사를 지어요"
+    ],
+    "title": "화전 농업의 순서",
+    "topics": [
+      "8.6",
+      "8.2"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": true,
+    "explain": "관광객이 늘면 수입도 늘지만 쓰레기 문제도 생겨요. 그래서 쓰레기를 되가져오는 규칙을 만들었어요.",
+    "id": "m-20",
+    "mTags": [
+      "M21"
+    ],
+    "prompt": "등산객이 늘면서 마을에 생긴 일을 순서대로 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M21"
+      ],
+      "text": "관광객이 늘면 좋은 점만 생겨요."
+    },
+    "steps": [
+      "등산객이 마을에 찾아와요",
+      "주민이 숙소와 음식을 제공해요",
+      "마을의 수입이 늘어요",
+      "쓰레기가 쌓여 문제가 생겨요",
+      "쓰레기를 되가져오기로 정해요"
+    ],
+    "title": "에베레스트 마을 이야기",
+    "topics": [
+      "3.4"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": false,
+    "explain": "피오르는 빙하가 깎은 U자 계곡에 바닷물이 들어와 생겨요. 빙하가 먼저, 바닷물은 나중이에요.",
+    "id": "m-21",
+    "mTags": [],
+    "prompt": "피오르 해안이 만들어지는 순서대로 놓아 보세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "피오르는 빙하가 깎은 계곡에 바닷물이 들어온 곳이에요."
+    },
+    "steps": [
+      "빙하가 땅을 깎아 U자 계곡을 내요",
+      "빙하가 녹아 사라져요",
+      "계곡에 바닷물이 들어와요",
+      "깊고 긴 피오르가 돼요"
+    ],
+    "title": "피오르가 생기는 순서",
+    "topics": [
+      "2.6",
+      "2.3"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": true,
+    "explain": "관광객이 늘어 일자리와 소득이 생겼지만 쓰레기로 환경이 오염됐어요. 그래서 섬을 여섯 달 닫았어요.",
+    "id": "m-22",
+    "mTags": [
+      "M21"
+    ],
+    "prompt": "보라카이섬에 일어난 일을 순서대로 놓아 보세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M21"
+      ],
+      "text": "관광 산업은 나쁜 점만 있어요."
+    },
+    "steps": [
+      "관광객이 많이 찾아와요",
+      "일자리와 소득이 늘어요",
+      "쓰레기로 환경이 오염돼요",
+      "여섯 달 동안 섬에 못 들어가게 해요"
+    ],
+    "title": "보라카이 이야기",
+    "topics": [
+      "5.4",
+      "5.5"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": false,
+    "explain": "히말라야와 알프스처럼 높고 험한 땅이 산지예요. 산지에서도 계단식 농사와 관광을 해요.",
+    "id": "m-23",
+    "mTags": [
+      "M7"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_himalaya.png",
+        "text": "히말라야산맥"
+      },
+      {
+        "correct": true,
+        "image": "mp_alps.png",
+        "text": "알프스산맥"
+      },
+      {
+        "correct": false,
+        "image": "mp_sahara.png",
+        "text": "사하라 사막"
+      },
+      {
+        "correct": false,
+        "image": "mp_fundy.png",
+        "text": "펀디만 갯벌"
+      }
+    ],
+    "prompt": "산지 지형 사진을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M7"
+      ],
+      "text": "산지에서는 농사도 관광도 할 수 없어요."
+    },
+    "title": "산지 사진 고르기",
+    "topics": [
+      "2.1",
+      "3.2"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "모래 언덕이 끝없이 펼쳐진 곳은 사하라 사막이에요. 다만 사막이 다 모래사막은 아니고 바위 사막이 더 많아요.",
+    "id": "m-24",
+    "mTags": [
+      "M3"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_sahara.png",
+        "text": "사하라 사막"
+      },
+      {
+        "correct": false,
+        "image": "mp_huanghe.png",
+        "text": "황허강"
+      },
+      {
+        "correct": false,
+        "image": "mp_sognefjord.png",
+        "text": "송네 피오르"
+      },
+      {
+        "correct": false,
+        "image": "mp_maunaloa.png",
+        "text": "마우나로아"
+      }
+    ],
+    "prompt": "모래 언덕이 끝없이 펼쳐진 사막을 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M3"
+      ],
+      "text": "사막은 모두 뜨거운 모래사막이에요."
+    },
+    "title": "사막 사진 고르기",
+    "topics": [
+      "2.3",
+      "2.1"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "탁자처럼 평평한 산은 호라이마산이에요. 마우나로아는 화산인데, 화산 땅은 기름져서 농사에 도움도 줘요.",
+    "id": "m-25",
+    "mTags": [
+      "M20"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_roraima.png",
+        "text": "호라이마산"
+      },
+      {
+        "correct": false,
+        "image": "mp_everest.png",
+        "text": "에베레스트산"
+      },
+      {
+        "correct": false,
+        "image": "mp_maunaloa.png",
+        "text": "마우나로아"
+      }
+    ],
+    "prompt": "위가 탁자처럼 평평하고 절벽이 가파른 산을 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M20"
+      ],
+      "text": "화산은 사람들에게 피해만 줘요."
+    },
+    "title": "탁자 모양 산 찾기",
+    "topics": [
+      "2.3",
+      "3.1"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "베나길 동굴은 천장이 뚫려 안에서 하늘이 보이는 해안 동굴이에요. 엘 아르코는 아치 모양 바위예요.",
+    "id": "m-26",
+    "mTags": [],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_benagil.png",
+        "text": "베나길 동굴"
+      },
+      {
+        "correct": false,
+        "image": "mp_elarco.png",
+        "text": "엘 아르코"
+      },
+      {
+        "correct": false,
+        "image": "mp_rocky.png",
+        "text": "로키산맥"
+      }
+    ],
+    "prompt": "동굴 안에서 하늘이 보이는 해안 동굴을 고르세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "엘 아르코는 아치 모양의 바위예요."
+    },
+    "title": "해안 동굴 찾기",
+    "topics": [
+      "2.4",
+      "2.6"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "갯벌은 북해 연안, 우리나라 서해안, 캐나다 동부처럼 바닷가에 있어요. 사막과 산지에는 갯벌이 없어요.",
+    "id": "m-27",
+    "mTags": [
+      "M12"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_northsea.png",
+        "text": "유럽 북해 연안"
+      },
+      {
+        "correct": true,
+        "image": "mp_korea_mudflat.png",
+        "text": "우리나라 서해안"
+      },
+      {
+        "correct": true,
+        "image": "mp_canada_mudflat.png",
+        "text": "캐나다 동부 연안"
+      },
+      {
+        "correct": false,
+        "image": "mp_sahara.png",
+        "text": "사하라 사막"
+      },
+      {
+        "correct": false,
+        "image": "mp_alps.png",
+        "text": "알프스산맥"
+      }
+    ],
+    "prompt": "세계적으로 유명한 갯벌을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M12"
+      ],
+      "text": "갯벌이 넓은 해안에는 스키장이 생겨요."
+    },
+    "title": "유명한 갯벌 고르기",
+    "topics": [
+      "5.2",
+      "5.1"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "갯벌 생태 지키기, 쓰레기 되가져오기, 신성한 바위산 오르지 않기가 지형을 지키는 노력이에요. 쓰레기 버리기는 반대예요.",
+    "id": "m-28",
+    "mTags": [],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_wadden.png",
+        "text": "갯벌 생태 보호하기"
+      },
+      {
+        "correct": true,
+        "image": "mp_trash_back.png",
+        "text": "쓰레기 되가져오기"
+      },
+      {
+        "correct": true,
+        "image": "mp_uluru.png",
+        "text": "신성한 바위산 오르지 않기"
+      },
+      {
+        "correct": false,
+        "image": "mp_litter.png",
+        "text": "쓰레기 버리고 떠나기"
+      }
+    ],
+    "prompt": "아름다운 지형을 지키려는 노력을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "울루루는 원주민이 신성하게 여기는 곳이에요."
+    },
+    "title": "지형을 지키는 노력",
+    "topics": [
+      "6.2",
+      "3.4",
+      "2.3"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "할롱베이 사람들은 어업과 관광으로 살지만 쓰레기 문제도 겪어요. 관광지에도 좋은 점과 고민이 함께 있어요.",
+    "id": "m-29",
+    "mTags": [
+      "M21"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_halong_fishing.png",
+        "text": "어업"
+      },
+      {
+        "correct": true,
+        "image": "mp_halong_tour.png",
+        "text": "관광"
+      },
+      {
+        "correct": true,
+        "image": "mp_halong_trash.png",
+        "text": "쓰레기 문제"
+      },
+      {
+        "correct": false,
+        "image": "mp_ski.png",
+        "text": "스키장"
+      }
+    ],
+    "prompt": "할롱베이 사람들의 생활 모습과 고민을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M21"
+      ],
+      "text": "관광지는 좋은 점만 있어요."
+    },
+    "title": "할롱베이의 생활",
+    "topics": [
+      "6.2",
+      "5.3"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "열대는 일 년 내내 덥고 비가 많아서 바닥을 띄운 집과 얇은 옷이 맞아요. 털옷과 흙벽돌 집은 다른 기후예요.",
+    "id": "m-30",
+    "mTags": [],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_stilt_house.png",
+        "text": "바닥을 띄운 고상 가옥"
+      },
+      {
+        "correct": true,
+        "image": "mp_thin_clothes.png",
+        "text": "얇고 바람 잘 통하는 옷"
+      },
+      {
+        "correct": true,
+        "image": "mp_safari.png",
+        "text": "사파리 생태 관광"
+      },
+      {
+        "correct": false,
+        "image": "mp_fur_coat.png",
+        "text": "두꺼운 털옷"
+      },
+      {
+        "correct": false,
+        "image": "mp_mud_house.png",
+        "text": "창이 작은 흙벽돌 집"
+      }
+    ],
+    "prompt": "열대 기후 지역의 생활 모습을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "열대 기후 지역에서는 바닥을 띄운 집을 지어요."
+    },
+    "title": "열대 생활 고르기",
+    "topics": [
+      "8.2"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "건조 기후에서도 오아시스나 강 주변에서는 농사를 지어요. 옷과 집은 햇볕과 모래바람을 막게 만들어요.",
+    "id": "m-31",
+    "mTags": [
+      "M1"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_robe.png",
+        "text": "온몸을 감싸는 옷"
+      },
+      {
+        "correct": true,
+        "image": "mp_mud_house.png",
+        "text": "벽이 두꺼운 흙벽돌 집"
+      },
+      {
+        "correct": true,
+        "image": "mp_oasis_farm.png",
+        "text": "오아시스 주변 농사"
+      },
+      {
+        "correct": false,
+        "image": "mp_log_house.png",
+        "text": "통나무집"
+      }
+    ],
+    "prompt": "건조 기후 지역의 생활 모습을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M1"
+      ],
+      "text": "건조 기후 지역에서는 농사를 전혀 지을 수 없어요."
+    },
+    "title": "건조 생활 고르기",
+    "topics": [
+      "8.5"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "냉대 기후는 겨울이 길고 추워서 농사는 짧은 여름에만 해요. 침엽수림 덕분에 통나무집과 목재, 펄프가 많아요.",
+    "id": "m-32",
+    "mTags": [
+      "M13"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "mp_log_house.png",
+        "text": "통나무집"
+      },
+      {
+        "correct": true,
+        "image": "mp_pulp.png",
+        "text": "침엽수림 목재와 펄프"
+      },
+      {
+        "correct": true,
+        "image": "mp_snow_festival.png",
+        "text": "눈과 얼음 축제"
+      },
+      {
+        "correct": false,
+        "image": "mp_winter_farm.png",
+        "text": "한겨울 밭농사"
+      },
+      {
+        "correct": false,
+        "image": "mp_stilt_house.png",
+        "text": "고상 가옥"
+      }
+    ],
+    "prompt": "냉대 기후 지역의 생활 모습을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M13"
+      ],
+      "text": "냉대 기후에서는 겨울에 농사를 지어요."
+    },
+    "title": "냉대 생활 고르기",
+    "topics": [
+      "9.4"
+    ],
+    "type": "photo"
+  },
+  {
+    "analytic": false,
+    "explain": "기후 그래프에서 막대는 달마다 내린 강수량, 선은 달마다의 기온이에요. 둘을 함께 보고 기후를 알아내요.",
+    "id": "m-33",
+    "image": "mg_kualalumpur.png",
+    "mTags": [],
+    "options": [
+      {
+        "correct": true,
+        "text": "막대는 강수량이에요"
+      },
+      {
+        "correct": true,
+        "text": "선은 기온이에요"
+      },
+      {
+        "correct": false,
+        "text": "막대는 기온이에요"
+      },
+      {
+        "correct": false,
+        "text": "선은 강수량이에요"
+      }
+    ],
+    "prompt": "기후 그래프의 막대와 선은 무엇을 나타낼까요? 맞는 것을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "기후는 기온과 강수량으로 구분해요."
+    },
+    "title": "그래프 읽는 법",
+    "topics": [
+      "7.4",
+      "7.1"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": true,
+    "explain": "두 도시 다 열대라 일 년 내내 더워요. 하지만 쿠알라룸푸르는 늘 비가 많고, 므완자는 건기와 우기가 있어요.",
+    "id": "m-34",
+    "image": "mg_kl_mwanza.png",
+    "mTags": [
+      "M15",
+      "M16"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "text": "둘 다 일 년 내내 기온이 높아요"
+      },
+      {
+        "correct": true,
+        "text": "쿠알라룸푸르는 늘 비가 많아요"
+      },
+      {
+        "correct": true,
+        "text": "므완자는 건기와 우기가 있어요"
+      },
+      {
+        "correct": false,
+        "text": "므완자는 겨울에 눈이 와요"
+      }
+    ],
+    "prompt": "두 열대 도시 그래프에서 맞는 설명을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M15"
+      ],
+      "text": "열대 기후는 모두 일 년 내내 비가 많아요."
+    },
+    "title": "두 열대 도시 비교",
+    "topics": [
+      "8.1",
+      "8.6"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": true,
+    "explain": "온대 도시는 셋 다 여름에 가장 덥지만 비 오는 때는 달라요. 같은 기후라도 지역마다 차이가 있어요.",
+    "id": "m-35",
+    "image": "mg_london_rome_seoul.png",
+    "mTags": [
+      "M16"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "text": "셋 다 여름에 기온이 가장 높아요"
+      },
+      {
+        "correct": true,
+        "text": "런던은 강수량이 늘 고른 편이에요"
+      },
+      {
+        "correct": true,
+        "text": "로마는 겨울에 비가 더 많아요"
+      },
+      {
+        "correct": true,
+        "text": "서울은 여름에 비가 집중돼요"
+      },
+      {
+        "correct": false,
+        "text": "셋 다 일 년 내내 더워요"
+      }
+    ],
+    "prompt": "세 온대 도시 그래프에서 맞는 설명을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M16"
+      ],
+      "text": "온대 기후 도시는 모두 비가 똑같이 와요."
+    },
+    "title": "세 온대 도시 비교",
+    "topics": [
+      "9.1"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": false,
+    "explain": "막대가 거의 없으니 비가 아주 적은 건조 기후예요. 건조 기후는 비가 많은 곳이 아니라 적은 곳에 나타나요.",
+    "id": "m-36",
+    "image": "mg_cairo.png",
+    "mTags": [
+      "M2"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "text": "건조 기후"
+      },
+      {
+        "correct": false,
+        "text": "열대 기후"
+      },
+      {
+        "correct": false,
+        "text": "냉대 기후"
+      },
+      {
+        "correct": false,
+        "text": "한대 기후"
+      }
+    ],
+    "prompt": "그래프를 보면 비가 거의 내리지 않아요. 이곳의 기후를 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M2"
+      ],
+      "text": "건조 기후는 비가 많이 내리는 기후예요."
+    },
+    "title": "카이로 그래프",
+    "topics": [
+      "8.4",
+      "7.5"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": false,
+    "explain": "기온 선이 겨울에 영하로 길게 내려가고 여름과 차이가 커요. 냉대 기후는 일 년 내내 덥지 않아요.",
+    "id": "m-37",
+    "image": "mg_oslo.png",
+    "mTags": [
+      "M14"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "text": "겨울이 길고 추워요"
+      },
+      {
+        "correct": true,
+        "text": "여름과 겨울 기온 차가 커요"
+      },
+      {
+        "correct": false,
+        "text": "일 년 내내 더워요"
+      },
+      {
+        "correct": false,
+        "text": "비가 전혀 내리지 않아요"
+      }
+    ],
+    "prompt": "오슬로 그래프를 보고 맞는 설명을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M14"
+      ],
+      "text": "냉대 기후는 일 년 내내 더워요."
+    },
+    "title": "오슬로 그래프",
+    "topics": [
+      "9.3"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": true,
+    "explain": "누크는 한대라 오슬로보다 훨씬 추워요. 둘 다 겨울이 길지만 추운 정도가 달라 생활 모습도 달라요.",
+    "id": "m-38",
+    "image": "mg_nuuk_oslo.png",
+    "mTags": [
+      "M14",
+      "M16"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "text": "누크가 오슬로보다 추워요"
+      },
+      {
+        "correct": true,
+        "text": "둘 다 겨울이 길어요"
+      },
+      {
+        "correct": false,
+        "text": "누크는 일 년 내내 더워요"
+      }
+    ],
+    "prompt": "두 도시 그래프를 비교해 맞는 설명을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M14"
+      ],
+      "text": "한대와 냉대는 생활 모습이 똑같아요."
+    },
+    "title": "누크와 오슬로 비교",
+    "topics": [
+      "10.1",
+      "9.3"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": true,
+    "explain": "적도 근처라도 해발 고도가 높은 키토는 일 년 내내 서늘해요. 위도가 같아도 고도가 다르면 기후가 달라요.",
+    "id": "m-39",
+    "image": "mg_quito_kl.png",
+    "mTags": [
+      "M4"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "text": "키토는 일 년 내내 서늘해요"
+      },
+      {
+        "correct": true,
+        "text": "쿠알라룸푸르는 일 년 내내 더워요"
+      },
+      {
+        "correct": true,
+        "text": "키토는 해발 고도가 높아요"
+      },
+      {
+        "correct": false,
+        "text": "적도 근처는 어디나 더워요"
+      }
+    ],
+    "prompt": "적도 근처 두 도시 그래프에서 맞는 설명을 모두 고르세요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M4"
+      ],
+      "text": "적도 가까운 곳은 어디나 더워요."
+    },
+    "title": "적도 근처 두 도시",
+    "topics": [
+      "7.2",
+      "7.3",
+      "10.3"
+    ],
+    "type": "graph"
+  },
+  {
+    "analytic": false,
+    "explain": "여름에 덥고 비가 많이 오고 겨울은 춥고 건조하면 온대 기후예요. 일 년 내내 덥지 않으니 열대는 아니에요.",
+    "id": "m-40",
+    "image": "mg_seoul.png",
+    "mTags": [],
+    "options": [
+      {
+        "correct": true,
+        "text": "온대 기후"
+      },
+      {
+        "correct": false,
+        "text": "열대 기후"
+      },
+      {
+        "correct": false,
+        "text": "건조 기후"
+      },
+      {
+        "correct": false,
+        "text": "한대 기후"
+      }
+    ],
+    "prompt": "그래프를 보면 여름에 덥고 비가 많이 와요. 이곳의 기후를 고르세요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "우리나라에는 온대 기후와 냉대 기후가 나타나요."
+    },
+    "title": "서울 그래프",
+    "topics": [
+      "9.1",
+      "7.5",
+      "7.6"
+    ],
+    "type": "graph"
+  }
+]

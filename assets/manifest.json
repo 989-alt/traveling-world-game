@@ -1,0 +1,1361 @@
+{
+  "version": 1,
+  "entries": {
+    "tile.0": "webp/TILE-00d.webp",
+    "tile.1": "webp/TILE-01d.webp",
+    "tile.2": "webp/TILE-02d.webp",
+    "tile.3": "webp/TILE-03d.webp",
+    "tile.4": "webp/TILE-04d.webp",
+    "tile.5": "webp/TILE-05d.webp",
+    "tile.6": "webp/TILE-Md.webp",
+    "tile.7": "webp/TILE-07d.webp",
+    "tile.8": "webp/TILE-08d.webp",
+    "tile.9": "webp/TILE-09d.webp",
+    "tile.10": "webp/TILE-10d.webp",
+    "tile.11": "webp/TILE-11e.webp",
+    "tile.12": "webp/TILE-12e.webp",
+    "tile.13": "webp/TILE-13e.webp",
+    "tile.14": "webp/TILE-14e.webp",
+    "tile.15": "webp/TILE-15d.webp",
+    "tile.16": "webp/TILE-16d.webp",
+    "tile.17": "webp/TILE-17d.webp",
+    "tile.18": "webp/TILE-18d.webp",
+    "tile.19": "webp/TILE-19d.webp",
+    "tile.20": "webp/TILE-Md.webp",
+    "tile.21": "webp/TILE-21d.webp",
+    "tile.22": "webp/TILE-22d.webp",
+    "tile.23": "webp/TILE-23d.webp",
+    "tile.24": "webp/TILE-24d.webp",
+    "tile.25": "webp/TILE-25d.webp",
+    "tile.26": "webp/TILE-26e.webp",
+    "tile.27": "webp/TILE-27e.webp",
+    "tile.28": "webp/TILE-28e.webp",
+    "tile.29": "webp/TILE-29e.webp",
+    "plaza": "webp/PLAZA-U5.webp",
+    "plaza.mask.asia": "webp/PLAZA-U5-mask-asia.webp",
+    "plaza.mask.europe": "webp/PLAZA-U5-mask-europe.webp",
+    "plaza.mask.africa": "webp/PLAZA-U5-mask-africa.webp",
+    "plaza.mask.namerica": "webp/PLAZA-U5-mask-namerica.webp",
+    "plaza.mask.samerica": "webp/PLAZA-U5-mask-samerica.webp",
+    "ui.signpost": "webp/UI-signpost.webp",
+    "building.1.1": "webp/BLD-01-1.webp",
+    "building.1.2": "webp/BLD-01-2.webp",
+    "building.1.3": "webp/BLD-01-3.webp",
+    "landmark.1": "webp/LM-01.webp",
+    "landmark.1.big": "webp/LM-01@1024.webp",
+    "cutscene.1": "webp/CUT-01.webp",
+    "building.2.1": "webp/BLD-02-1.webp",
+    "building.2.2": "webp/BLD-02-2.webp",
+    "building.2.3": "webp/BLD-02-3.webp",
+    "landmark.2": "webp/LM-02.webp",
+    "landmark.2.big": "webp/LM-02@1024.webp",
+    "cutscene.2": "webp/CUT-02.webp",
+    "building.5.1": "webp/BLD-04-1.webp",
+    "building.5.2": "webp/BLD-04-2.webp",
+    "building.5.3": "webp/BLD-04-3.webp",
+    "landmark.5": "webp/LM-04.webp",
+    "landmark.5.big": "webp/LM-04@1024.webp",
+    "cutscene.5": "webp/CUT-04.webp",
+    "building.4.1": "webp/BLD-05-1.webp",
+    "building.4.2": "webp/BLD-05-2.webp",
+    "building.4.3": "webp/BLD-05-3.webp",
+    "landmark.4": "webp/LM-05.webp",
+    "landmark.4.big": "webp/LM-05@1024.webp",
+    "cutscene.4": "webp/CUT-05.webp",
+    "building.3.1": "webp/BLD-06-1.webp",
+    "building.3.2": "webp/BLD-06-2.webp",
+    "building.3.3": "webp/BLD-06-3.webp",
+    "landmark.3": "webp/LM-06.webp",
+    "landmark.3.big": "webp/LM-06@1024.webp",
+    "cutscene.3": "webp/CUT-06.webp",
+    "building.11.1": "webp/BLD-11-1.webp",
+    "building.11.2": "webp/BLD-11-2.webp",
+    "building.11.3": "webp/BLD-11-3.webp",
+    "landmark.11": "webp/LM-11.webp",
+    "landmark.11.big": "webp/LM-11@1024.webp",
+    "cutscene.11": "webp/CUT-11.webp",
+    "building.12.1": "webp/BLD-12-1.webp",
+    "building.12.2": "webp/BLD-12-2.webp",
+    "building.12.3": "webp/BLD-12-3.webp",
+    "landmark.12": "webp/LM-12.webp",
+    "landmark.12.big": "webp/LM-12@1024.webp",
+    "cutscene.12": "webp/CUT-12.webp",
+    "building.13.1": "webp/BLD-13-1.webp",
+    "building.13.2": "webp/BLD-13-2.webp",
+    "building.13.3": "webp/BLD-13-3.webp",
+    "landmark.13": "webp/LM-13.webp",
+    "landmark.13.big": "webp/LM-13@1024.webp",
+    "cutscene.13": "webp/CUT-13.webp",
+    "building.14.1": "webp/BLD-15-1.webp",
+    "building.14.2": "webp/BLD-15-2.webp",
+    "building.14.3": "webp/BLD-15-3.webp",
+    "landmark.14": "webp/LM-15.webp",
+    "landmark.14.big": "webp/LM-15@1024.webp",
+    "cutscene.14": "webp/CUT-15.webp",
+    "building.15.1": "webp/BLD-16-1.webp",
+    "building.15.2": "webp/BLD-16-2.webp",
+    "building.15.3": "webp/BLD-16-3.webp",
+    "landmark.15": "webp/LM-16.webp",
+    "landmark.15.big": "webp/LM-16@1024.webp",
+    "cutscene.15": "webp/CUT-16.webp",
+    "building.19.1": "webp/BLD-17-1.webp",
+    "building.19.2": "webp/BLD-17-2.webp",
+    "building.19.3": "webp/BLD-17-3.webp",
+    "landmark.19": "webp/LM-17.webp",
+    "landmark.19.big": "webp/LM-17@1024.webp",
+    "cutscene.19": "webp/CUT-17.webp",
+    "building.18.1": "webp/BLD-18-1.webp",
+    "building.18.2": "webp/BLD-18-2.webp",
+    "building.18.3": "webp/BLD-18-3.webp",
+    "landmark.18": "webp/LM-18.webp",
+    "landmark.18.big": "webp/LM-18@1024.webp",
+    "cutscene.18": "webp/CUT-18.webp",
+    "building.17.1": "webp/BLD-19-1.webp",
+    "building.17.2": "webp/BLD-19-2.webp",
+    "building.17.3": "webp/BLD-19-3.webp",
+    "landmark.17": "webp/LM-19.webp",
+    "landmark.17.big": "webp/LM-19@1024.webp",
+    "cutscene.17": "webp/CUT-19.webp",
+    "building.16.1": "webp/BLD-22-1.webp",
+    "building.16.2": "webp/BLD-22-2.webp",
+    "building.16.3": "webp/BLD-22-3.webp",
+    "landmark.16": "webp/LM-22.webp",
+    "landmark.16.big": "webp/LM-22@1024.webp",
+    "cutscene.16": "webp/CUT-22.webp",
+    "building.24.1": "webp/BLD-25-1.webp",
+    "building.24.2": "webp/BLD-25-2.webp",
+    "building.24.3": "webp/BLD-25-3.webp",
+    "landmark.24": "webp/LM-25.webp",
+    "landmark.24.big": "webp/LM-25@1024.webp",
+    "cutscene.24": "webp/CUT-25.webp",
+    "building.23.1": "webp/BLD-26-1.webp",
+    "building.23.2": "webp/BLD-26-2.webp",
+    "building.23.3": "webp/BLD-26-3.webp",
+    "landmark.23": "webp/LM-26.webp",
+    "landmark.23.big": "webp/LM-26@1024.webp",
+    "cutscene.23": "webp/CUT-26.webp",
+    "building.22.1": "webp/BLD-28-1.webp",
+    "building.22.2": "webp/BLD-28-2.webp",
+    "building.22.3": "webp/BLD-28-3.webp",
+    "landmark.22": "webp/LM-28.webp",
+    "landmark.22.big": "webp/LM-28@1024.webp",
+    "cutscene.22": "webp/CUT-28.webp",
+    "building.21.1": "webp/BLD-29-1.webp",
+    "building.21.2": "webp/BLD-29-2.webp",
+    "building.21.3": "webp/BLD-29-3.webp",
+    "landmark.21": "webp/LM-29.webp",
+    "landmark.21.big": "webp/LM-29@1024.webp",
+    "cutscene.21": "webp/CUT-29.webp",
+    "building.26.1": "webp/BLD-31-1.webp",
+    "building.26.2": "webp/BLD-31-2.webp",
+    "building.26.3": "webp/BLD-31-3.webp",
+    "landmark.26": "webp/LM-31.webp",
+    "landmark.26.big": "webp/LM-31@1024.webp",
+    "cutscene.26": "webp/CUT-31.webp",
+    "building.27.1": "webp/BLD-32-1.webp",
+    "building.27.2": "webp/BLD-32-2.webp",
+    "building.27.3": "webp/BLD-32-3.webp",
+    "landmark.27": "webp/LM-32.webp",
+    "landmark.27.big": "webp/LM-32@1024.webp",
+    "cutscene.27": "webp/CUT-32.webp",
+    "building.29.1": "webp/BLD-35-1.webp",
+    "building.29.2": "webp/BLD-35-2.webp",
+    "building.29.3": "webp/BLD-35-3.webp",
+    "landmark.29": "webp/LM-35.webp",
+    "landmark.29.big": "webp/LM-35@1024.webp",
+    "cutscene.29": "webp/CUT-35.webp",
+    "building.28.1": "webp/BLD-36-1.webp",
+    "building.28.2": "webp/BLD-36-2.webp",
+    "building.28.3": "webp/BLD-36-3.webp",
+    "landmark.28": "webp/LM-36.webp",
+    "landmark.28.big": "webp/LM-36@1024.webp",
+    "cutscene.28": "webp/CUT-36.webp",
+    "culture.1": "webp/CC-01.webp",
+    "culture.2": "webp/CC-02.webp",
+    "culture.5": "webp/CC-04.webp",
+    "culture.4": "webp/CC-05.webp",
+    "culture.3": "webp/CC-06.webp",
+    "culture.0": "webp/CC-08.webp",
+    "culture.7": "webp/CC-09.webp",
+    "culture.11": "webp/CC-11.webp",
+    "culture.12": "webp/CC-12.webp",
+    "culture.13": "webp/CC-13.webp",
+    "culture.14": "webp/CC-15.webp",
+    "culture.15": "webp/CC-16.webp",
+    "culture.19": "webp/CC-17.webp",
+    "culture.18": "webp/CC-18.webp",
+    "culture.17": "webp/CC-19.webp",
+    "culture.16": "webp/CC-22.webp",
+    "culture.24": "webp/CC-25.webp",
+    "culture.23": "webp/CC-26.webp",
+    "culture.22": "webp/CC-28.webp",
+    "culture.21": "webp/CC-29.webp",
+    "culture.26": "webp/CC-31.webp",
+    "culture.27": "webp/CC-32.webp",
+    "culture.29": "webp/CC-35.webp",
+    "culture.28": "webp/CC-36.webp",
+    "cutscene.cloud-far": "webp/CUT-cloud-far.webp",
+    "cutscene.cloud-near": "webp/CUT-cloud-near.webp",
+    "cutscene.rays": "webp/CUT-rays.webp",
+    "char.1.p01": "webp/CH1-P01.webp",
+    "char.1.p01.big": "webp/CH1-P01@1024.webp",
+    "char.1.p02": "webp/CH1-P02.webp",
+    "char.1.p03": "webp/CH1-P03.webp",
+    "char.1.p04": "webp/CH1-P04.webp",
+    "char.1.p05": "webp/CH1-P05.webp",
+    "char.1.p06": "webp/CH1-P06.webp",
+    "char.1.p07": "webp/CH1-P07.webp",
+    "char.1.p08": "webp/CH1-P08.webp",
+    "char.1.p09": "webp/CH1-P09.webp",
+    "char.1.p10": "webp/CH1-P10.webp",
+    "char.1.p10.big": "webp/CH1-P10@1024.webp",
+    "char.1.p11": "webp/CH1-P11.webp",
+    "char.1.p11.big": "webp/CH1-P11@1024.webp",
+    "char.1.p12": "webp/CH1-P12.webp",
+    "char.1.p12.big": "webp/CH1-P12@1024.webp",
+    "char.1.p13": "webp/CH1-P13.webp",
+    "char.1.p13.big": "webp/CH1-P13@1024.webp",
+    "char.1.p14": "webp/CH1-P14.webp",
+    "char.1.p15": "webp/CH1-P15.webp",
+    "char.1.p16": "webp/CH1-P16.webp",
+    "char.1.p17": "webp/CH1-P17.webp",
+    "char.1.p18": "webp/CH1-P18.webp",
+    "char.1.p18.big": "webp/CH1-P18@1024.webp",
+    "char.1.p19": "webp/CH1-P19.webp",
+    "char.1.f00": "webp/CH1-F00.webp",
+    "char.2.p01": "webp/CH2-P01.webp",
+    "char.2.p01.big": "webp/CH2-P01@1024.webp",
+    "char.2.p02": "webp/CH2-P02.webp",
+    "char.2.p03": "webp/CH2-P03.webp",
+    "char.2.p04": "webp/CH2-P04.webp",
+    "char.2.p05": "webp/CH2-P05.webp",
+    "char.2.p06": "webp/CH2-P06.webp",
+    "char.2.p07": "webp/CH2-P07.webp",
+    "char.2.p08": "webp/CH2-P08.webp",
+    "char.2.p09": "webp/CH2-P09.webp",
+    "char.2.p10": "webp/CH2-P10.webp",
+    "char.2.p10.big": "webp/CH2-P10@1024.webp",
+    "char.2.p11": "webp/CH2-P11.webp",
+    "char.2.p11.big": "webp/CH2-P11@1024.webp",
+    "char.2.p12": "webp/CH2-P12.webp",
+    "char.2.p12.big": "webp/CH2-P12@1024.webp",
+    "char.2.p13": "webp/CH2-P13.webp",
+    "char.2.p13.big": "webp/CH2-P13@1024.webp",
+    "char.2.p14": "webp/CH2-P14.webp",
+    "char.2.p15": "webp/CH2-P15.webp",
+    "char.2.p16": "webp/CH2-P16.webp",
+    "char.2.p17": "webp/CH2-P17.webp",
+    "char.2.p18": "webp/CH2-P18.webp",
+    "char.2.p18.big": "webp/CH2-P18@1024.webp",
+    "char.2.p19": "webp/CH2-P19.webp",
+    "char.2.f00": "webp/CH2-F00.webp",
+    "char.3.p01": "webp/CH3-P01.webp",
+    "char.3.p01.big": "webp/CH3-P01@1024.webp",
+    "char.3.p02": "webp/CH3-P02.webp",
+    "char.3.p03": "webp/CH3-P03.webp",
+    "char.3.p04": "webp/CH3-P04.webp",
+    "char.3.p05": "webp/CH3-P05.webp",
+    "char.3.p06": "webp/CH3-P06.webp",
+    "char.3.p07": "webp/CH3-P07.webp",
+    "char.3.p08": "webp/CH3-P08.webp",
+    "char.3.p09": "webp/CH3-P09.webp",
+    "char.3.p10": "webp/CH3-P10.webp",
+    "char.3.p10.big": "webp/CH3-P10@1024.webp",
+    "char.3.p11": "webp/CH3-P11.webp",
+    "char.3.p11.big": "webp/CH3-P11@1024.webp",
+    "char.3.p12": "webp/CH3-P12.webp",
+    "char.3.p12.big": "webp/CH3-P12@1024.webp",
+    "char.3.p13": "webp/CH3-P13.webp",
+    "char.3.p13.big": "webp/CH3-P13@1024.webp",
+    "char.3.p14": "webp/CH3-P14.webp",
+    "char.3.p15": "webp/CH3-P15.webp",
+    "char.3.p16": "webp/CH3-P16.webp",
+    "char.3.p17": "webp/CH3-P17.webp",
+    "char.3.p18": "webp/CH3-P18.webp",
+    "char.3.p18.big": "webp/CH3-P18@1024.webp",
+    "char.3.p19": "webp/CH3-P19.webp",
+    "char.3.f00": "webp/CH3-F00.webp",
+    "char.4.p01": "webp/CH4-P01.webp",
+    "char.4.p01.big": "webp/CH4-P01@1024.webp",
+    "char.4.p02": "webp/CH4-P02.webp",
+    "char.4.p03": "webp/CH4-P03.webp",
+    "char.4.p04": "webp/CH4-P04.webp",
+    "char.4.p05": "webp/CH4-P05.webp",
+    "char.4.p06": "webp/CH4-P06.webp",
+    "char.4.p07": "webp/CH4-P07.webp",
+    "char.4.p08": "webp/CH4-P08.webp",
+    "char.4.p09": "webp/CH4-P09.webp",
+    "char.4.p10": "webp/CH4-P10.webp",
+    "char.4.p10.big": "webp/CH4-P10@1024.webp",
+    "char.4.p11": "webp/CH4-P11.webp",
+    "char.4.p11.big": "webp/CH4-P11@1024.webp",
+    "char.4.p12": "webp/CH4-P12.webp",
+    "char.4.p12.big": "webp/CH4-P12@1024.webp",
+    "char.4.p13": "webp/CH4-P13.webp",
+    "char.4.p13.big": "webp/CH4-P13@1024.webp",
+    "char.4.p14": "webp/CH4-P14.webp",
+    "char.4.p15": "webp/CH4-P15.webp",
+    "char.4.p16": "webp/CH4-P16.webp",
+    "char.4.p17": "webp/CH4-P17.webp",
+    "char.4.p18": "webp/CH4-P18.webp",
+    "char.4.p18.big": "webp/CH4-P18@1024.webp",
+    "char.4.p19": "webp/CH4-P19.webp",
+    "char.4.f00": "webp/CH4-F00.webp",
+    "char.5.p01": "webp/CH5-P01.webp",
+    "char.5.p01.big": "webp/CH5-P01@1024.webp",
+    "char.5.p02": "webp/CH5-P02.webp",
+    "char.5.p03": "webp/CH5-P03.webp",
+    "char.5.p04": "webp/CH5-P04.webp",
+    "char.5.p05": "webp/CH5-P05.webp",
+    "char.5.p06": "webp/CH5-P06.webp",
+    "char.5.p07": "webp/CH5-P07.webp",
+    "char.5.p08": "webp/CH5-P08.webp",
+    "char.5.p09": "webp/CH5-P09.webp",
+    "char.5.p10": "webp/CH5-P10.webp",
+    "char.5.p10.big": "webp/CH5-P10@1024.webp",
+    "char.5.p11": "webp/CH5-P11.webp",
+    "char.5.p11.big": "webp/CH5-P11@1024.webp",
+    "char.5.p12": "webp/CH5-P12.webp",
+    "char.5.p12.big": "webp/CH5-P12@1024.webp",
+    "char.5.p13": "webp/CH5-P13.webp",
+    "char.5.p13.big": "webp/CH5-P13@1024.webp",
+    "char.5.p14": "webp/CH5-P14.webp",
+    "char.5.p15": "webp/CH5-P15.webp",
+    "char.5.p16": "webp/CH5-P16.webp",
+    "char.5.p17": "webp/CH5-P17.webp",
+    "char.5.p18": "webp/CH5-P18.webp",
+    "char.5.p18.big": "webp/CH5-P18@1024.webp",
+    "char.5.p19": "webp/CH5-P19.webp",
+    "char.5.f00": "webp/CH5-F00.webp",
+    "char.6.p01": "webp/CH6-P01.webp",
+    "char.6.p01.big": "webp/CH6-P01@1024.webp",
+    "char.6.p02": "webp/CH6-P02.webp",
+    "char.6.p03": "webp/CH6-P03.webp",
+    "char.6.p04": "webp/CH6-P04.webp",
+    "char.6.p05": "webp/CH6-P05.webp",
+    "char.6.p06": "webp/CH6-P06.webp",
+    "char.6.p07": "webp/CH6-P07.webp",
+    "char.6.p08": "webp/CH6-P08.webp",
+    "char.6.p09": "webp/CH6-P09.webp",
+    "char.6.p10": "webp/CH6-P10.webp",
+    "char.6.p10.big": "webp/CH6-P10@1024.webp",
+    "char.6.p11": "webp/CH6-P11.webp",
+    "char.6.p11.big": "webp/CH6-P11@1024.webp",
+    "char.6.p12": "webp/CH6-P12.webp",
+    "char.6.p12.big": "webp/CH6-P12@1024.webp",
+    "char.6.p13": "webp/CH6-P13.webp",
+    "char.6.p13.big": "webp/CH6-P13@1024.webp",
+    "char.6.p14": "webp/CH6-P14.webp",
+    "char.6.p15": "webp/CH6-P15.webp",
+    "char.6.p16": "webp/CH6-P16.webp",
+    "char.6.p17": "webp/CH6-P17.webp",
+    "char.6.p18": "webp/CH6-P18.webp",
+    "char.6.p18.big": "webp/CH6-P18@1024.webp",
+    "char.6.p19": "webp/CH6-P19.webp",
+    "char.6.f00": "webp/CH6-F00.webp",
+    "char.7.p01": "webp/CH7-P01.webp",
+    "char.7.p01.big": "webp/CH7-P01@1024.webp",
+    "char.7.p02": "webp/CH7-P02.webp",
+    "char.7.p03": "webp/CH7-P03.webp",
+    "char.7.p04": "webp/CH7-P04.webp",
+    "char.7.p05": "webp/CH7-P05.webp",
+    "char.7.p06": "webp/CH7-P06.webp",
+    "char.7.p07": "webp/CH7-P07.webp",
+    "char.7.p08": "webp/CH7-P08.webp",
+    "char.7.p09": "webp/CH7-P09.webp",
+    "char.7.p10": "webp/CH7-P10.webp",
+    "char.7.p10.big": "webp/CH7-P10@1024.webp",
+    "char.7.p11": "webp/CH7-P11.webp",
+    "char.7.p11.big": "webp/CH7-P11@1024.webp",
+    "char.7.p12": "webp/CH7-P12.webp",
+    "char.7.p12.big": "webp/CH7-P12@1024.webp",
+    "char.7.p13": "webp/CH7-P13.webp",
+    "char.7.p13.big": "webp/CH7-P13@1024.webp",
+    "char.7.p14": "webp/CH7-P14.webp",
+    "char.7.p15": "webp/CH7-P15.webp",
+    "char.7.p16": "webp/CH7-P16.webp",
+    "char.7.p17": "webp/CH7-P17.webp",
+    "char.7.p18": "webp/CH7-P18.webp",
+    "char.7.p18.big": "webp/CH7-P18@1024.webp",
+    "char.7.p19": "webp/CH7-P19.webp",
+    "char.7.f00": "webp/CH7-F00.webp",
+    "item.travelTile": "webp/IT-travel.webp",
+    "item.island": "webp/IT-island.webp",
+    "item.doubleRoll": "webp/IT-double.webp",
+    "item.toStart": "webp/IT-start.webp",
+    "item.toMyLand": "webp/IT-myland.webp",
+    "item.takeFund": "webp/IT-fund.webp",
+    "item.tollFree": "webp/IT-tollzero.webp",
+    "item.tollHalf": "webp/IT-tollhalf.webp",
+    "item.escape": "webp/IT-escape.webp",
+    "item.shield": "webp/IT-shield.webp",
+    "item.hint": "webp/IT-hint.webp",
+    "event.island": "webp/EV-island.webp",
+    "event.travel": "webp/EV-travel.webp",
+    "event.festival": "webp/EV-festival.webp",
+    "event.fund": "webp/EV-fund.webp",
+    "event.antarctic": "webp/EV-antarctic.webp",
+    "event.climate.drought": "webp/EV-climate-drought.webp",
+    "event.climate.flood": "webp/EV-climate-flood.webp",
+    "event.climate.blizzard": "webp/EV-climate-blizzard.webp",
+    "event.climate.typhoon": "webp/EV-climate-typhoon.webp",
+    "event.climate.heat": "webp/EV-climate-heat.webp",
+    "event.korea": "webp/CC-08.webp",
+    "event.monopoly": "webp/EV-festival.webp",
+    "ui.boardBg": "webp/BG-board.webp",
+    "ui.dice": "webp/UI-dice.webp",
+    "ui.coin": "webp/UI-coin.webp",
+    "ui.flag.1": "webp/UI-flag-1.webp",
+    "ui.flag.2": "webp/UI-flag-2.webp",
+    "ui.flag.3": "webp/UI-flag-3.webp",
+    "ui.flag.4": "webp/UI-flag-4.webp",
+    "ui.missionEmblem": "webp/UI-mission-emblem.webp",
+    "ui.chest": "webp/UI-chest.webp",
+    "ui.logo": "webp/UI-logo.webp",
+    "logo.v2": "webp/LOGO-v2.webp",
+    "ui.stage": "webp/UI-stage.webp",
+    "ui.plank": "webp/UI-plank-panel.webp",
+    "ui.sign": "webp/UI-sign-small.webp",
+    "result.banner": "webp/RS-banner.webp",
+    "result.btn-blue": "webp/RS-btn-blue.webp",
+    "result.confetti": "webp/RS-confetti.webp",
+    "result.dot.check": "webp/RS-dot-check.webp",
+    "result.dot.star": "webp/RS-dot-star.webp",
+    "result.isle.1": "webp/RS-isle-1.webp",
+    "result.isle.2": "webp/RS-isle-2.webp",
+    "result.isle.3": "webp/RS-isle-3.webp",
+    "result.isle.4": "webp/RS-isle-4.webp",
+    "result.line-chip": "webp/RS-line-chip.webp",
+    "result.map-board": "webp/RS-map-board.webp",
+    "result.medal.bronze": "webp/RS-medal-bronze.webp",
+    "result.medal.gold": "webp/RS-medal-gold.webp",
+    "result.medal.plain": "webp/RS-medal-plain.webp",
+    "result.medal.silver": "webp/RS-medal-silver.webp",
+    "result.pin": "webp/RS-pin.webp",
+    "result.plate.1": "webp/RS-plate-1.webp",
+    "result.plate.2": "webp/RS-plate-2.webp",
+    "result.plate.3": "webp/RS-plate-3.webp",
+    "result.plate.4": "webp/RS-plate-4.webp",
+    "result.scroll": "webp/RS-scroll.webp",
+    "result.scroll-wide": "webp/RS-scroll-wide.webp",
+    "result.souv-stand": "webp/RS-souv-stand.webp",
+    "result.stamp.compass": "webp/RS-stamp-compass.webp",
+    "result.stamp.mountain": "webp/RS-stamp-mountain.webp",
+    "result.stamp.palm": "webp/RS-stamp-palm.webp",
+    "result.stamp.plane": "webp/RS-stamp-plane.webp",
+    "result.tab-ring.1": "webp/RS-tab-ring-1.webp",
+    "result.tab-ring.2": "webp/RS-tab-ring-2.webp",
+    "result.tab-ring.3": "webp/RS-tab-ring-3.webp",
+    "result.tab-ring.4": "webp/RS-tab-ring-4.webp",
+    "result.trophy": "webp/RS-trophy.webp",
+    "bgm.lobby": "audio/BGM-lobby.mp3",
+    "bgm.board": "audio/BGM-board.mp3",
+    "bgm.final": "audio/BGM-final.mp3",
+    "bgm.result": "audio/BGM-result.mp3",
+    "badge.1": {
+      "file": "webp/TB-01.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.ph-2": {
+      "file": "webp/ph_terrace.webp",
+      "optional": true,
+      "fallback": "culture.1"
+    },
+    "card.ph-3": {
+      "file": "webp/ph_boracay.webp",
+      "optional": true,
+      "fallback": "culture.1"
+    },
+    "card.ph-4": {
+      "file": "webp/ph_terrace_hill.webp",
+      "optional": true,
+      "fallback": "culture.1"
+    },
+    "badge.2": {
+      "file": "webp/TB-02.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.th-2": {
+      "file": "webp/th_market.webp",
+      "optional": true,
+      "fallback": "culture.2"
+    },
+    "card.th-3": {
+      "file": "webp/th_house.webp",
+      "optional": true,
+      "fallback": "culture.2"
+    },
+    "card.th-4": {
+      "file": "webp/th_food_house.webp",
+      "optional": true,
+      "fallback": "culture.2"
+    },
+    "badge.5": {
+      "file": "webp/TB-04.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.sa-2": {
+      "file": "webp/sa_clothes.webp",
+      "optional": true,
+      "fallback": "culture.5"
+    },
+    "card.sa-3": {
+      "file": "webp/sa_oasis.webp",
+      "optional": true,
+      "fallback": "culture.5"
+    },
+    "card.sa-4": {
+      "file": "webp/sa_desert_life.webp",
+      "optional": true,
+      "fallback": "culture.5"
+    },
+    "badge.4": {
+      "file": "webp/TB-05.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.np-2": {
+      "file": "webp/np_sherpa.webp",
+      "optional": true,
+      "fallback": "culture.4"
+    },
+    "card.np-3": {
+      "file": "webp/np_lukla.webp",
+      "optional": true,
+      "fallback": "culture.4"
+    },
+    "card.np-4": {
+      "file": "webp/np_income.webp",
+      "optional": true,
+      "fallback": "culture.4"
+    },
+    "badge.3": {
+      "file": "webp/TB-06.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.cn-2": {
+      "file": "webp/cn_rice.webp",
+      "optional": true,
+      "fallback": "culture.3"
+    },
+    "card.cn-3": {
+      "file": "webp/cn_plain.webp",
+      "optional": true,
+      "fallback": "culture.3"
+    },
+    "card.cn-4": {
+      "file": "webp/cn_huanghe_plain.webp",
+      "optional": true,
+      "fallback": "culture.3"
+    },
+    "badge.0": {
+      "file": "webp/TB-08.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.kr-3": {
+      "file": "webp/kr_mountain.webp",
+      "optional": true,
+      "fallback": "culture.0"
+    },
+    "badge.11": {
+      "file": "webp/TB-it.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.it-3": {
+      "file": "webp/it_beach.webp",
+      "optional": true,
+      "fallback": "culture.11"
+    },
+    "card.it-4": {
+      "file": "webp/it_eruption.webp",
+      "optional": true,
+      "fallback": "culture.11"
+    },
+    "badge.12": {
+      "file": "webp/TB-fr.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.fr-2": {
+      "file": "webp/fr_salt.webp",
+      "optional": true,
+      "fallback": "culture.12"
+    },
+    "card.fr-3": {
+      "file": "webp/fr_seine.webp",
+      "optional": true,
+      "fallback": "culture.12"
+    },
+    "card.fr-4": {
+      "file": "webp/fr_salt_flat.webp",
+      "optional": true,
+      "fallback": "culture.12"
+    },
+    "badge.13": {
+      "file": "webp/TB-13.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.ch-2": {
+      "file": "webp/ch_ski.webp",
+      "optional": true,
+      "fallback": "culture.13"
+    },
+    "card.ch-3": {
+      "file": "webp/ch_train.webp",
+      "optional": true,
+      "fallback": "culture.13"
+    },
+    "card.ch-4": {
+      "file": "webp/ch_l4_ski.webp",
+      "optional": true,
+      "fallback": "culture.13"
+    },
+    "badge.14": {
+      "file": "webp/TB-15.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.no-3": {
+      "file": "webp/no_hydro.webp",
+      "optional": true,
+      "fallback": "culture.14"
+    },
+    "card.no-4": {
+      "file": "webp/no_l4_forest.webp",
+      "optional": true,
+      "fallback": "culture.14"
+    },
+    "badge.15": {
+      "file": "webp/TB-16.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.ru-2": {
+      "file": "webp/ru_taiga.webp",
+      "optional": true,
+      "fallback": "culture.15"
+    },
+    "card.ru-3": {
+      "file": "webp/ru_reindeer.webp",
+      "optional": true,
+      "fallback": "culture.15"
+    },
+    "card.ru-4": {
+      "file": "webp/ru_l4_logcabin.webp",
+      "optional": true,
+      "fallback": "culture.15"
+    },
+    "badge.19": {
+      "file": "webp/TB-cd.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.cd-2": {
+      "file": "webp/cd_forest.webp",
+      "optional": true,
+      "fallback": "culture.19"
+    },
+    "card.cd-3": {
+      "file": "webp/cd_wagenia.webp",
+      "optional": true,
+      "fallback": "culture.19"
+    },
+    "card.cd-4": {
+      "file": "webp/cd_trap_rapids.webp",
+      "optional": true,
+      "fallback": "culture.19"
+    },
+    "badge.18": {
+      "file": "webp/TB-18.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.tz-3": {
+      "file": "webp/tz_safari.webp",
+      "optional": true,
+      "fallback": "culture.18"
+    },
+    "badge.17": {
+      "file": "webp/TB-19.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.et-2": {
+      "file": "webp/et_addis.webp",
+      "optional": true,
+      "fallback": "culture.17"
+    },
+    "card.et-3": {
+      "file": "webp/et_africa_map.webp",
+      "optional": true,
+      "fallback": "culture.17"
+    },
+    "card.et-4": {
+      "file": "webp/et_highland_city.webp",
+      "optional": true,
+      "fallback": "culture.17"
+    },
+    "badge.16": {
+      "file": "webp/TB-eg.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.eg-3": {
+      "file": "webp/eg_oasis.webp",
+      "optional": true,
+      "fallback": "culture.16"
+    },
+    "card.eg-4": {
+      "file": "webp/eg_desert.webp",
+      "optional": true,
+      "fallback": "culture.16"
+    },
+    "badge.24": {
+      "file": "webp/TB-25.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.mx-2": {
+      "file": "webp/mx_city.webp",
+      "optional": true,
+      "fallback": "culture.24"
+    },
+    "card.mx-3": {
+      "file": "webp/mx_cancun.webp",
+      "optional": true,
+      "fallback": "culture.24"
+    },
+    "card.mx-4": {
+      "file": "webp/mx_cancun_beach.webp",
+      "optional": true,
+      "fallback": "culture.24"
+    },
+    "badge.23": {
+      "file": "webp/TB-26.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.us-2": {
+      "file": "webp/us_farm.webp",
+      "optional": true,
+      "fallback": "culture.23"
+    },
+    "card.us-3": {
+      "file": "webp/us_makena.webp",
+      "optional": true,
+      "fallback": "culture.23"
+    },
+    "card.us-4": {
+      "file": "webp/us_machine_farm.webp",
+      "optional": true,
+      "fallback": "culture.23"
+    },
+    "badge.22": {
+      "file": "webp/TB-28.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.ca-2": {
+      "file": "webp/ca_logcabin.webp",
+      "optional": true,
+      "fallback": "culture.22"
+    },
+    "card.ca-3": {
+      "file": "webp/ca_fraser.webp",
+      "optional": true,
+      "fallback": "culture.22"
+    },
+    "card.ca-4": {
+      "file": "webp/ca_reindeer.webp",
+      "optional": true,
+      "fallback": "culture.22"
+    },
+    "badge.21": {
+      "file": "webp/TB-29.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.gl-2": {
+      "file": "webp/gl_nuuk.webp",
+      "optional": true,
+      "fallback": "culture.21"
+    },
+    "card.gl-3": {
+      "file": "webp/gl_aurora.webp",
+      "optional": true,
+      "fallback": "culture.21"
+    },
+    "badge.26": {
+      "file": "webp/TB-31.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.ec-3": {
+      "file": "webp/ec_potato.webp",
+      "optional": true,
+      "fallback": "culture.26"
+    },
+    "badge.27": {
+      "file": "webp/TB-32.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.br-2": {
+      "file": "webp/br_cacao.webp",
+      "optional": true,
+      "fallback": "culture.27"
+    },
+    "card.br-3": {
+      "file": "webp/br_iguazu.webp",
+      "optional": true,
+      "fallback": "culture.27"
+    },
+    "card.br-4": {
+      "file": "webp/br_life.webp",
+      "optional": true,
+      "fallback": "culture.27"
+    },
+    "badge.29": {
+      "file": "webp/TB-35.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.cl-2": {
+      "file": "webp/cl_copper.webp",
+      "optional": true,
+      "fallback": "culture.29"
+    },
+    "card.cl-3": {
+      "file": "webp/cl_two_faces.webp",
+      "optional": true,
+      "fallback": "culture.29"
+    },
+    "card.cl-4": {
+      "file": "webp/cl_desert.webp",
+      "optional": true,
+      "fallback": "culture.29"
+    },
+    "badge.28": {
+      "file": "webp/TB-36.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "card.ar-2": {
+      "file": "webp/ar_season.webp",
+      "optional": true,
+      "fallback": "culture.28"
+    },
+    "card.ar-3": {
+      "file": "webp/ar_glacier.webp",
+      "optional": true,
+      "fallback": "culture.28"
+    },
+    "card.ar-4": {
+      "file": "webp/ar_tourists.webp",
+      "optional": true,
+      "fallback": "culture.28"
+    },
+    "card.aq-s1": {
+      "file": "webp/aq_ice.webp",
+      "optional": true,
+      "fallback": "event.antarctic"
+    },
+    "card.aq-s2": {
+      "file": "webp/aq_scientist.webp",
+      "optional": true,
+      "fallback": "event.antarctic"
+    },
+    "card.ph-4.b": {
+      "file": "webp/ph_compare_plain.webp",
+      "optional": true,
+      "fallback": "culture.1"
+    },
+    "card.th-4.b": {
+      "file": "webp/th_festival.webp",
+      "optional": true,
+      "fallback": "culture.2"
+    },
+    "card.sa-4.b": {
+      "file": "webp/sa_grassland_life.webp",
+      "optional": true,
+      "fallback": "culture.5"
+    },
+    "card.np-4.b": {
+      "file": "webp/np_trash.webp",
+      "optional": true,
+      "fallback": "culture.4"
+    },
+    "card.cn-4.b": {
+      "file": "webp/cn_compare_illinois.webp",
+      "optional": true,
+      "fallback": "culture.3"
+    },
+    "card.it-4.b": {
+      "file": "webp/it_orchard.webp",
+      "optional": true,
+      "fallback": "culture.11"
+    },
+    "card.fr-4.b": {
+      "file": "webp/fr_port.webp",
+      "optional": true,
+      "fallback": "culture.12"
+    },
+    "card.ch-4.b": {
+      "file": "webp/ch_l4_mine.webp",
+      "optional": true,
+      "fallback": "culture.13"
+    },
+    "card.no-4.b": {
+      "file": "webp/no_l4_arctic.webp",
+      "optional": true,
+      "fallback": "culture.14"
+    },
+    "card.ru-4.b": {
+      "file": "webp/ru_l4_reindeer.webp",
+      "optional": true,
+      "fallback": "culture.15"
+    },
+    "card.cd-4.b": {
+      "file": "webp/cd_net_idea.webp",
+      "optional": true,
+      "fallback": "culture.19"
+    },
+    "card.et-4.b": {
+      "file": "webp/et_lowland_forest.webp",
+      "optional": true,
+      "fallback": "culture.17"
+    },
+    "card.eg-4.b": {
+      "file": "webp/eg_nile_farm.webp",
+      "optional": true,
+      "fallback": "culture.16"
+    },
+    "card.mx-4.b": {
+      "file": "webp/mx_highland_city.webp",
+      "optional": true,
+      "fallback": "culture.24"
+    },
+    "card.us-4.b": {
+      "file": "webp/us_terrace_compare.webp",
+      "optional": true,
+      "fallback": "culture.23"
+    },
+    "card.ca-4.b": {
+      "file": "webp/ca_cabin_summer.webp",
+      "optional": true,
+      "fallback": "culture.22"
+    },
+    "card.br-4.b": {
+      "file": "webp/br_product.webp",
+      "optional": true,
+      "fallback": "culture.27"
+    },
+    "card.cl-4.b": {
+      "file": "webp/cl_glacier.webp",
+      "optional": true,
+      "fallback": "culture.29"
+    },
+    "card.ar-4.b": {
+      "file": "webp/ar_trash.webp",
+      "optional": true,
+      "fallback": "culture.28"
+    },
+    "mission.mp_himalaya": {
+      "file": "webp/mp_himalaya.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_alps": {
+      "file": "webp/mp_alps.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_sahara": {
+      "file": "webp/mp_sahara.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_fundy": {
+      "file": "webp/mp_fundy.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_huanghe": {
+      "file": "webp/mp_huanghe.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_sognefjord": {
+      "file": "webp/mp_sognefjord.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_maunaloa": {
+      "file": "webp/mp_maunaloa.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_roraima": {
+      "file": "webp/mp_roraima.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_everest": {
+      "file": "webp/mp_everest.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_benagil": {
+      "file": "webp/mp_benagil.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_elarco": {
+      "file": "webp/mp_elarco.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_rocky": {
+      "file": "webp/mp_rocky.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_northsea": {
+      "file": "webp/mp_northsea.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_korea_mudflat": {
+      "file": "webp/mp_korea_mudflat.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_canada_mudflat": {
+      "file": "webp/mp_canada_mudflat.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_wadden": {
+      "file": "webp/mp_wadden.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_trash_back": {
+      "file": "webp/mp_trash_back.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_uluru": {
+      "file": "webp/mp_uluru.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_litter": {
+      "file": "webp/mp_litter.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_halong_fishing": {
+      "file": "webp/mp_halong_fishing.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_halong_tour": {
+      "file": "webp/mp_halong_tour.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_halong_trash": {
+      "file": "webp/mp_halong_trash.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_ski": {
+      "file": "webp/mp_ski.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_stilt_house": {
+      "file": "webp/mp_stilt_house.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_thin_clothes": {
+      "file": "webp/mp_thin_clothes.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_safari": {
+      "file": "webp/mp_safari.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_fur_coat": {
+      "file": "webp/mp_fur_coat.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_mud_house": {
+      "file": "webp/mp_mud_house.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_robe": {
+      "file": "webp/mp_robe.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_oasis_farm": {
+      "file": "webp/mp_oasis_farm.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_log_house": {
+      "file": "webp/mp_log_house.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_pulp": {
+      "file": "webp/mp_pulp.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_snow_festival": {
+      "file": "webp/mp_snow_festival.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mission.mp_winter_farm": {
+      "file": "webp/mp_winter_farm.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "badge.it": {
+      "file": "webp/TB-it.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "badge.fr": {
+      "file": "webp/TB-fr.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "badge.cd": {
+      "file": "webp/TB-cd.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "badge.eg": {
+      "file": "webp/TB-eg.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.addis": {
+      "file": "webp/MC-addis.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.africa": {
+      "file": "webp/MC-africa.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.antarctica": {
+      "file": "webp/MC-antarctica.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.arctic": {
+      "file": "webp/MC-arctic.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.asia": {
+      "file": "webp/MC-asia.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.atlantic": {
+      "file": "webp/MC-atlantic.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.chaophraya": {
+      "file": "webp/MC-chaophraya.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.cusco": {
+      "file": "webp/MC-cusco.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.day-night": {
+      "file": "webp/MC-day-night.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.deep-winter": {
+      "file": "webp/MC-deep-winter.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.finland": {
+      "file": "webp/MC-finland.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.globe-greenland": {
+      "file": "webp/MC-globe-greenland.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.globe-russia": {
+      "file": "webp/MC-globe-russia.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.high-lat": {
+      "file": "webp/MC-high-lat.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.ice-driving": {
+      "file": "webp/MC-ice-driving.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.igloo": {
+      "file": "webp/MC-igloo.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.indian": {
+      "file": "webp/MC-indian.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.low-lat": {
+      "file": "webp/MC-low-lat.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.map-greenland": {
+      "file": "webp/MC-map-greenland.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.mexico-city": {
+      "file": "webp/MC-mexico-city.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.namerica": {
+      "file": "webp/MC-namerica.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.newzealand": {
+      "file": "webp/MC-newzealand.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.niue": {
+      "file": "webp/MC-niue.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.ore": {
+      "file": "webp/MC-ore.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.pacific": {
+      "file": "webp/MC-pacific.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.paris": {
+      "file": "webp/MC-paris.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.plain-river": {
+      "file": "webp/MC-plain-river.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.poncho": {
+      "file": "webp/MC-poncho.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.quito": {
+      "file": "webp/MC-quito.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.rapids": {
+      "file": "webp/MC-rapids.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.samerica": {
+      "file": "webp/MC-samerica.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.sandstorm": {
+      "file": "webp/MC-sandstorm.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.siesta": {
+      "file": "webp/MC-siesta.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.spain": {
+      "file": "webp/MC-spain.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.steep-river": {
+      "file": "webp/MC-steep-river.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.sun-high": {
+      "file": "webp/MC-sun-high.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.sun-low": {
+      "file": "webp/MC-sun-low.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "mc.taiga": {
+      "file": "webp/MC-taiga.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "ui.rotate": {
+      "file": "webp/UI-rotate.webp",
+      "optional": true,
+      "fallback": "none"
+    },
+    "ui.rotate-wide": {
+      "file": "webp/UI-rotate-wide.webp",
+      "optional": true,
+      "fallback": "none"
+    }
+  }
+}

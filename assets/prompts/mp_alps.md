@@ -1,0 +1,7 @@
+# mp_alps mission photo: Alps mountain range, opaque
+Scene: one clear subject fills the frame like a travel photo: the Alps, pointed snow-capped peaks rising above bright green alpine meadows dotted with wildflowers, a wooden chalet with a wide roof and a plain cream pennant on its peak, dairy cows with bells grazing on the slope, a dark pine forest band between the meadow and the rock. A red cable car cabin hangs on a line toward the ridge. The green meadow in front and the snowy summits behind make the picture read at once as a mountain range in a temperate land. One hiker in a modern jacket rests on a bench by the chalet, shown with respect and dignity.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #7DCB4E green, #F2B21C gold accent.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

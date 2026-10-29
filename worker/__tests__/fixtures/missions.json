@@ -1,0 +1,98 @@
+[
+  {
+    "analytic": true,
+    "id": "m-sample-1",
+    "mTags": [
+      "M14"
+    ],
+    "pairs": [
+      {
+        "left": "열대",
+        "right": "고상 가옥"
+      },
+      {
+        "left": "건조",
+        "right": "흙벽돌 집"
+      },
+      {
+        "left": "냉대",
+        "right": "통나무집"
+      }
+    ],
+    "prompt": "기후와 알맞은 생활 모습을 이어 보세요.",
+    "explain": "시험용 연결 해설 문장이에요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M14"
+      ],
+      "text": "열대는 일 년 내내 눈이 와요."
+    },
+    "title": "기후와 생활 잇기",
+    "topics": [
+      "8.2",
+      "9.4"
+    ],
+    "type": "connect"
+  },
+  {
+    "analytic": false,
+    "id": "m-sample-2",
+    "mTags": [],
+    "prompt": "강물이 평야를 만드는 순서대로 놓아 보세요.",
+    "explain": "시험용 순서 해설 문장이에요.",
+    "spectatorTf": {
+      "answer": true,
+      "mTags": [],
+      "text": "강이 흙을 쌓아 평야를 만들어요."
+    },
+    "steps": [
+      "강물이 흙을 실어 와요",
+      "흙이 강 아래쪽에 쌓여요",
+      "넓은 평야가 만들어져요"
+    ],
+    "title": "평야가 생기는 순서",
+    "topics": [
+      "4.2"
+    ],
+    "type": "order"
+  },
+  {
+    "analytic": true,
+    "id": "m-sample-3",
+    "mTags": [
+      "M21"
+    ],
+    "options": [
+      {
+        "correct": true,
+        "image": "np_income.png",
+        "text": "관광 수입"
+      },
+      {
+        "correct": true,
+        "image": "np_trash.png",
+        "text": "쓰레기 문제"
+      },
+      {
+        "correct": false,
+        "image": "np_sea.png",
+        "text": "바다낚시"
+      }
+    ],
+    "prompt": "산지 마을의 좋은 점과 어려움을 모두 고르세요.",
+    "explain": "시험용 사진 해설 문장이에요.",
+    "spectatorTf": {
+      "answer": false,
+      "mTags": [
+        "M21"
+      ],
+      "text": "산지 관광은 좋은 점만 있어요."
+    },
+    "title": "산지 마을의 두 얼굴",
+    "topics": [
+      "3.4"
+    ],
+    "type": "photo"
+  }
+]

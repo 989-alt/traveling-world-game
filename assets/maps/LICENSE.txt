@@ -1,0 +1,14 @@
+world.svg — 세계 지도 (게임 안 화면에는 표시하지 않음)
+
+원본: Natural Earth, "Admin 0 – Countries" 1:110m (ne_110m_admin_0_countries.geojson)
+받은 곳: https://github.com/nvkelso/natural-earth-vector (geojson/ne_110m_admin_0_countries.geojson)
+확인일: 2026-10-23
+라이선스: 퍼블릭 도메인. "All versions of Natural Earth raster + vector map data ... are in the public domain.
+You may use the maps in any manner, including modifying the content and design ..."
+(https://www.naturalearthdata.com/about/terms-of-use/ , 저장소 LICENSE.md: "Everything here is public domain.")
+출처 표기 의무 없음. 원하면 "Made with Natural Earth."
+
+가공: 나라 경계를 CONTINENT 값으로 묶어 대륙별 path 로 합침(러시아는 동경 60도에서 유럽·아시아로 나눔),
+위경도를 그대로 좌표로 씀(등장방형, viewBox 0 0 360 180), 소수 첫째 자리 반올림, 글자 없음.
+기후 구역은 교과서 수준 단순 구분(열대·건조·온대·냉대·한대·고산)을 위도 띠(+고산 네 곳)로 만든 근사이며
+실제 쾨펜 분포가 아님. 색은 src/styles/missions.css 가 토큰으로 입힌다.

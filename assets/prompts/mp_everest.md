@@ -1,0 +1,7 @@
+# mp_everest mission photo: Mount Everest peak, opaque
+Scene: one clear subject fills the frame like a travel photo: Mount Everest, a single towering pyramid-shaped summit of dark rock and snow standing above the neighboring peaks, a long white plume of wind-blown snow streaming from its sharp tip, a glacier of broken ice blocks flowing down the valley in front, a cluster of yellow and orange dome tents at a base camp on the rocky moraine for scale. The single sharp pointed summit is the center of the picture, so it reads at once as the highest peak. Two climbers in modern down suits and goggles stand by the tents, shown with respect and dignity.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #5A5F6B dark rock, #F2B21C gold accent.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

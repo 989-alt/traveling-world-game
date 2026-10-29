@@ -1,0 +1,12 @@
+/* U7-device: 전체 화면 다시 들어가기 간판. 왼쪽 아래 귀퉁이(보드 한국 칸 섬 밑 구름 · 결과 4등 띠 아래 · 로비 빈 하늘).
+ * 판 배율을 따르지 않는 화면 px 48 — 휴대폰 가로(배율 0.47~0.53)에서도 누르는 칸 48 그대로.
+ * 세로 안내(--z-rotate 100) 아래, 문항·해설·알림(≤ 60) 위. */
+.fs-corner {
+  position: fixed;
+  left: calc(10px + env(safe-area-inset-left, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 90;
+}
+/* 인트로는 왼쪽 아래에 버전 글자가 있어 조금 비켜 선다 */
+.app[data-phase="entry"] .fs-corner { left: calc(44px + env(safe-area-inset-left, 0px)); }
+.fs-btn svg { width: 18px; height: 18px; }

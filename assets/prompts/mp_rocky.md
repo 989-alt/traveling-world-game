@@ -1,0 +1,7 @@
+# mp_rocky mission photo: Rocky Mountains lake, opaque
+Scene: one clear subject fills the frame like a travel photo: the Rocky Mountains, a row of rugged grey peaks with snow in their gullies standing above a still turquoise glacial lake, a dense dark spruce forest along the shore, a red canoe pulled up on a pebble beach, a wooden lodge with a stone chimney among the trees. The jagged peaks reflected in the lake are the center of the picture, so it reads at once as a mountain range. One visitor in a modern fleece jacket and cap stands by the canoe, shown with respect and dignity.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #3FB8A8 lake, #2F6B3A spruce green.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

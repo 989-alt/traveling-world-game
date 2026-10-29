@@ -1,0 +1,7 @@
+# RS-tab-ring-3 round portrait frame ring, gold outer ring with a teal inner ring and an open center, sprite source on magenta
+Scene: one round frame ring alone, seen straight on: a thick glossy gold outer ring with a thin dark outline, a slightly thinner flat teal green ring just inside it, and the whole center of the ring left open showing the backdrop so a portrait fits inside, the ring centered and filling about 84 percent of the frame, readable at 44 pixels. Everywhere around and inside the ring the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered.
+Lighting: soft top light with a glossy highlight on the upper left of the gold ring, the backdrop keeps one uniform tone in every corner and in the open center.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #F2B21C gold, #FFE27A highlight, #14B8A6 teal ring, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

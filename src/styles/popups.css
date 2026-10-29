@@ -1,0 +1,203 @@
+/* 첫 화면 팝업(DESIGN §15.2): 나무판(UI-plank-panel 9-slice)·두루마리(ScrollPanel)·작은 나무 간판(UI-sign-small).
+ * 움직임은 transform 만. 모션 줄이기면 떨어짐·펄스 0. */
+
+/* ── 레이어: 뒤 검정 35%, 1366×768 판 ── */
+.pp-layer { position: fixed; inset: 0; z-index: 30; background: rgb(0 0 0 / 0.35); font-family: var(--font-body); color: var(--foreground); }
+.pp-stage { position: absolute; left: 50%; top: 50%; width: var(--stage-w); height: var(--stage-h); display: grid; place-items: center; transform-origin: 50% 50%; pointer-events: none; }
+.pp-stage > * { pointer-events: auto; }
+
+/* ── 팝업 1: 나무판 9-slice. 밧줄 두 줄은 그림 위로 화면 끝까지 이어진다 ── */
+.plank {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  box-sizing: border-box;
+  width: 820px;
+  min-height: 430px;
+  margin-top: 40px;
+  border-style: solid;
+  border-color: #8A5A2B;
+  border-width: 136px 96px 49px 96px;
+  border-image-source: var(--plank);
+  border-image-slice: 183 130 66 130 fill;
+  border-image-width: 136px 96px 49px 96px;
+  border-image-repeat: stretch;
+  /* 그림이 안 오면 나무색 판(§14.3) */
+  background: linear-gradient(#EFC98A, #D9A862);
+  background-clip: padding-box;
+  animation: pp-drop var(--duration-scroll-open) var(--ease-bounce) both;
+  filter: drop-shadow(0 18px 18px rgb(0 0 0 / 0.35));
+}
+.plank::before, .plank::after {
+  content: "";
+  position: absolute;
+  top: -136px;
+  width: 16px;
+  height: 520px;
+  transform: translateY(-100%);
+  margin-top: 36px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(-58deg, #D9B37A 0 6px, #A87C45 6px 9px);
+  box-shadow: inset 0 0 0 1.5px #6B4A22;
+}
+.plank::before { left: -42px; }
+.plank::after { right: -42px; }
+.plank-title {
+  position: absolute;
+  top: -66px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  margin: 0;
+  padding: 6px 34px 8px;
+  border-radius: 12px;
+  background: linear-gradient(#FFF8E3, #F6E6BF);
+  color: var(--foreground);
+  font: var(--weight-regular) 30px / 1.2 var(--font-display);
+  box-shadow: inset 0 0 0 2px #D8B271, 0 4px 0 #B88A49, 0 6px 10px rgb(0 0 0 / 0.25);
+}
+.plank-btns { display: flex; gap: 28px; margin-top: 14px; }
+.plank-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: var(--size-plank-button-w);
+  height: var(--size-plank-button-h);
+  border: 0;
+  border-radius: 18px;
+  /* 못 4 + 나무결 + 크림 나무 */
+  background:
+    radial-gradient(circle at 16px 16px, #F4F4F4 0 2px, #8E949C 3px 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 16px) 16px, #F4F4F4 0 2px, #8E949C 3px 5px, transparent 6px),
+    radial-gradient(circle at 16px calc(100% - 18px), #F4F4F4 0 2px, #8E949C 3px 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 16px) calc(100% - 18px), #F4F4F4 0 2px, #8E949C 3px 5px, transparent 6px),
+    repeating-linear-gradient(176deg, transparent 0 13px, rgb(160 104 44 / 0.16) 13px 15px, transparent 15px 27px),
+    linear-gradient(#FFF1D2, #F2D29A 55%, #E7BD78);
+  color: var(--foreground);
+  font: var(--weight-regular) 26px / 1.15 var(--font-display);
+  box-shadow: inset 0 0 0 3px #A06E37, inset 0 -7px 0 #C08A4B, 0 6px 0 #6E4520, 0 12px 16px rgb(0 0 0 / 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.plank-btn-icon { font-size: 30px; line-height: 1; }
+.plank-btn:hover { filter: brightness(1.04); }
+.plank-btn:active { transform: translateY(4px); }
+.plank-btn:focus-visible, .pp-go:focus-visible, .peg:focus-visible, .code-tile:focus-visible, .sign-btn:focus-visible { outline: 4px solid var(--ring); outline-offset: 3px; }
+
+@keyframes pp-drop {
+  from { transform: translateY(-640px); }
+  to { transform: translateY(0); }
+}
+
+/* ── 두루마리(팝업 2a·2b, 결과 패널): 파란 광택 막대 44px + 금 캡, 크림 종이 ── */
+.sp { position: relative; display: flex; flex-direction: column; }
+.sp--pop { width: 640px; animation: pp-pop var(--duration-scroll-open) var(--ease-bounce) both; filter: drop-shadow(0 16px 18px rgb(0 0 0 / 0.35)); }
+/* .sp-bar·.sp-cap(막대·금 캡·손잡이)은 overlays.css 에 문항·행동 패널과 함께 있다(R2 D1) */
+.sp-paper {
+  position: relative;
+  margin: -6px 4px;
+  padding: 26px 36px 30px;
+  background:
+    radial-gradient(ellipse at 50% 30%, #FFFBEA 0 45%, transparent 75%),
+    linear-gradient(90deg, #EBD7A6, var(--scroll-paper) 8%, var(--scroll-paper) 92%, #EBD7A6);
+  box-shadow: inset 0 0 0 2px #D8BE85, inset 0 10px 14px -8px rgb(120 80 20 / 0.35), inset 0 -10px 14px -8px rgb(120 80 20 / 0.35);
+}
+@keyframes pp-pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* 팝업 2a·2b 안 */
+.pp-form { display: flex; flex-direction: column; align-items: center; gap: 18px; margin: 0; }
+.pp-title { margin: 0; padding: 0; color: var(--foreground); font: var(--weight-regular) 30px / 1.2 var(--font-display); text-align: center; }
+.code-tiles { display: flex; gap: 10px; }
+.code-tile {
+  box-sizing: border-box;
+  width: 66px;
+  height: 80px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(174deg, transparent 0 11px, rgb(160 104 44 / 0.14) 11px 13px, transparent 13px 22px),
+    linear-gradient(#FFF0CC, #EDC88A);
+  color: var(--foreground);
+  caret-color: var(--foreground);
+  font: var(--weight-regular) 44px / 1 var(--font-display);
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 3px #A06E37, inset 0 -6px 0 #C08A4B, 0 4px 0 #6E4520;
+}
+.code-tile:focus { background: repeating-linear-gradient(174deg, transparent 0 11px, rgb(160 104 44 / 0.14) 11px 13px, transparent 13px 22px), linear-gradient(#FFFBEA, #FFE29A); }
+.pp-go {
+  min-width: 300px;
+  height: 76px;
+  margin-top: 6px;
+  padding: 0 40px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(rgb(255 255 255 / 0.45) 0 40%, transparent 40%), linear-gradient(var(--primary-hover), var(--primary) 50%, #F5A800);
+  color: var(--primary-foreground);
+  font: var(--weight-regular) 32px / 1 var(--font-display);
+  box-shadow: inset 0 -6px 0 var(--primary-edge), 0 0 0 4px #FFF4C2, 0 0 0 8px #1F6FD6, 0 8px 0 8px #154FA6;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.pp-go:active:not(:disabled) { transform: translateY(3px); }
+.pp-go:disabled { filter: grayscale(0.55); opacity: 0.7; cursor: default; }
+.pp-msg { margin: 0; padding: 6px 16px; border-radius: var(--radius-full); background: var(--retry-soft); color: var(--foreground); font-weight: var(--weight-bold); text-align: center; word-break: keep-all; }
+
+/* 나무 말뚝 토글(놀이 시간 20/40/60/80분, DESIGN §15.2 2b) */
+.peg-set { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0; padding: 0; border: 0; }
+.peg-row { display: flex; gap: 14px; }
+.peg-row--time { gap: 12px; justify-content: center; } /* U3: 말뚝 3개를 두루마리 가운데로 모음(폭 그대로) */
+.peg-row--time .peg { min-width: 110px; width: 110px; height: 64px; padding: 0; }
+.pp-hint { margin: 0; color: var(--muted-foreground); font-size: 14px; text-align: center; word-break: keep-all; }
+.peg {
+  min-width: 124px;
+  height: 66px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(176deg, transparent 0 11px, rgb(160 104 44 / 0.16) 11px 13px, transparent 13px 22px),
+    linear-gradient(#FCE9C2, #E5BC7B);
+  color: var(--foreground);
+  font: var(--weight-regular) 26px / 1 var(--font-display);
+  box-shadow: inset 0 0 0 3px #A06E37, inset 0 -6px 0 #C08A4B, 0 5px 0 #6E4520;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.peg[aria-pressed="true"] {
+  background: linear-gradient(rgb(255 255 255 / 0.45) 0 40%, transparent 40%), linear-gradient(var(--primary-hover), var(--primary));
+  box-shadow: inset 0 0 0 3px var(--gold-rim-dark), inset 0 -5px 0 var(--primary-edge), 0 2px 0 #6E4520, 0 0 0 4px #1F6FD6;
+  transform: translateY(3px);
+}
+
+/* ── 작은 나무 간판 버튼 40×40(누르는 칸 48) ── */
+.sign-btn { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: #4A2C10; cursor: pointer; touch-action: manipulation; }
+.sign-btn-face {
+  display: grid;
+  place-items: center;
+  width: var(--size-sign-small);
+  height: var(--size-sign-small);
+  padding-top: 8px;
+  box-sizing: border-box;
+  background: var(--sign) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.35));
+}
+.sign-btn:active .sign-btn-face { transform: translateY(2px); }
+.sign-btn svg { width: 18px; height: 18px; }
+.sign-q { font: var(--weight-regular) 20px / 1 var(--font-display); }
+.sp-back { position: absolute; left: 8px; top: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .plank, .sp--pop { animation: none; }
+}

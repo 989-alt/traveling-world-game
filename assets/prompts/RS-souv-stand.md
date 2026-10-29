@@ -1,0 +1,7 @@
+# RS-souv-stand small gold souvenir pedestal, a low round stepped stand with a plain top, sprite source on magenta
+Scene: one small display pedestal alone, seen from the front at a slightly raised eye level: a low round two-step stand of glossy gold with a thin dark outline, a wide bottom step and a narrower top step, the flat top face a plain pale gold ellipse kept clear so a small figure can stand on it, a soft shadow ellipse under the stand, the pedestal centered in the lower half of the frame and filling about 80 percent of the frame width. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: front view a little above eye level, orthographic feel, centered, the top face a clean shallow ellipse.
+Lighting: soft top light with a glossy highlight on the front of the upper step and a darker band at the base, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #FFC93A gold, #FFE27A pale gold top, #B8860B dark gold, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

@@ -1,0 +1,7 @@
+# mp_fundy mission photo: Bay of Fundy tidal flat with flowerpot rocks, opaque
+Scene: one clear subject fills the frame like a travel photo: the Bay of Fundy at low tide, tall red-brown sandstone sea stacks shaped like flowerpots with small spruce trees growing on their tops, standing on a wide wet mudflat of reddish mud with shallow tide pools reflecting the sky, a dark tide line on the cliff showing how high the water rises. Two visitors in rain boots and modern jackets walk on the exposed sea floor between the stacks, shown with respect and dignity. The flat wet mud in front and the sea far behind make the picture read at once as a tidal flat.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #9B5A3C red mud rock, #7DCB4E green.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

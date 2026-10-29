@@ -1,0 +1,33 @@
+/* 금 리본 배너(결과 화면 머리글 · 독점 띠 공용, 기준 그림 RESULT-mock). 제목 글자는 코드.
+ * 크림 판(금테) + 양옆 금 꼬리(V 홈). 크기는 쓰는 쪽이 --ribbon-* 로 정한다. */
+.ribbon {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.ribbon::before,
+.ribbon::after {
+  content: "";
+  position: absolute;
+  top: var(--ribbon-tail-top, 34px);
+  width: var(--ribbon-tail-w, 170px);
+  height: var(--ribbon-tail-h, 72px);
+  background: linear-gradient(rgb(255 255 255 / 0.35) 0 30%, transparent 30%), linear-gradient(var(--gold-shine), var(--gold-rim) 55%, var(--gold-rim-dark));
+  box-shadow: inset 0 0 0 3px #A86A00;
+}
+.ribbon::before { left: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 24% 50%); }
+.ribbon::after { right: 0; clip-path: polygon(0 0, 100% 0, 76% 50%, 100% 100%, 0 100%); }
+.ribbon-title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  border-radius: 16px;
+  background: linear-gradient(#FFFDF0, #F6E3B4);
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  text-align: center;
+  -webkit-text-stroke: 1.5px var(--foreground);
+  text-shadow: 0 3px 0 #E9D29A;
+  box-shadow: inset 0 0 0 4px var(--gold-rim), inset 0 0 0 7px #FFF3C4, 0 0 0 3px #A86A00, 0 8px 0 #A86A00, 0 14px 20px rgb(0 0 0 / 0.3);
+}

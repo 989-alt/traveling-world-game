@@ -1,0 +1,7 @@
+# CUT-02 Thailand landmark cutscene background, opaque, monument plot left empty
+Scene: a landmark-construction cutscene background: a dramatic low camera angle at golden hour looking across the Chao Phraya river with stilt houses along the bank, long wooden boats, palms and a golden sky. Slightly right of center an open flat plot of ground stays empty and clear, ready for a monument to rise there later. The lower left quarter is simple foreground ground where a character will stand later. The upper 45 percent is warm sky with a few fluffy clouds. The scene is pure landscape, every path and plot empty and still.
+Camera: low camera angle close to the ground, wide lens feel, horizon in the lower third, room at the edges for a slight push-in zoom.
+Lighting: golden hour sun low on the horizon behind the empty plot, warm rim light on edges, long soft shadows toward the camera, light haze in the distance.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #F2B21C golden light, #3A8DE0 sky top, #FFE27A warm haze, #8A6A4C ground.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 16:9

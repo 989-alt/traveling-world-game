@@ -1,0 +1,2700 @@
+[
+  {
+    "answer": true,
+    "cardId": "ph-1",
+    "id": "ph-1-t1",
+    "mTags": [],
+    "text": "필리핀은 바다로 둘러싸인 섬나라예요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ph-1",
+    "id": "ph-1-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "필리핀의 가파른 산지에서는 농사를 지을 수 없어요.",
+    "topics": [
+      "3.1",
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ph-2",
+    "id": "ph-2-t1",
+    "mTags": [],
+    "text": "가파른 산지에서는 계단식으로 논을 만들어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ph-2",
+    "id": "ph-2-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "산지가 가파르면 농사를 지을 수 없어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ph-2",
+    "id": "ph-2-t3",
+    "mTags": [
+      "M9"
+    ],
+    "text": "계단식 논은 넓은 평야에 만들어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ph-3",
+    "id": "ph-3-t1",
+    "mTags": [],
+    "text": "관광객이 오면 일자리가 생기지만 쓰레기 문제도 생겨요.",
+    "topics": [
+      "5.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ph-3",
+    "id": "ph-3-t2",
+    "mTags": [
+      "M21"
+    ],
+    "text": "관광 산업이 발달하면 주민에게 좋은 점만 생겨요.",
+    "topics": [
+      "5.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ph-3",
+    "id": "ph-3-t3",
+    "mTags": [],
+    "text": "양식업은 물고기나 조개를 직접 기르는 일이에요.",
+    "topics": [
+      "5.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ph-4",
+    "id": "ph-4-t1",
+    "mTags": [],
+    "text": "넓은 평야에서는 큰 기계로 농사를 지어요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ph-4",
+    "id": "ph-4-t2",
+    "mTags": [
+      "M9"
+    ],
+    "text": "넓은 평야에서는 계단식 논을 만들어 농사지어요.",
+    "topics": [
+      "3.3",
+      "4.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ph-1",
+    "id": "ph-1-t3",
+    "mTags": [],
+    "text": "필리핀 섬에는 넓게 펼쳐진 아름다운 해변이 있어요.",
+    "topics": [
+      "5.1",
+      "B2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ph-1",
+    "id": "ph-1-t4",
+    "mTags": [
+      "M12"
+    ],
+    "text": "필리핀 해변 마을 사람들은 주로 스키장을 운영해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-1",
+    "id": "th-1-t1",
+    "mTags": [],
+    "text": "짜오프라야강은 타이의 큰 강이에요.",
+    "topics": [
+      "4.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-1",
+    "id": "th-1-t2",
+    "mTags": [
+      "M10"
+    ],
+    "text": "물살이 빠른 강에서는 물고기를 잡을 수 없어요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-2",
+    "id": "th-2-t1",
+    "mTags": [],
+    "text": "타이는 일 년 내내 덥고 비가 많이 와요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-2",
+    "id": "th-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "타이에서는 겨울마다 눈이 쌓여요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-2",
+    "id": "th-2-t3",
+    "mTags": [],
+    "text": "수상 시장에서는 배 위에서 물건을 사고팔아요.",
+    "topics": [
+      "4.6"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-3",
+    "id": "th-3-t1",
+    "mTags": [],
+    "text": "고상 가옥은 바닥을 땅에서 띄워 지은 집이에요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-3",
+    "id": "th-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "타이 사람들은 추위 때문에 두꺼운 털옷을 입어요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-4",
+    "id": "th-4-t1",
+    "mTags": [],
+    "text": "더운 기후에 맞춰 집과 옷, 축제가 달라져요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-4",
+    "id": "th-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "열대 기후 나라들의 생활 모습은 어디나 똑같아요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-4",
+    "id": "th-4-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "타이의 축제는 추위를 이기려고 열려요.",
+    "topics": [
+      "11.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "sa-1",
+    "id": "sa-1-t1",
+    "mTags": [],
+    "text": "사우디아라비아는 아라비아반도 대부분을 차지해요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "sa-1",
+    "id": "sa-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "사막은 어디나 고운 모래로만 덮여 있어요.",
+    "topics": [
+      "2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "sa-1",
+    "id": "sa-1-t3",
+    "mTags": [
+      "M22"
+    ],
+    "text": "사우디아라비아는 지도 위 한 점에만 있는 나라예요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "sa-2",
+    "id": "sa-2-t1",
+    "mTags": [],
+    "text": "건조 기후는 비가 적게 오는 곳에 나타나요.",
+    "topics": [
+      "8.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "sa-2",
+    "id": "sa-2-t2",
+    "mTags": [
+      "M2"
+    ],
+    "text": "건조 기후는 비가 많이 오는 곳에 나타나요.",
+    "topics": [
+      "8.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "sa-2",
+    "id": "sa-2-t3",
+    "mTags": [],
+    "text": "온몸을 감싸는 옷은 햇볕과 모래바람을 막아요.",
+    "topics": [
+      "7.8",
+      "8.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "sa-3",
+    "id": "sa-3-t1",
+    "mTags": [],
+    "text": "오아시스 주변에서는 밀 같은 곡식을 길러요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "sa-3",
+    "id": "sa-3-t2",
+    "mTags": [
+      "M1"
+    ],
+    "text": "건조 기후 지역에서는 농사를 지을 수 없어요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "sa-3",
+    "id": "sa-3-t3",
+    "mTags": [],
+    "text": "흙벽돌 집은 벽이 두껍고 창문이 작아요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "sa-4",
+    "id": "sa-4-t1",
+    "mTags": [],
+    "text": "사막에서도 초원에서도 비가 적게 와요.",
+    "topics": [
+      "8.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "sa-4",
+    "id": "sa-4-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "건조 기후 지역에서는 겨울이 길고 눈이 많이 와요.",
+    "topics": [
+      "8.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "sa-4",
+    "id": "sa-4-t3",
+    "mTags": [
+      "M1"
+    ],
+    "text": "사막 사람들은 농사를 전혀 지을 수 없어요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-1",
+    "id": "np-1-t1",
+    "mTags": [],
+    "text": "네팔은 바다에 닿지 않은 내륙국이에요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-1",
+    "id": "np-1-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "에베레스트산 꼭대기에 눈이 쌓인 까닭은 위도가 높아서예요.",
+    "topics": [
+      "3.5",
+      "7.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-2",
+    "id": "np-2-t1",
+    "mTags": [],
+    "text": "셰르파족은 네팔 히말라야에 사는 민족이에요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-2",
+    "id": "np-2-t2",
+    "mTags": [
+      "M19"
+    ],
+    "text": "셰르파족은 산을 안내하는 직업의 이름이에요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-2",
+    "id": "np-2-t3",
+    "mTags": [
+      "M19"
+    ],
+    "text": "등산 안내를 하는 사람은 누구나 셰르파족이에요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-3",
+    "id": "np-3-t1",
+    "mTags": [],
+    "text": "관광객이 늘면 수입도 늘고 쓰레기도 늘어요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-3",
+    "id": "np-3-t2",
+    "mTags": [
+      "M21"
+    ],
+    "text": "네팔 주민에게 관광은 나쁜 점만 있어요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-3",
+    "id": "np-3-t3",
+    "mTags": [],
+    "text": "루클라는 높은 산지에 있는 도시예요.",
+    "topics": [
+      "10.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-4",
+    "id": "np-4-t1",
+    "mTags": [],
+    "text": "네팔은 산지 때문에 수입도 생기고 문제도 생겼어요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-4",
+    "id": "np-4-t2",
+    "mTags": [
+      "M21"
+    ],
+    "text": "관광 수입만 생각하면 쓰레기는 신경 쓸 필요 없어요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cn-1",
+    "id": "cn-1-t1",
+    "mTags": [],
+    "text": "황허강은 강물이 누런색이에요.",
+    "topics": [
+      "2.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cn-1",
+    "id": "cn-1-t2",
+    "mTags": [
+      "M22"
+    ],
+    "text": "중국의 위치는 지도 위 한 점으로 나타내요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cn-2",
+    "id": "cn-2-t1",
+    "mTags": [],
+    "text": "중국은 온대 기후 지역에서 벼농사를 많이 지어요.",
+    "topics": [
+      "9.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cn-2",
+    "id": "cn-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "온대 기후는 겨울이 여름보다 길고 몹시 추워요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cn-3",
+    "id": "cn-3-t1",
+    "mTags": [],
+    "text": "강이 실어 온 흙이 쌓여 평야가 만들어져요.",
+    "topics": [
+      "4.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cn-3",
+    "id": "cn-3-t2",
+    "mTags": [
+      "M9"
+    ],
+    "text": "넓은 평야에서는 계단식으로 농사를 지어요.",
+    "topics": [
+      "4.2",
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cn-3",
+    "id": "cn-3-t3",
+    "mTags": [],
+    "text": "황허강의 물은 황토 때문에 누렇게 보여요.",
+    "topics": [
+      "2.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cn-4",
+    "id": "cn-4-t1",
+    "mTags": [],
+    "text": "강이 실어 온 흙이 쌓여 넓은 평야가 생겨요.",
+    "topics": [
+      "4.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cn-4",
+    "id": "cn-4-t2",
+    "mTags": [
+      "M9"
+    ],
+    "text": "평야에서도 산처럼 계단식 논을 만들어 농사지어요.",
+    "topics": [
+      "4.4",
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "kr-1",
+    "id": "kr-1-t1",
+    "mTags": [],
+    "text": "우리나라는 동쪽, 서쪽, 남쪽 삼면이 바다예요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "kr-1",
+    "id": "kr-1-t2",
+    "mTags": [
+      "M12"
+    ],
+    "text": "우리나라 갯벌 해안에서는 스키장을 볼 수 있어요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "kr-1",
+    "id": "kr-1-t3",
+    "mTags": [
+      "M6"
+    ],
+    "text": "우리나라와 영국의 시간 차이는 위도 때문에 생겨요.",
+    "topics": [
+      "B3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "kr-1",
+    "id": "kr-1-t4",
+    "mTags": [],
+    "text": "갯벌은 염전이나 양식업에 쓸 수 있어요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "kr-2",
+    "id": "kr-2-t1",
+    "mTags": [],
+    "text": "서울은 여름에 비가 많이 와요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "kr-2",
+    "id": "kr-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "서울은 일 년 내내 기온이 높고 변화가 없어요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "kr-3",
+    "id": "kr-3-t1",
+    "mTags": [],
+    "text": "우리나라에는 온대 기후와 냉대 기후가 나타나요.",
+    "topics": [
+      "7.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "kr-3",
+    "id": "kr-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "냉대 기후는 일 년 내내 기온이 높아요.",
+    "topics": [
+      "9.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "kr-3",
+    "id": "kr-3-t3",
+    "mTags": [],
+    "text": "높은 산지는 평지보다 서늘해요.",
+    "topics": [
+      "7.9"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "kr-4",
+    "id": "kr-4-t1",
+    "mTags": [],
+    "text": "같은 온대 기후여도 도시마다 비 오는 때가 달라요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "kr-4",
+    "id": "kr-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "서울의 기후가 온대 기후의 대표 모습이에요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "kr-4",
+    "id": "kr-4-t3",
+    "mTags": [
+      "M16"
+    ],
+    "text": "로마는 여름에 비가 가장 많이 와요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "it-1",
+    "id": "it-1-t1",
+    "mTags": [],
+    "text": "에트나 화산은 이탈리아에 있어요.",
+    "topics": [
+      "6.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "it-1",
+    "id": "it-1-t2",
+    "mTags": [
+      "M20"
+    ],
+    "text": "화산은 사람들에게 피해만 줘요.",
+    "topics": [
+      "6.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "it-2",
+    "id": "it-2-t1",
+    "mTags": [],
+    "text": "로마는 여름보다 겨울에 비가 더 많이 와요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "it-2",
+    "id": "it-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "온대 기후는 겨울이 여름보다 길고 몹시 추워요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "it-2",
+    "id": "it-2-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "올리브와 포도는 비가 많은 여름에 잘 자라요.",
+    "topics": [
+      "9.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "it-3",
+    "id": "it-3-t1",
+    "mTags": [],
+    "text": "이탈리아 해변은 여름에 관광객이 즐겨 찾아요.",
+    "topics": [
+      "9.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "it-3",
+    "id": "it-3-t2",
+    "mTags": [
+      "M12"
+    ],
+    "text": "해안 지형에서는 스키장을 볼 수 있어요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "it-3",
+    "id": "it-3-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "온대 기후 지역 사람들은 일 년 내내 같은 옷을 입어요.",
+    "topics": [
+      "9.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "it-4",
+    "id": "it-4-t1",
+    "mTags": [],
+    "text": "화산재는 땅을 기름지게 하기도 해요.",
+    "topics": [
+      "6.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "it-4",
+    "id": "it-4-t2",
+    "mTags": [
+      "M20"
+    ],
+    "text": "화산은 끔찍한 피해만 줘요.",
+    "topics": [
+      "6.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "it-4",
+    "id": "it-4-t3",
+    "mTags": [],
+    "text": "에트나 화산 주변에서 포도와 올리브를 길러요.",
+    "topics": [
+      "6.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "fr-1",
+    "id": "fr-1-t1",
+    "mTags": [],
+    "text": "프랑스에는 본초 자오선이 지나요.",
+    "topics": [
+      "B2.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "fr-1",
+    "id": "fr-1-t2",
+    "mTags": [
+      "M6"
+    ],
+    "text": "시차는 위도에 따라 생겨요.",
+    "topics": [
+      "B3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "fr-1",
+    "id": "fr-1-t3",
+    "mTags": [],
+    "text": "게랑드 해안에는 넓은 갯벌이 있어요.",
+    "topics": [
+      "5.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "fr-2",
+    "id": "fr-2-t1",
+    "mTags": [],
+    "text": "염전은 갯벌이 넓게 펼쳐진 해안에 발달해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "fr-2",
+    "id": "fr-2-t2",
+    "mTags": [
+      "M11"
+    ],
+    "text": "배가 드나들기에 유리한 해안에는 염전이 발달해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "fr-2",
+    "id": "fr-2-t3",
+    "mTags": [],
+    "text": "프랑스에서는 밀을 많이 재배해요.",
+    "topics": [
+      "9.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "fr-3",
+    "id": "fr-3-t1",
+    "mTags": [],
+    "text": "파리는 흐리거나 비가 내리는 날이 많아요.",
+    "topics": [
+      "9.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "fr-3",
+    "id": "fr-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "온대 기후 지역은 일 년 내내 맑고 햇빛이 강해요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "fr-4",
+    "id": "fr-4-t1",
+    "mTags": [],
+    "text": "배가 드나들기 좋은 해안에는 항구가 발달해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "fr-4",
+    "id": "fr-4-t2",
+    "mTags": [
+      "M11"
+    ],
+    "text": "항구는 갯벌이 넓은 해안에 발달해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "fr-4",
+    "id": "fr-4-t3",
+    "mTags": [
+      "M12"
+    ],
+    "text": "해안 지형에서는 스키장이 발달해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ch-1",
+    "id": "ch-1-t1",
+    "mTags": [],
+    "text": "스위스는 바다에 접하지 않은 내륙국이에요.",
+    "topics": [
+      "B2.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ch-1",
+    "id": "ch-1-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "스위스 알프스는 경사가 급해 관광지로 이용할 수 없어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ch-2",
+    "id": "ch-2-t1",
+    "mTags": [],
+    "text": "알프스는 경관이 아름다워 관광지로 이용돼요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ch-2",
+    "id": "ch-2-t2",
+    "mTags": [
+      "M8"
+    ],
+    "text": "지하자원이 풍부한 산지에 스키장이 발달해요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ch-2",
+    "id": "ch-2-t3",
+    "mTags": [
+      "M7"
+    ],
+    "text": "산지는 경사가 급해 관광지로 쓸 수 없어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ch-3",
+    "id": "ch-3-t1",
+    "mTags": [],
+    "text": "스위스는 알프스 경관을 관광 산업에 활용해요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ch-3",
+    "id": "ch-3-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "산지에서는 관광 산업이 발달할 수 없어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ch-4",
+    "id": "ch-4-t1",
+    "mTags": [],
+    "text": "산지에서는 관광, 목축, 광업, 농사를 해요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ch-4",
+    "id": "ch-4-t2",
+    "mTags": [
+      "M8"
+    ],
+    "text": "아름다운 경관이 있는 산지에서 광업이 발달해요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ch-4",
+    "id": "ch-4-t3",
+    "mTags": [
+      "M9"
+    ],
+    "text": "넓은 평야에서 계단식 농사를 지어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "no-1",
+    "id": "no-1-t1",
+    "mTags": [],
+    "text": "피오르는 빙하가 깎은 계곡에 바닷물이 들어온 해안이에요.",
+    "topics": [
+      "2.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "no-1",
+    "id": "no-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "송네 피오르는 사막 한가운데에 있어요.",
+    "topics": [
+      "2.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "no-1",
+    "id": "no-1-t3",
+    "mTags": [],
+    "text": "송네 피오르는 거대한 절벽 사이로 바닷물이 들어온 해안이에요.",
+    "topics": [
+      "5.1",
+      "2.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "no-1",
+    "id": "no-1-t4",
+    "mTags": [
+      "M11"
+    ],
+    "text": "피오르처럼 깊은 해안에는 넓은 염전이 발달해요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "no-2",
+    "id": "no-2-t1",
+    "mTags": [],
+    "text": "냉대 기후 지역에서는 통나무집을 짓고 살아요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "no-2",
+    "id": "no-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "냉대 기후는 일 년 내내 기온이 높고 기온 변화가 거의 없어요.",
+    "topics": [
+      "9.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "no-3",
+    "id": "no-3-t1",
+    "mTags": [],
+    "text": "노르웨이는 수력 발전으로 전기를 많이 만들어요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "no-3",
+    "id": "no-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후 지역에서 바닥을 띄운 집은 더위를 피하려는 거예요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "no-4",
+    "id": "no-4-t1",
+    "mTags": [],
+    "text": "한 나라 안에도 여러 기후가 나타날 수 있어요.",
+    "topics": [
+      "12.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "no-4",
+    "id": "no-4-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "노르웨이는 일 년 내내 더운 열대 기후예요.",
+    "topics": [
+      "7.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "no-4",
+    "id": "no-4-t3",
+    "mTags": [
+      "M5"
+    ],
+    "text": "적도에서 극지방으로 갈수록 기온이 높아져요.",
+    "topics": [
+      "7.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ru-1",
+    "id": "ru-1-t1",
+    "mTags": [],
+    "text": "우랄산맥의 서쪽은 유럽, 동쪽은 아시아예요.",
+    "topics": [
+      "B1.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ru-1",
+    "id": "ru-1-t2",
+    "mTags": [
+      "M17"
+    ],
+    "text": "세계지도에서 보이는 대로 러시아는 아프리카보다 두 배 커요.",
+    "topics": [
+      "B4.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ru-1",
+    "id": "ru-1-t3",
+    "mTags": [],
+    "text": "러시아는 유럽과 아시아에 걸쳐 있어요.",
+    "topics": [
+      "B2.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ru-2",
+    "id": "ru-2-t1",
+    "mTags": [],
+    "text": "냉대 기후 지역에서는 여름에 밀, 옥수수, 감자 등을 재배해요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ru-2",
+    "id": "ru-2-t2",
+    "mTags": [
+      "M13"
+    ],
+    "text": "냉대 기후 지역에서는 겨울에 밀, 옥수수, 감자 등을 재배해요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ru-2",
+    "id": "ru-2-t3",
+    "mTags": [],
+    "text": "침엽수림에서 목재와 종이 원료인 펄프를 만들어요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ru-3",
+    "id": "ru-3-t1",
+    "mTags": [],
+    "text": "한대 기후 지역에서는 순록을 기르며 유목 생활을 해요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ru-3",
+    "id": "ru-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후 지역은 일 년 내내 풀이 무성하게 자라요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ru-4",
+    "id": "ru-4-t1",
+    "mTags": [],
+    "text": "냉대와 한대 기후 지역은 모두 겨울이 길고 추워요.",
+    "topics": [
+      "9.3",
+      "10.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ru-4",
+    "id": "ru-4-t2",
+    "mTags": [
+      "M13"
+    ],
+    "text": "냉대 기후 지역에서는 겨울에 농사를 지어요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ru-4",
+    "id": "ru-4-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후 지역에는 침엽수림이 넓게 펼쳐져요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cd-1",
+    "id": "cd-1-t1",
+    "mTags": [],
+    "text": "콩고강은 물살이 빠른 큰 강이에요.",
+    "topics": [
+      "4.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cd-1",
+    "id": "cd-1-t2",
+    "mTags": [
+      "M10"
+    ],
+    "text": "콩고강 물살은 호수처럼 잔잔해요.",
+    "topics": [
+      "4.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cd-2",
+    "id": "cd-2-t1",
+    "mTags": [],
+    "text": "콩고강 주변은 일 년 내내 덥고 비가 많아요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cd-2",
+    "id": "cd-2-t2",
+    "mTags": [
+      "M15"
+    ],
+    "text": "열대 기후 지역은 모두 우림으로 덮여 있어요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cd-2",
+    "id": "cd-2-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "열대 기후는 겨울이 길고 몹시 추워요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cd-3",
+    "id": "cd-3-t1",
+    "mTags": [],
+    "text": "와게니아족은 급류에 통발을 놓아 물고기를 잡아요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cd-3",
+    "id": "cd-3-t2",
+    "mTags": [
+      "M10"
+    ],
+    "text": "물살이 빠른 강에서는 어업을 할 수 없어요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cd-4",
+    "id": "cd-4-t1",
+    "mTags": [],
+    "text": "급류에 맞춘 튼튼한 그물은 콩고강 사람들에게 도움이 돼요.",
+    "topics": [
+      "12.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cd-4",
+    "id": "cd-4-t2",
+    "mTags": [
+      "M10"
+    ],
+    "text": "급류 때문에 콩고강에서는 고기잡이가 사라졌어요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "tz-1",
+    "id": "tz-1-t1",
+    "mTags": [],
+    "text": "킬리만자로산 정상에는 일 년 내내 눈이 있어요.",
+    "topics": [
+      "7.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "tz-1",
+    "id": "tz-1-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "적도 가까운 곳은 어디나 똑같이 더워요.",
+    "topics": [
+      "7.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "tz-1",
+    "id": "tz-1-t3",
+    "mTags": [
+      "M5",
+      "M4"
+    ],
+    "text": "킬리만자로산은 고위도에 있어 햇볕을 적게 받아요.",
+    "topics": [
+      "7.2",
+      "B3.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "tz-2",
+    "id": "tz-2-t1",
+    "mTags": [],
+    "text": "므완자는 건기와 우기가 번갈아 나타나요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "tz-2",
+    "id": "tz-2-t2",
+    "mTags": [
+      "M15"
+    ],
+    "text": "열대 기후는 일 년 내내 비가 많은 우림뿐이에요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "tz-3",
+    "id": "tz-3-t1",
+    "mTags": [],
+    "text": "탄자니아 초원에서는 사파리 관광을 해요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "tz-3",
+    "id": "tz-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "열대 초원에 사는 사람들은 두꺼운 털옷을 입어요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "tz-4",
+    "id": "tz-4-t1",
+    "mTags": [],
+    "text": "두 도시 모두 일 년 내내 기온이 높아요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "tz-4",
+    "id": "tz-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "므완자 그래프만 보면 열대 기후를 다 알 수 있어요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "tz-4",
+    "id": "tz-4-t3",
+    "mTags": [
+      "M15"
+    ],
+    "text": "쿠알라룸푸르와 므완자는 비 오는 시기가 똑같아요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "et-1",
+    "id": "et-1-t1",
+    "mTags": [],
+    "text": "에티오피아는 바다와 닿지 않은 내륙국이에요.",
+    "topics": [
+      "B2.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "et-1",
+    "id": "et-1-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "고원은 가팔라서 농사도 관광도 할 수 없는 곳이에요.",
+    "topics": [
+      "3.1",
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "et-2",
+    "id": "et-2-t1",
+    "mTags": [],
+    "text": "아디스아바바는 고원 위의 고산 도시예요.",
+    "topics": [
+      "10.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "et-2",
+    "id": "et-2-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "저위도에 있는 도시는 모두 일 년 내내 더워요.",
+    "topics": [
+      "10.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "et-3",
+    "id": "et-3-t1",
+    "mTags": [],
+    "text": "아프리카는 북반구와 남반구에 걸쳐 있어요.",
+    "topics": [
+      "B2.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "et-3",
+    "id": "et-3-t2",
+    "mTags": [
+      "M17"
+    ],
+    "text": "러시아는 실제로 아프리카보다 두 배 넓어요.",
+    "topics": [
+      "B4.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "et-3",
+    "id": "et-3-t3",
+    "mTags": [
+      "M6"
+    ],
+    "text": "이집트와 남아프리카 공화국은 위도가 달라 시차가 생겨요.",
+    "topics": [
+      "B3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "et-4",
+    "id": "et-4-t1",
+    "mTags": [],
+    "text": "해발 고도가 높을수록 기온이 낮아져요.",
+    "topics": [
+      "10.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "et-4",
+    "id": "et-4-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "적도 가까이에 있으면 높은 곳도 똑같이 더워요.",
+    "topics": [
+      "7.2",
+      "10.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "eg-1",
+    "id": "eg-1-t1",
+    "mTags": [],
+    "text": "나일강 주변에는 넓은 평야가 펼쳐져 있어요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "eg-1",
+    "id": "eg-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "이집트 땅은 전부 모래 언덕으로만 되어 있어요.",
+    "topics": [
+      "4.3",
+      "2.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "eg-2",
+    "id": "eg-2-t1",
+    "mTags": [],
+    "text": "카이로는 비가 거의 내리지 않아요.",
+    "topics": [
+      "8.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "eg-2",
+    "id": "eg-2-t2",
+    "mTags": [
+      "M2"
+    ],
+    "text": "건조 기후는 비가 많이 내리는 곳에 나타나요.",
+    "topics": [
+      "8.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "eg-3",
+    "id": "eg-3-t1",
+    "mTags": [],
+    "text": "이집트에서는 오아시스 곁에서 대추야자를 길러요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "eg-3",
+    "id": "eg-3-t2",
+    "mTags": [
+      "M1"
+    ],
+    "text": "건조 기후 지역에서는 농사를 지을 수 없어요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "eg-3",
+    "id": "eg-3-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "대추야자는 온대 기후에서 기르는 작물이에요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "eg-4",
+    "id": "eg-4-t1",
+    "mTags": [],
+    "text": "나일강 덕분에 사막에서도 농사를 지어요.",
+    "topics": [
+      "4.2",
+      "8.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "eg-4",
+    "id": "eg-4-t2",
+    "mTags": [
+      "M1"
+    ],
+    "text": "이집트는 사막이라 사람들이 농사를 포기했어요.",
+    "topics": [
+      "8.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "mx-1",
+    "id": "mx-1-t1",
+    "mTags": [],
+    "text": "엘 아르코는 바다 위에 솟은 아치 모양 바위예요.",
+    "topics": [
+      "2.3",
+      "5.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "mx-1",
+    "id": "mx-1-t2",
+    "mTags": [
+      "M18"
+    ],
+    "text": "멕시코는 남아메리카에 있는 나라예요.",
+    "topics": [
+      "B2.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "mx-1",
+    "id": "mx-1-t3",
+    "mTags": [
+      "M12"
+    ],
+    "text": "엘 아르코가 있는 바닷가에서는 스키장을 볼 수 있어요.",
+    "topics": [
+      "5.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "mx-2",
+    "id": "mx-2-t1",
+    "mTags": [],
+    "text": "멕시코시티는 해발 고도가 높은 고산 도시예요.",
+    "topics": [
+      "10.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "mx-2",
+    "id": "mx-2-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "높은 산지는 낮은 곳보다 항상 더 더워요.",
+    "topics": [
+      "10.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "mx-3",
+    "id": "mx-3-t1",
+    "mTags": [],
+    "text": "칸쿤 해변은 해수욕장으로 이용돼요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "mx-3",
+    "id": "mx-3-t2",
+    "mTags": [
+      "M11"
+    ],
+    "text": "칸쿤 모래사장에는 큰 염전이 있어요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "mx-3",
+    "id": "mx-3-t3",
+    "mTags": [
+      "M12"
+    ],
+    "text": "칸쿤 해변에는 스키장이 발달했어요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "mx-4",
+    "id": "mx-4-t1",
+    "mTags": [],
+    "text": "같은 나라여도 지형에 따라 생활이 달라요.",
+    "topics": [
+      "2.2",
+      "11.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "mx-4",
+    "id": "mx-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "한 나라 안에서는 생활 모습이 모두 같아요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "us-1",
+    "id": "us-1-t1",
+    "mTags": [],
+    "text": "마우나로아는 용암이 흐르는 화산이에요.",
+    "topics": [
+      "2.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "us-1",
+    "id": "us-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "호스슈 벤드 계곡은 사막의 모래 언덕이에요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "us-2",
+    "id": "us-2-t1",
+    "mTags": [],
+    "text": "넓은 평야에서는 큰 기계로 농사를 지어요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "us-2",
+    "id": "us-2-t2",
+    "mTags": [
+      "M9"
+    ],
+    "text": "넓은 평야에서는 계단식 농사를 지어요.",
+    "topics": [
+      "4.4",
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "us-3",
+    "id": "us-3-t1",
+    "mTags": [],
+    "text": "마케나 모래사장은 자연 그대로의 해변이에요.",
+    "topics": [
+      "5.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "us-3",
+    "id": "us-3-t2",
+    "mTags": [
+      "M21"
+    ],
+    "text": "아름다운 지형은 마음껏 개발해도 괜찮아요.",
+    "topics": [
+      "6.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "us-4",
+    "id": "us-4-t1",
+    "mTags": [],
+    "text": "땅 생김새에 따라 농사 방법이 달라요.",
+    "topics": [
+      "6.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "us-4",
+    "id": "us-4-t2",
+    "mTags": [
+      "M9"
+    ],
+    "text": "가파른 산지에서는 비행기로 농사를 지어요.",
+    "topics": [
+      "3.3",
+      "4.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "us-4",
+    "id": "us-4-t3",
+    "mTags": [
+      "M7"
+    ],
+    "text": "가파른 산지에서는 농사를 지을 수 없어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ca-1",
+    "id": "ca-1-t1",
+    "mTags": [],
+    "text": "펀디만은 밀물과 썰물의 차이가 큰 갯벌이에요.",
+    "topics": [
+      "5.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-1",
+    "id": "ca-1-t2",
+    "mTags": [
+      "M18"
+    ],
+    "text": "캐나다는 남아메리카에 있는 나라예요.",
+    "topics": [
+      "B2.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-1",
+    "id": "ca-1-t3",
+    "mTags": [
+      "M12"
+    ],
+    "text": "스키장은 산지가 아니라 해안에 생겨요.",
+    "topics": [
+      "3.3",
+      "5.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ca-2",
+    "id": "ca-2-t1",
+    "mTags": [],
+    "text": "냉대 기후 지역에서는 통나무로 집을 지어요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-2",
+    "id": "ca-2-t2",
+    "mTags": [
+      "M13"
+    ],
+    "text": "냉대 기후 지역에서는 겨울에 농사가 활발해요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-2",
+    "id": "ca-2-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "냉대 기후는 일 년 내내 더워요.",
+    "topics": [
+      "9.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ca-3",
+    "id": "ca-3-t1",
+    "mTags": [],
+    "text": "프레이저강에서는 통나무를 띄워 옮겨요.",
+    "topics": [
+      "4.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-3",
+    "id": "ca-3-t2",
+    "mTags": [
+      "M18"
+    ],
+    "text": "나이아가라 폭포는 남아메리카에 있어요.",
+    "topics": [
+      "4.3",
+      "B2.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ca-4",
+    "id": "ca-4-t1",
+    "mTags": [],
+    "text": "한대 지역에서는 순록을 기르며 이동해요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-4",
+    "id": "ca-4-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "캐나다 북쪽 한대 지역은 여름이 길고 더워요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ca-4",
+    "id": "ca-4-t3",
+    "mTags": [
+      "M13"
+    ],
+    "text": "냉대 지역에서는 겨울에 밀을 거둬요.",
+    "topics": [
+      "9.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "gl-1",
+    "id": "gl-1-t1",
+    "mTags": [],
+    "text": "그린란드는 덴마크에 속한 자치 지역이에요.",
+    "topics": [
+      "B2.5"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-1",
+    "id": "gl-1-t2",
+    "mTags": [
+      "M17"
+    ],
+    "text": "그린란드는 실제로 남아메리카만큼 넓어요.",
+    "topics": [
+      "B4.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-1",
+    "id": "gl-1-t3",
+    "mTags": [
+      "M18"
+    ],
+    "text": "그린란드는 유럽 대륙에 포함돼요.",
+    "topics": [
+      "B2.5"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "gl-2",
+    "id": "gl-2-t1",
+    "mTags": [],
+    "text": "누크는 겨울이 길고 기온이 매우 낮아요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-2",
+    "id": "gl-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후 지역은 적도 가까이에 있어요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-2",
+    "id": "gl-2-t3",
+    "mTags": [
+      "M6"
+    ],
+    "text": "누크가 추운 까닭은 시차 때문이에요.",
+    "topics": [
+      "7.3",
+      "B3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "gl-3",
+    "id": "gl-3-t1",
+    "mTags": [],
+    "text": "한대 지역 사람들은 동물 가죽으로 옷을 지어요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-3",
+    "id": "gl-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후 지역에서는 벼농사가 활발해요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "gl-4",
+    "id": "gl-4-t1",
+    "mTags": [],
+    "text": "누크와 오슬로는 둘 다 겨울이 길고 추워요.",
+    "topics": [
+      "10.1",
+      "9.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-4",
+    "id": "gl-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "한대 지역은 어디나 누크와 기후가 똑같아요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "gl-4",
+    "id": "gl-4-t3",
+    "mTags": [
+      "M14"
+    ],
+    "text": "오슬로는 일 년 내내 눈과 얼음에 덮여 있어요.",
+    "topics": [
+      "9.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ec-1",
+    "id": "ec-1-t1",
+    "mTags": [],
+    "text": "에콰도르는 적도가 지나는 나라예요.",
+    "topics": [
+      "B2.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ec-1",
+    "id": "ec-1-t2",
+    "mTags": [
+      "M18"
+    ],
+    "text": "에콰도르는 북아메리카에 있는 나라예요.",
+    "topics": [
+      "B2.6"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ec-2",
+    "id": "ec-2-t1",
+    "mTags": [],
+    "text": "키토는 높은 곳에 있어 일 년 내내 서늘해요.",
+    "topics": [
+      "10.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ec-2",
+    "id": "ec-2-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "적도 가까운 곳은 어디나 일 년 내내 더워요.",
+    "topics": [
+      "10.3",
+      "7.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ec-3",
+    "id": "ec-3-t1",
+    "mTags": [],
+    "text": "고산 지역 사람들은 감자와 옥수수를 길러요.",
+    "topics": [
+      "10.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ec-3",
+    "id": "ec-3-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "높은 산지에서는 농사를 지을 수 없어요.",
+    "topics": [
+      "10.4",
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ec-4",
+    "id": "ec-4-t1",
+    "mTags": [],
+    "text": "같은 적도 부근이라도 기후가 다를 수 있어요.",
+    "topics": [
+      "7.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ec-4",
+    "id": "ec-4-t2",
+    "mTags": [
+      "M4"
+    ],
+    "text": "위도가 같으면 기후도 똑같아요.",
+    "topics": [
+      "7.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ec-4",
+    "id": "ec-4-t3",
+    "mTags": [
+      "M6"
+    ],
+    "text": "위도가 다르면 시차가 생겨요.",
+    "topics": [
+      "B3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "br-1",
+    "id": "br-1-t1",
+    "mTags": [],
+    "text": "아마존강은 브라질 북부를 흐르는 큰 강이에요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "br-1",
+    "id": "br-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "아마존강 주변에는 넓은 사막이 펼쳐져 있어요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "br-1",
+    "id": "br-1-t3",
+    "mTags": [],
+    "text": "아마존강이 바다와 만나는 곳에는 넓은 갯벌이 있어요.",
+    "topics": [
+      "5.2",
+      "5.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "br-2",
+    "id": "br-2-t1",
+    "mTags": [],
+    "text": "브라질에서는 카카오와 커피를 대규모로 길러요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "br-2",
+    "id": "br-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "열대 기후는 겨울이 길고 몹시 추워요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "br-3",
+    "id": "br-3-t1",
+    "mTags": [],
+    "text": "이구아수 폭포는 세계 3대 폭포 중 하나예요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "br-3",
+    "id": "br-3-t2",
+    "mTags": [
+      "M12"
+    ],
+    "text": "해안 지형에서는 스키장을 볼 수 있어요.",
+    "topics": [
+      "5.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "br-3",
+    "id": "br-3-t3",
+    "mTags": [
+      "M18"
+    ],
+    "text": "이구아수 폭포는 브라질과 멕시코 사이에 있어요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "br-4",
+    "id": "br-4-t1",
+    "mTags": [],
+    "text": "열대 기후에 맞춰 옷과 집이 달라져요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "br-4",
+    "id": "br-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "같은 열대 기후면 사는 모습도 다 똑같아요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cl-1",
+    "id": "cl-1-t1",
+    "mTags": [],
+    "text": "칠레는 남북으로 매우 긴 나라예요.",
+    "topics": [
+      "B2.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cl-1",
+    "id": "cl-1-t2",
+    "mTags": [
+      "M18"
+    ],
+    "text": "칠레는 북아메리카에 있는 나라예요.",
+    "topics": [
+      "B2.6"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cl-2",
+    "id": "cl-2-t1",
+    "mTags": [],
+    "text": "추키카마타는 구리가 많아 광업이 발달했어요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cl-2",
+    "id": "cl-2-t2",
+    "mTags": [
+      "M8"
+    ],
+    "text": "지하자원이 많은 산지에는 스키장이 발달해요.",
+    "topics": [
+      "3.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cl-3",
+    "id": "cl-3-t1",
+    "mTags": [],
+    "text": "칠레에서는 사막과 빙하를 모두 볼 수 있어요.",
+    "topics": [
+      "B2.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cl-3",
+    "id": "cl-3-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "사막은 모두 뜨거운 모래사막이에요.",
+    "topics": [
+      "2.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "cl-4",
+    "id": "cl-4-t1",
+    "mTags": [],
+    "text": "적도에서 극지방으로 갈수록 기온이 낮아져요.",
+    "topics": [
+      "7.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "cl-4",
+    "id": "cl-4-t2",
+    "mTags": [
+      "M5"
+    ],
+    "text": "고위도로 갈수록 햇볕을 더 많이 받아 더워요.",
+    "topics": [
+      "7.3",
+      "B3.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ar-1",
+    "id": "ar-1-t1",
+    "mTags": [],
+    "text": "이구아수 폭포는 브라질과 아르헨티나 사이에 있어요.",
+    "topics": [
+      "4.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ar-1",
+    "id": "ar-1-t2",
+    "mTags": [
+      "M18"
+    ],
+    "text": "아르헨티나는 오세아니아에 있는 나라예요.",
+    "topics": [
+      "B2.6"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ar-2",
+    "id": "ar-2-t1",
+    "mTags": [],
+    "text": "1월에 남반구는 여름이에요.",
+    "topics": [
+      "B3.3"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ar-2",
+    "id": "ar-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "온대 기후는 겨울이 여름보다 길고 몹시 추워요.",
+    "topics": [
+      "9.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ar-2",
+    "id": "ar-2-t3",
+    "mTags": [
+      "M6"
+    ],
+    "text": "시차는 위도 때문에 생겨요.",
+    "topics": [
+      "B3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ar-3",
+    "id": "ar-3-t1",
+    "mTags": [],
+    "text": "한대 기후 지역에서는 빙하 관광이 발달해요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ar-3",
+    "id": "ar-3-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후는 일 년 내내 기온이 높아요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "ar-4",
+    "id": "ar-4-t1",
+    "mTags": [],
+    "text": "관광객이 오면 수입도 생기지만 환경 문제도 생겨요.",
+    "topics": [
+      "3.4",
+      "5.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "ar-4",
+    "id": "ar-4-t2",
+    "mTags": [
+      "M21"
+    ],
+    "text": "폭포 관광은 좋은 점만 있어요.",
+    "topics": [
+      "4.4",
+      "3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "aq-s1",
+    "id": "aq-s1-t1",
+    "mTags": [],
+    "text": "남극은 얼음으로 덮인 대륙이에요.",
+    "topics": [
+      "B1.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "aq-s1",
+    "id": "aq-s1-t2",
+    "mTags": [
+      "M5"
+    ],
+    "text": "남극은 햇볕을 많이 받아 따뜻해요.",
+    "topics": [
+      "B1.2",
+      "7.3"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "aq-s1",
+    "id": "aq-s1-t3",
+    "mTags": [],
+    "text": "우리나라는 남극에 과학 기지를 세웠어요.",
+    "topics": [
+      "10.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "aq-s1",
+    "id": "aq-s1-t4",
+    "mTags": [
+      "M14"
+    ],
+    "text": "남극에는 열대 기후가 나타나요.",
+    "topics": [
+      "10.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "aq-s2",
+    "id": "aq-s2-t1",
+    "mTags": [],
+    "text": "극지 과학자는 극지방의 자연을 연구해요.",
+    "topics": [
+      "10.6"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "aq-s2",
+    "id": "aq-s2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후는 일 년 내내 더워요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "aq-s2",
+    "id": "aq-s2-t3",
+    "mTags": [],
+    "text": "한대 기후 지역에서는 기후 연구가 활발해요.",
+    "topics": [
+      "10.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "aq-s2",
+    "id": "aq-s2-t4",
+    "mTags": [
+      "M14"
+    ],
+    "text": "한대 기후 지역은 일 년 내내 비가 많이 와요.",
+    "topics": [
+      "10.2"
+    ]
+  }
+]

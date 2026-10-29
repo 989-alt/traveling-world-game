@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- U7: viewport-fit=cover = 노치 뒤까지 하늘 배경을 깔고, 판은 safe-area 안쪽에 맞춘다(src/ui/device/stage.ts) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>돌아라! 지구 한 바퀴</title>
+    <!-- U7: 홈 화면에 추가하면 주소창 없이(안드로이드 fullscreen · 아이폰 standalone) 가로로 연다 -->
+    <link rel="manifest" href="/src/pwa/manifest.webmanifest" />
+    <meta name="theme-color" content="#3A8DE0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="지구 한 바퀴" />
+    <link rel="apple-touch-icon" href="/src/pwa/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- 글꼴은 첫 화면을 막지 않게 늦게 붙인다(글꼴 서버가 막혀도 시스템 글꼴로 바로 뜬다) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" /></noscript>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

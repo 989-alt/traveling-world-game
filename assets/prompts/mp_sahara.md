@@ -1,0 +1,7 @@
+# mp_sahara mission photo: Sahara sand dunes, opaque
+Scene: one clear subject fills the frame like a travel photo: the Sahara desert, endless golden sand dunes rolling to the horizon with sharp crescent ridges and long shadows, fine ripple patterns on the sand in the foreground, a tiny camel caravan of three camels and two people in long loose robes and head scarves walking along a far ridge for scale. The whole lower two thirds of the picture is sand, the sky is clear and deep blue, so the picture reads at once as a sand desert. People are shown with respect and dignity.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #E8C06A sand, #F2B21C gold accent.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

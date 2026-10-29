@@ -1,0 +1,7 @@
+# RS-stamp-mountain gold stamp medallion with a raised twin-peak mountain emblem and a laurel rim, sprite source on magenta
+Scene: one game medallion alone, seen straight on: a thick glossy gold coin with a raised ring of tiny laurel leaves around its rim and a raised plain emblem of two mountain peaks with a tiny snow cap in the center, the emblem a darker gold relief, the coin centered and filling about 80 percent of the frame, readable at 48 pixels. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered.
+Lighting: soft top light with a glossy highlight on the upper 40 percent of the coin and a darker band along the bottom edge, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #FFC93A gold, #FFE27A highlight, #B8860B dark gold relief, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

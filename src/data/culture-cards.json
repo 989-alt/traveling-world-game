@@ -1,0 +1,224 @@
+[
+  {
+    "continent": "asia",
+    "country": "ph",
+    "id": "cc-ph",
+    "image": "cc_ph.png",
+    "intro": "바나우에 산비탈에 계단식 논이 층층이 펼쳐져요.",
+    "name": "필리핀"
+  },
+  {
+    "continent": "asia",
+    "country": "th",
+    "id": "cc-th",
+    "image": "cc_th.png",
+    "intro": "짜오프라야강 위에서 배를 띄운 수상 시장이 열려요.",
+    "name": "타이"
+  },
+  {
+    "continent": "asia",
+    "country": "sa",
+    "id": "cc-sa",
+    "image": "cc_sa.png",
+    "intro": "사막의 햇볕과 모래바람을 온몸 감싸는 옷으로 막아요.",
+    "name": "사우디아라비아"
+  },
+  {
+    "continent": "asia",
+    "country": "np",
+    "id": "cc-np",
+    "image": "cc_np.png",
+    "intro": "히말라야 산지에서 셰르파족이 등산객을 안내해요.",
+    "name": "네팔"
+  },
+  {
+    "continent": "asia",
+    "country": "cn",
+    "id": "cc-cn",
+    "image": "cc_cn.png",
+    "intro": "누런 황허강이 흐르고 평야에서 벼농사를 지어요.",
+    "name": "중국"
+  },
+  {
+    "continent": "asia",
+    "country": "kr",
+    "id": "cc-kr",
+    "image": "cc_kr.png",
+    "intro": "삼면이 바다인 우리나라 서·남해안에는 넓은 갯벌이 있어요.",
+    "name": "한국"
+  },
+  {
+    "badge": {
+      "id": "badge-it",
+      "image": "badge_orange.png",
+      "kind": "food",
+      "name": "오렌지",
+      "origin": "guide"
+    },
+    "continent": "europe",
+    "country": "it",
+    "id": "cc-it",
+    "image": "cc_it.png",
+    "intro": "에트나 화산 기슭에서 오렌지와 포도를 길러요.",
+    "name": "이탈리아"
+  },
+  {
+    "badge": {
+      "id": "badge-fr",
+      "image": "badge_cheese.png",
+      "kind": "food",
+      "name": "치즈",
+      "origin": "guide"
+    },
+    "continent": "europe",
+    "country": "fr",
+    "id": "cc-fr",
+    "image": "cc_fr.png",
+    "intro": "게랑드 갯벌에서 소금을 만들고 센강 변에서 햇볕을 즐겨요.",
+    "name": "프랑스"
+  },
+  {
+    "continent": "europe",
+    "country": "ch",
+    "id": "cc-ch",
+    "image": "cc_ch.png",
+    "intro": "알프스산맥의 아름다운 경관을 보러 관광객이 모여요.",
+    "name": "스위스"
+  },
+  {
+    "continent": "europe",
+    "country": "no",
+    "id": "cc-no",
+    "image": "cc_no.png",
+    "intro": "송네 피오르가 있고 전기 대부분을 수력 발전으로 만들어요.",
+    "name": "노르웨이"
+  },
+  {
+    "continent": "europe",
+    "country": "ru",
+    "id": "cc-ru",
+    "image": "cc_ru.png",
+    "intro": "침엽수림에서 목재와 종이 원료인 펄프를 만들고 북쪽에선 순록을 길러요.",
+    "name": "러시아"
+  },
+  {
+    "badge": {
+      "id": "badge-cd",
+      "image": "badge_cassava.png",
+      "kind": "food",
+      "name": "카사바",
+      "origin": "guide"
+    },
+    "continent": "africa",
+    "country": "cd",
+    "id": "cc-cd",
+    "image": "cc_cd.png",
+    "intro": "콩고강 급류에서 와게니아족이 통발로 물고기를 잡아요.",
+    "name": "콩고민주공화국"
+  },
+  {
+    "continent": "africa",
+    "country": "tz",
+    "id": "cc-tz",
+    "image": "cc_tz.png",
+    "intro": "건기와 우기가 번갈아 오는 초원에서 사파리 관광을 해요.",
+    "name": "탄자니아"
+  },
+  {
+    "continent": "africa",
+    "country": "et",
+    "id": "cc-et",
+    "image": "cc_et.png",
+    "intro": "'아프리카의 지붕' 아비시니아고원 위에 고산 도시가 있어요.",
+    "name": "에티오피아"
+  },
+  {
+    "badge": {
+      "id": "badge-eg",
+      "image": "badge_eish.png",
+      "kind": "food",
+      "name": "에이쉬",
+      "origin": "guide"
+    },
+    "continent": "africa",
+    "country": "eg",
+    "id": "cc-eg",
+    "image": "cc_eg.png",
+    "intro": "나일강 가의 넓은 평야에서 밀을 길러요.",
+    "name": "이집트"
+  },
+  {
+    "continent": "namerica",
+    "country": "mx",
+    "id": "cc-mx",
+    "image": "cc_mx.png",
+    "intro": "칸쿤의 아름다운 모래사장에 관광객이 찾아와요.",
+    "name": "멕시코"
+  },
+  {
+    "continent": "namerica",
+    "country": "us",
+    "id": "cc-us",
+    "image": "cc_us.png",
+    "intro": "일리노이강 넓은 평야에서 비행기로 농사를 지어요.",
+    "name": "미국"
+  },
+  {
+    "continent": "namerica",
+    "country": "ca",
+    "id": "cc-ca",
+    "image": "cc_ca.png",
+    "intro": "프레이저강에 통나무를 띄워 옮기며 살아요.",
+    "name": "캐나다"
+  },
+  {
+    "continent": "namerica",
+    "country": "gl",
+    "id": "cc-gl",
+    "image": "cc_gl.png",
+    "intro": "긴 겨울을 지내며 사냥한 고기와 생선을 먹어요.",
+    "name": "그린란드",
+    "note": "덴마크 자치령"
+  },
+  {
+    "continent": "samerica",
+    "country": "ec",
+    "id": "cc-ec",
+    "image": "cc_ec.png",
+    "intro": "적도가 지나는 나라지만 높은 곳의 키토는 일 년 내내 서늘해요.",
+    "name": "에콰도르"
+  },
+  {
+    "continent": "samerica",
+    "country": "br",
+    "id": "cc-br",
+    "image": "cc_br.png",
+    "intro": "아마존강이 열대 우림 사이를 구불구불 흘러요.",
+    "name": "브라질"
+  },
+  {
+    "continent": "samerica",
+    "country": "cl",
+    "id": "cc-cl",
+    "image": "cc_cl.png",
+    "intro": "남북으로 길어 사막도 빙하도 볼 수 있어요.",
+    "name": "칠레"
+  },
+  {
+    "continent": "samerica",
+    "country": "ar",
+    "id": "cc-ar",
+    "image": "cc_ar.png",
+    "intro": "남쪽 끝 빙하와 이구아수 폭포를 찾아 관광객이 와요.",
+    "name": "아르헨티나"
+  },
+  {
+    "continent": "oceania",
+    "country": "au",
+    "id": "cc-au",
+    "image": "cc_au.png",
+    "intro": "원주민이 신성하게 여기는 바위산 울루루가 있어요.",
+    "name": "오스트레일리아",
+    "note": "남반구, 나라가 곧 대륙"
+  }
+]

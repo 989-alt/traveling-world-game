@@ -1,0 +1,7 @@
+# mp_huanghe mission photo: the Yellow River, opaque
+Scene: one clear subject fills the frame like a travel photo: the Yellow River in northern China, a broad river of thick muddy yellow-brown water making a wide bend through a loess plateau of soft tan hills cut into terraces, a small wooden ferry boat on the water for scale, green wheat plots on the flat riverbank, a village of flat-roofed earthen houses on the far bank. The muddy yellow color of the water is the center of the picture, so it reads at once as a river carrying loess soil. One farmer in a straw hat and modern work clothes stands on the bank, shown with respect and dignity.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #C9A24A loess water, #7DCB4E green.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

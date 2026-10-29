@@ -1,0 +1,7 @@
+# mp_sognefjord mission photo: Sognefjord narrow sea inlet, opaque
+Scene: one clear subject fills the frame like a travel photo: the Sognefjord, a long narrow arm of deep blue-green sea water squeezed between towering steep rock walls that rise straight from the water, snow still lying on the ridge tops, a thin white waterfall dropping down one cliff, a tiny cluster of red and white wooden houses with a small pier at the water edge, a small white ferry leaving a wake. The narrow water channel running away between the cliffs is the center of the picture, so it reads at once as a fjord. Two visitors on the pier wear modern rain jackets and wool sweaters, shown with respect and dignity.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #2F7F8A fjord water, #7DCB4E green.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

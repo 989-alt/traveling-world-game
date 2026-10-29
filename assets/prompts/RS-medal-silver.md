@@ -1,0 +1,7 @@
+# RS-medal-silver second place silver medal disc with a plain face and a short striped ribbon knot on top, sprite source on magenta
+Scene: one game medal alone, seen straight on: a thick glossy silver disc with a raised plain rim and a plain flat center face kept clear for a numeral, a tiny ring at the top holding a short two-tailed ribbon knot striped in blue and white, the disc centered and filling about 78 percent of the frame, readable at 48 pixels. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered.
+Lighting: soft top light with a glossy highlight on the upper left of the disc and a darker band along the bottom edge, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #C9D2DC silver, #F4F7FA highlight, #7E8995 dark silver, #2468D1 ribbon blue, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

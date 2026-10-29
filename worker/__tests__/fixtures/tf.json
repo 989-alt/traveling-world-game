@@ -1,0 +1,178 @@
+[
+  {
+    "answer": true,
+    "cardId": "th-1",
+    "id": "th-1-t1",
+    "mTags": [],
+    "text": "짜오프라야강은 타이의 큰 강이에요.",
+    "topics": [
+      "4.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-1",
+    "id": "th-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "짜오프라야강은 사막 한가운데를 흘러요.",
+    "topics": [
+      "4.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-2",
+    "id": "th-2-t1",
+    "mTags": [],
+    "text": "타이는 일 년 내내 덥고 비가 많아요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-2",
+    "id": "th-2-t2",
+    "mTags": [
+      "M14"
+    ],
+    "text": "타이는 겨울마다 눈이 쌓여요.",
+    "topics": [
+      "8.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-3",
+    "id": "th-3-t1",
+    "mTags": [],
+    "text": "고상 가옥은 기둥 위에 지은 집이에요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-3",
+    "id": "th-3-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "고상 가옥은 모래바람을 막으려는 집이에요.",
+    "topics": [
+      "8.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "th-4",
+    "id": "th-4-t1",
+    "mTags": [],
+    "text": "더운 날씨에 맞춰 집과 옷이 달라져요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "th-4",
+    "id": "th-4-t2",
+    "mTags": [
+      "M16"
+    ],
+    "text": "열대 기후의 모습은 어디나 똑같아요.",
+    "topics": [
+      "11.1"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-1",
+    "id": "np-1-t1",
+    "mTags": [],
+    "text": "네팔은 바다와 닿지 않은 내륙국이에요.",
+    "topics": [
+      "B2.1"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-1",
+    "id": "np-1-t2",
+    "mTags": [
+      "M3"
+    ],
+    "text": "에베레스트산은 사막에 있는 산이에요.",
+    "topics": [
+      "3.2"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-2",
+    "id": "np-2-t1",
+    "mTags": [],
+    "text": "셰르파족은 히말라야에 사는 민족이에요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-2",
+    "id": "np-2-t2",
+    "mTags": [
+      "M19"
+    ],
+    "text": "셰르파족은 산을 안내하는 직업 이름이에요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-3",
+    "id": "np-3-t1",
+    "mTags": [],
+    "text": "관광은 수입과 쓰레기를 함께 늘려요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-3",
+    "id": "np-3-t2",
+    "mTags": [
+      "M21"
+    ],
+    "text": "관광은 좋은 점만 가져다줘요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": true,
+    "cardId": "np-4",
+    "id": "np-4-t1",
+    "mTags": [],
+    "text": "산지는 수입과 문제를 함께 주었어요.",
+    "topics": [
+      "3.4"
+    ]
+  },
+  {
+    "answer": false,
+    "cardId": "np-4",
+    "id": "np-4-t2",
+    "mTags": [
+      "M7"
+    ],
+    "text": "산지에서는 관광을 할 수 없어요.",
+    "topics": [
+      "3.3"
+    ]
+  }
+]

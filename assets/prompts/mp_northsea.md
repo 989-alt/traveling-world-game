@@ -1,0 +1,7 @@
+# mp_northsea mission photo: North Sea coast tidal flat, opaque
+Scene: one clear subject fills the frame like a travel photo: the Wadden Sea tidal flat on the North Sea coast at low tide, a vast flat expanse of grey-brown mud shining with thin films of water, winding tidal channels, ripple marks and worm casts on the surface, a low green grass dike with a few sheep far behind, a wooden post marker and a small flat-bottomed boat resting tilted on the mud. Three people in rubber boots and modern windbreakers walk barefoot across the flat on a guided mudflat hike, shown with respect and dignity. The wide bare mud stretching to the horizon is the center of the picture, so it reads at once as a tidal flat.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #8C7B66 mud, #7DCB4E green.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

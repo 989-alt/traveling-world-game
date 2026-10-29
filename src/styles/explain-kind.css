@@ -1,0 +1,18 @@
+/* 4단계 비교 까닭 앞 꼬리표(DESIGN §4.2 해설 카드 행, 2026-10-29 U5): 알약 칩 14px bold, 높이 22 · radius 11 · 안쪽 가로 8, 문장과 8px.
+   같은 점 = answer.c 초록 면, 다른 점 = answer.b 주황 면, 글자 남색(대비표 §4.3) */
+.ex-reasons li.has-kind { list-style: none; margin-left: -1.1em; }
+.ex-kind {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border-radius: 11px;
+  color: var(--foreground);
+  font: var(--weight-bold) 14px / 1 var(--font-body);
+  vertical-align: 2px;
+  white-space: nowrap;
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+.ex-kind--same { background: var(--answer-c); }
+.ex-kind--diff { background: var(--answer-b); }

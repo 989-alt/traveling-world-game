@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["findings"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "problem", "suggestion"],
+        "properties": {
+          "id": { "type": "string", "description": "입력 항목의 id (예: s0042)" },
+          "text": { "type": "string", "description": "지적한 원문 그대로" },
+          "problem": { "type": "string", "description": "어떤 기준에 걸리는지 한 줄" },
+          "suggestion": { "type": "string", "description": "고친 표현 제안. 내용(정답·지도 내용)은 그대로" }
+        }
+      }
+    }
+  }
+}

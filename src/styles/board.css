@@ -1,0 +1,1094 @@
+/* 보드 화면 (DESIGN §4.2·§7·§16). 토큰 이름만 쓴다. 그림자·글로우는 정적, 움직임은 transform·opacity 만. */
+.board-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--background);
+  font-family: var(--font-body);
+  color: var(--foreground);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.board-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 먼 하늘: 살짝 흐리고 밝게 — 배경 그림 속 먼 섬이 판 칸과 겹쳐 보이지 않게(정적) */
+  filter: blur(1.5px) brightness(1.06) saturate(0.9);
+}
+.board-bg--fallback {
+  background: linear-gradient(var(--background-sky-top), var(--background-sky-mid) 55%, var(--background-sky-bottom));
+}
+.board-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--stage-w);
+  height: var(--stage-h);
+  transform-origin: 50% 50%;
+}
+
+/* ── 레이어 2개(§16.6): world 는 줌 대상(T-E), hud 는 고정 ── */
+.board-cam,
+.board-world,
+.board-hud {
+  position: absolute;
+  inset: 0;
+}
+.board-cam {
+  z-index: 1;
+}
+/* 줌 동안만 스테이지 밖을 자른다(1배에선 칸 그림 투명 여백이 스테이지 밖 1~2px 로 나가도 됨) */
+.board-cam.is-zoom {
+  overflow: hidden;
+}
+.board-world {
+  transform-origin: 0 0;
+}
+.board-hud {
+  z-index: 2;
+  pointer-events: none;
+}
+.board-hud > * {
+  pointer-events: auto;
+}
+.board-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* ── 광장(세계 지도 섬) + 대륙 마스크 ── */
+.plaza {
+  position: absolute;
+  z-index: 1;
+}
+.plaza-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--foreground) 28%, transparent));
+}
+.plaza-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-card);
+  background: linear-gradient(var(--tile-top) 0 82%, var(--tile-side) 82% 100%);
+}
+.plaza-mask {
+  position: absolute;
+  z-index: 2;
+  background: var(--paint);
+  -webkit-mask: var(--mask) center / 100% 100% no-repeat;
+  mask: var(--mask) center / 100% 100% no-repeat;
+  mix-blend-mode: color; /* 자리색으로 칠하되 지도 명암·나무 결은 그대로 */
+  opacity: 0;
+  transition: opacity 200ms var(--ease-standard);
+  pointer-events: none;
+}
+.plaza-mask.is-on {
+  opacity: 0.85;
+}
+.plaza-mask.is-instant {
+  transition: none;
+}
+
+/* ── 칸 30 (TILE-<n>d, 이름표는 그림 속) ── */
+.tile {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+.tile-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 6px color-mix(in srgb, var(--foreground) 22%, transparent));
+}
+.tile.is-current .tile-img {
+  filter: drop-shadow(0 0 3px var(--tile-current)) drop-shadow(0 0 8px var(--tile-current)) drop-shadow(0 6px 6px color-mix(in srgb, var(--foreground) 22%, transparent));
+}
+.tile.is-glow .tile-img {
+  filter: drop-shadow(0 0 2px var(--gold-shine)) drop-shadow(0 0 10px var(--gold-rim)) drop-shadow(0 0 4px var(--gold-shine));
+}
+/* 지금 칸: 공터에 깔린 금빛 고리(캐릭터 발 아래, 정적) */
+.tile-current {
+  position: absolute;
+  z-index: 1;
+  width: 46px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tile-current);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--gold-shine) 55%, transparent), color-mix(in srgb, var(--gold-shine) 8%, transparent));
+  box-shadow: 0 0 10px var(--tile-current);
+}
+/* 그림 미로드 폴백: 땅덩이 모양 + 띠 + 크림 이름표(코드 글자는 이때만) */
+.tile-fallback {
+  position: absolute;
+  inset: 0 4% 3%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14%;
+  border-radius: 22% 22% 40% 40%;
+  background: linear-gradient(var(--tile-top-light), var(--tile-top) 58%, var(--band, var(--tile-side)) 58% 68%, var(--tile-side) 68% 100%);
+}
+.tile-fallback[data-band='asia'] { --band: var(--continent-asia); }
+.tile-fallback[data-band='europe'] { --band: var(--continent-europe); }
+.tile-fallback[data-band='africa'] { --band: var(--continent-africa); }
+.tile-fallback[data-band='namerica'] { --band: var(--continent-north-america); }
+.tile-fallback[data-band='samerica'] { --band: var(--continent-south-america); }
+.tile-fallback-plate {
+  max-width: 76%;
+  padding: 1px var(--space-2);
+  border: 2px solid var(--tile-side);
+  border-radius: var(--radius-sm);
+  background: var(--tile-label);
+  color: var(--tile-label-foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-tile);
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 칸 사이 밧줄 다리(중립 나무) ── */
+.board-bridges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 1.5px color-mix(in srgb, var(--foreground) 35%, transparent));
+}
+.br-plank {
+  fill: var(--wood-light);
+  stroke: var(--wood-rope);
+  stroke-width: 0.8;
+}
+.br-rope {
+  fill: none;
+  stroke: var(--wood-rope);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+.br-post {
+  fill: var(--tile-side-dark);
+}
+
+/* ── 대륙 이정표: 그림(판 + 기둥) 위 대륙색 면 + 흰 글자 ── */
+.sign {
+  position: absolute;
+  pointer-events: none;
+}
+.sign-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sign-shadow {
+  position: absolute;
+  left: 22%;
+  bottom: 1%;
+  width: 56%;
+  height: 12%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--shadow-contact), transparent);
+}
+.sign-fallback {
+  position: absolute;
+  left: 6%;
+  top: 19%;
+  width: 88%;
+  height: 37%;
+  border-radius: var(--radius-sm);
+  background: var(--tile-side);
+}
+.sign-face {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  /* 답 버튼 레시피: 위 40% 광택 + 아래 2px 어두운 테 */
+  background:
+    linear-gradient(color-mix(in srgb, var(--background-cloud) 34%, transparent), color-mix(in srgb, var(--background-cloud) 8%, transparent) 40%, transparent 40%),
+    var(--face);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--foreground) 35%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--foreground) 25%, transparent);
+}
+/* 볼트 2(그림의 볼트를 면이 덮으므로 다시 박는다) */
+.sign-face::before,
+.sign-face::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--background-cloud), var(--island) 70%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+.sign-face::before { left: 3px; }
+.sign-face::after { right: 3px; }
+.sign-text {
+  color: var(--background-cloud);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--weight-regular);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  /* 흰 글자 + 남색 외곽(노랑·초록 면에서도 읽힌다) */
+  text-shadow:
+    -1px -1px 0 var(--foreground), 1px -1px 0 var(--foreground), -1px 1px 0 var(--foreground), 1px 1px 0 var(--foreground),
+    0 2px 0 var(--foreground);
+}
+
+/* ── 소유 깃발·건물 ── */
+/* 칸 그림 경관과 같은 화풍이라 그대로 두면 풍경에 묻힌다(U5 사용자 피드백 4·5) →
+   흰 스티커 테(정적 drop-shadow 4방향) + 남색 그림자 + 자리색 받침. 새로 꽂힘·지어짐은 한 번 튀어 오른다 */
+.board-world { --sticker-rim: var(--accent-foreground); }
+.tile-flag,
+.tile-bld {
+  transform-origin: 50% 100%;
+  animation: tile-pop 420ms var(--ease-standard) both;
+}
+@keyframes tile-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.tile-flag {
+  position: absolute;
+  pointer-events: none;
+}
+.tile-flag-img,
+.tile-bld-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter:
+    drop-shadow(1.2px 0 0 var(--sticker-rim)) drop-shadow(-1.2px 0 0 var(--sticker-rim))
+    drop-shadow(0 1.2px 0 var(--sticker-rim)) drop-shadow(0 -1.2px 0 var(--sticker-rim))
+    drop-shadow(0 2px 1.5px color-mix(in srgb, var(--foreground) 55%, transparent));
+}
+/* 자리색 받침: 깃대 밑·건물 밑에 깔린 납작한 원(흰 테) */
+.tile-flag-base,
+.tile-bld-shadow {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--seat);
+  border: 1.5px solid var(--sticker-rim);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+.tile-flag-base {
+  left: -10%;
+  bottom: -4px;
+  width: 120%;
+  height: 8px;
+}
+.tile-flag-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(10% 0, 100% 25%, 10% 50%, 10% 100%, 0 100%, 0 0);
+  background: var(--seat);
+}
+.tile-bld {
+  position: absolute;
+  pointer-events: none;
+}
+.tile-bld-shadow {
+  left: 2%;
+  bottom: -4px;
+  width: 96%;
+  height: 9px;
+}
+.tile-bld-fallback {
+  border-radius: var(--radius-sm);
+  background: var(--landmark);
+}
+
+/* ── 남은 시간 간판: 광장 뒤 가운데 매달린 간판(hang-sign.css, §16.4·§15.5) — 모래시계 16 + mm:ss 22px ── */
+.board-timer {
+  font-size: 22px;
+}
+.board-timer-ico {
+  flex: none;
+  filter: drop-shadow(1px 1px 0 var(--tile-side-dark));
+}
+.board-timer b {
+  font-weight: var(--weight-regular);
+}
+/* 막판: 간판 면이 붉게(warn) + 아래 "통행료 ×1.5" 칩 */
+.board-timer-sign.is-last .hang-plate {
+  border: 3px solid var(--tile-side-dark);
+  border-image: none;
+  border-radius: 8px;
+  background: var(--timer-warn);
+  color: #FFF;
+}
+.board-timer-chip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  transform: translateX(-50%);
+  padding: 2px var(--space-2);
+  border: 2px solid var(--timer-warn);
+  border-radius: var(--radius-full);
+  background: var(--popover);
+  color: var(--timer-warn);
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ── 플레이어 패널(U5 §16.9.2): 초상 없는 200×48 금테 알약, 자리색 띠 30% + 크림 70% ── */
+.panel {
+  position: absolute;
+  box-sizing: border-box;
+  width: var(--panel-w);
+  height: var(--panel-h);
+  transform: translate(-50%, -50%);
+}
+/* at 없이 쓰일 때(옛 귀퉁이 자리) */
+.panel--tl:not([style*='left']) { left: 140px; top: 48px; }
+.panel--tr:not([style*='left']) { left: 1226px; top: 48px; }
+.panel--bl:not([style*='left']) { left: 140px; top: 720px; }
+.panel--br:not([style*='left']) { left: 1226px; top: 720px; }
+.panel-pill {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 3px solid var(--gold-rim);
+  border-radius: var(--radius-full);
+  /* 왼쪽 자리색 띠 30% + 오른쪽 크림 70%, 위 절반 옅은 광택(§15.5 · §16.9.2) */
+  background:
+    linear-gradient(color-mix(in srgb, var(--background-cloud) 40%, transparent), color-mix(in srgb, var(--background-cloud) 6%, transparent) 48%, transparent 48%),
+    linear-gradient(90deg, var(--seat) 0 30%, var(--popover) 30% 100%);
+  box-shadow:
+    0 0 0 2px var(--foreground),
+    inset 0 -3px 0 color-mix(in srgb, var(--foreground) 18%, transparent),
+    0 4px 0 color-mix(in srgb, var(--foreground) 30%, transparent);
+}
+.panel-band {
+  position: relative;
+  flex: 0 0 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 4px;
+  box-sizing: border-box;
+}
+.panel.is-turn .panel-pill {
+  box-shadow: 0 0 0 2px var(--foreground), var(--shadow-glow-gold);
+}
+.panel.is-out {
+  opacity: 0.6;
+  filter: grayscale(0.7);
+}
+.panel-bot,
+.panel-me {
+  position: absolute;
+  padding: 0 var(--space-1);
+  border: 2px solid var(--foreground);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  line-height: 1.3;
+}
+/* 봇 캡션 11px: 알약 왼쪽 위 테에 걸친 작은 표("나" 표와 거울 자리 — 초상이 없어 이름 띠 위에 붙인다) */
+.panel-bot {
+  left: 4px;
+  top: -9px;
+  padding: 0 3px;
+  border-width: 1.5px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 11px;
+  line-height: 1.15;
+}
+.panel-me {
+  right: -8px;
+  top: -9px;
+  background: var(--gold-rim);
+  color: var(--foreground);
+  font-size: var(--text-tile);
+}
+/* 닉네임 15px bold, 자리색 면 위 남색(seat.n.on). 별명 = 형용사 + 동물(각 3자 이하) → 두 줄 */
+.panel-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  color: var(--seat-on, var(--foreground));
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: var(--weight-bold);
+  line-height: 1.02;
+  white-space: nowrap;
+}
+.panel-name-w {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.panel-coin {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding-right: 6px;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.panel-coin b {
+  font-weight: var(--weight-regular);
+}
+.panel-coin-img {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 1px 0 var(--foreground));
+}
+.panel-coin-fallback {
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--coin);
+}
+.panel {
+  transition: opacity var(--duration-fast) linear;
+}
+/* 줌 중 이동자가 패널 뒤에 들어옴: 옅게만(자리·크기 그대로) */
+.panel.is-veiled {
+  opacity: 0.28;
+}
+/* 줌(in·follow·hold) 동안 광장 위에 떠 있는 HUD(패널·남은 시간·규칙·멈춤)를 걷는다(U5 사용자 피드백 3).
+   HUD 는 화면 레이어라 줌에 안 커지고 제자리에 남는데, 그대로 두면 확대된 판 위에 떠서 줌을 따라다니는 것처럼 보이고 장면을 가린다.
+   주사위와 같은 150ms 페이드, 줌이 풀리기 시작(out)하면 돌아온다. 자리·크기는 그대로 */
+.board-hud.is-cam .panel,
+.board-hud.is-cam .board-timer-sign,
+.game:has(.board-hud.is-cam) .gm-sign {
+  opacity: 0;
+  pointer-events: none;
+}
+.board-timer-sign,
+.gm-sign {
+  transition: opacity var(--duration-fast) linear;
+}
+
+/* ── 주사위: 금색 받침 위 빛나는 유리 구슬 + 게이지 ── */
+.dice-wrap {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: opacity var(--duration-fast) linear;
+}
+/* 줌 동안 숨김(§16.6): 화면 정중앙이라 줌된 캐릭터를 가린다 */
+.dice-wrap.is-cam {
+  opacity: 0;
+  pointer-events: none;
+}
+.dice-pedestal {
+  /* 구슬 밑 금 받침(원통): 윗면 타원 + 아래 옆면(::after). 구슬 뒤에 깔린다 */
+  position: absolute;
+  left: 50%;
+  top: calc(100% - 40px);
+  z-index: 0;
+  width: 156px;
+  height: 44px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 30% 26% at 50% 44%, color-mix(in srgb, var(--gold-shine) 90%, var(--background-cloud)), transparent),
+    radial-gradient(ellipse at 50% 40%, var(--gold-shine) 0 28%, var(--gold-rim) 66%, var(--gold-rim-dark) 100%);
+  box-shadow: 0 0 0 2px var(--foreground), inset 0 -3px 0 color-mix(in srgb, var(--gold-rim-dark) 60%, transparent), inset 0 2px 0 color-mix(in srgb, var(--background-cloud) 70%, transparent);
+}
+.dice-pedestal::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16px;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--gold-rim-dark), var(--gold-rim) 35%, var(--gold-rim-dark));
+  box-shadow: 0 0 0 2px var(--foreground), 0 10px 14px color-mix(in srgb, var(--foreground) 35%, transparent);
+}
+.dice {
+  position: relative;
+  z-index: 1;
+  width: calc(var(--dice-button-d) + var(--dice-button-gauge-w) * 2);
+  height: calc(var(--dice-button-d) + var(--dice-button-gauge-w) * 2);
+}
+.dice-halo {
+  position: absolute;
+  inset: -40px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--gold-shine) 70%, transparent) 55%, color-mix(in srgb, var(--gold-shine) 22%, transparent) 75%, transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.dice.is-ready .dice-halo {
+  opacity: 1;
+  animation: dice-halo 1.6s var(--ease-standard) infinite alternate;
+}
+@keyframes dice-halo {
+  from { transform: scale(0.94); opacity: 0.8; }
+  to { transform: scale(1.06); opacity: 1; }
+}
+.dice-gauge {
+  position: absolute;
+  inset: 0;
+}
+.dice-knob {
+  position: absolute;
+  inset: 0;
+}
+.dice-knob::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: calc(var(--dice-button-gauge-w) + 6px);
+  height: calc(var(--dice-button-gauge-w) + 6px);
+  transform: translateX(-50%);
+  border: 3px solid var(--foreground);
+  border-radius: var(--radius-full);
+  background: var(--background-cloud);
+}
+.dice-gauge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: conic-gradient(from -150deg, var(--dice-gauge-start), var(--dice-gauge-end) 300deg, var(--timer-track) 300deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--dice-button-gauge-w)), var(--foreground) calc(100% - var(--dice-button-gauge-w) + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--dice-button-gauge-w)), var(--foreground) calc(100% - var(--dice-button-gauge-w) + 1px));
+}
+.dice-btn {
+  position: absolute;
+  inset: var(--dice-button-gauge-w);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 4px solid var(--gold-rim);
+  border-radius: var(--radius-full);
+  background:
+    radial-gradient(circle at 38% 26%, color-mix(in srgb, var(--background-cloud) 95%, transparent) 0 9%, transparent 10%),
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--background-cloud) 92%, transparent) 0 28%, color-mix(in srgb, color-mix(in srgb, var(--gold-shine) 30%, var(--background-cloud)) 70%, transparent) 50%, color-mix(in srgb, var(--gold-shine) 75%, transparent) 74%, var(--gold-rim) 100%);
+  box-shadow:
+    0 0 0 2px var(--foreground),
+    0 0 26px 6px var(--gold-shine),
+    inset 0 -10px 16px color-mix(in srgb, var(--gold-rim) 55%, transparent),
+    inset 0 6px 10px color-mix(in srgb, var(--background-cloud) 80%, transparent);
+  cursor: pointer;
+  touch-action: none;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.dice-btn:active:not(:disabled) {
+  transform: translateY(3px) scale(0.97);
+}
+.dice-btn:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+.dice-btn:disabled {
+  cursor: default;
+}
+.dice:not(.is-ready) .dice-btn {
+  filter: saturate(0.55) brightness(0.96);
+}
+.dice-icon {
+  width: 70px;
+  height: 70px;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 2px color-mix(in srgb, var(--foreground) 35%, transparent));
+}
+
+/* ── 독점 띠 + 색종이(§16.5) ── */
+.mono {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mono-confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mono-band {
+  /* 띠 자리(가로 전체)는 slide-in 만 맡고, 그림은 가운데 금 리본 */
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 248px;
+  display: grid;
+  place-items: center;
+  animation: mono-in 300ms var(--ease-standard) both;
+}
+.mono-ribbon {
+  --ribbon-tail-top: 30px;
+  --ribbon-tail-w: 150px;
+  --ribbon-tail-h: 64px;
+  width: 820px;
+  height: 104px;
+}
+.mono-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  padding: 12px 36px 14px 24px;
+  font-size: 34px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.mono-title b {
+  font-weight: var(--weight-regular);
+}
+.mono-who {
+  color: var(--seat);
+  -webkit-text-stroke: 1.5px var(--foreground);
+  paint-order: stroke fill;
+}
+.mono-flag {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  margin: -6px 0;
+}
+.mono-flag--css {
+  border-radius: 50%;
+  background: var(--seat);
+  box-shadow: inset 0 0 0 3px var(--foreground);
+}
+.mono.is-static .mono-band {
+  animation: none;
+}
+@keyframes mono-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* ── 판 그림 받는 중(로비를 거치지 않고 들어왔을 때) ── */
+.board-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 150000;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(var(--background-sky-top), var(--background-sky-mid) 55%, var(--background-sky-bottom));
+}
+.board-loading-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-8);
+  border: 4px solid var(--tile-side-dark);
+  border-radius: var(--radius-card);
+  background: var(--wood-light);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--foreground) 25%, transparent);
+  color: var(--background-cloud);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  text-shadow: -1px -1px 0 var(--tile-side-dark), 1px -1px 0 var(--tile-side-dark), -1px 1px 0 var(--tile-side-dark), 1px 2px 0 var(--tile-side-dark);
+}
+.board-loading-dot {
+  width: 22px;
+  height: 22px;
+  border: 4px solid var(--gold-shine);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: board-spin 0.9s linear infinite;
+}
+@keyframes board-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 세로 화면: 가로로 돌려 달라는 안내(가로 전용 게임, U1 DESIGN §4.2 세로 화면 안내) ──
+   QA6: 게임 루트(.game)의 fixed 최상위 덮개. 전용 z 는 기존 최고(연결 끊김 띠 60) 위 */
+:root {
+  --z-rotate: 100;
+  /* U4 카드 회전(DESIGN §4.2 2026-10-29 U4, motion.rotate-card.*): 주기 4.8s = 세로 머묾 1.2 + 돌기 .8 + 가로 머묾 2.0 + 되돌기 .8 */
+  --rotate-card-period: 4800ms;
+  --rotate-card-ease: cubic-bezier(0.65, 0, 0.35, 1);
+}
+.board-rotate {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-rotate);
+  overflow: hidden;
+  background: linear-gradient(var(--background-sky-top), var(--background-sky-mid));
+  /* P 카드 폭 W(3:4) · L 카드 폭 WL(16:9). DESIGN: W = min(78vw, 420px, 39vh), WL = min(86vw, 4W/3).
+     60vw 상한(U4 구현 보정): 돌기 도중 P 대각선(5W/3 × scale ≈ .97)이 좁은 폰(360·390 폭)에서도 화면 폭 안에 머물게 */
+  --rot-w: min(60vw, 420px, 39dvh);
+  --rot-h: calc(var(--rot-w) * 4 / 3);
+  --rot-wl: min(86vw, var(--rot-w) * 4 / 3);
+  --rot-hl: calc(var(--rot-wl) * 9 / 16);
+  --rot-cy: 42dvh; /* 회전 중심: 가로 중앙 × 42vh(세로 중앙보다 8% 위) */
+}
+.board-rotate-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.board-rotate-body {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* 카드: 금테·그림자는 정적, 움직이는 건 transform·opacity 만 */
+.board-rotate-card {
+  position: absolute;
+  left: calc(50% - var(--rot-w) / 2);
+  top: calc(var(--rot-cy) - var(--rot-h) / 2);
+  width: var(--rot-w);
+  height: var(--rot-h);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--gold-rim);
+  border-radius: var(--radius-card);
+  background: var(--background-sky-mid);
+  box-shadow: var(--shadow-popover);
+  transform-origin: 50% 50%;
+}
+.board-rotate-card.is-l {
+  left: calc(50% - var(--rot-wl) / 2);
+  top: calc(var(--rot-cy) - var(--rot-hl) / 2);
+  width: var(--rot-wl);
+  height: var(--rot-hl);
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.94);
+}
+.board-rotate-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 10%; /* 세로판 9:16 → 3:4: 위 하늘·풍차 섬은 남기고 아래 구름을 자른다 */
+}
+.board-rotate[data-mode='turn'] .board-rotate-card {
+  will-change: transform;
+}
+.board-rotate[data-mode='turn'] .is-p {
+  animation: rotate-card-p-turn var(--rotate-card-period) linear infinite, rotate-card-p-fade var(--rotate-card-period) linear infinite;
+}
+.board-rotate[data-mode='turn'] .is-l {
+  animation: rotate-card-l-turn var(--rotate-card-period) linear infinite, rotate-card-l-fade var(--rotate-card-period) linear infinite;
+}
+/* 0~25% 세로 머묾 → 25~41.667% 돌기(시계방향, 그림 속 금 화살표 방향) → ~83.333% 가로 머묾 → ~100% 되돌기(거울) */
+@keyframes rotate-card-p-turn {
+  0%, 25% { transform: rotate(0deg) scale(1); animation-timing-function: var(--rotate-card-ease); }
+  41.667%, 83.333% { transform: rotate(90deg) scale(0.94); animation-timing-function: var(--rotate-card-ease); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes rotate-card-l-turn {
+  0%, 25% { transform: rotate(-90deg) scale(0.94); animation-timing-function: var(--rotate-card-ease); }
+  41.667%, 83.333% { transform: rotate(0deg) scale(1); animation-timing-function: var(--rotate-card-ease); }
+  100% { transform: rotate(-90deg) scale(0.94); }
+}
+/* 크로스페이드는 돌기 구간의 35~65% 에서만: 25 + 16.667 × .35 = 30.833, × .65 = 35.833 (되돌기 89.167 ~ 94.167) */
+@keyframes rotate-card-p-fade {
+  0%, 30.833% { opacity: 1; }
+  35.833%, 89.167% { opacity: 0; }
+  94.167%, 100% { opacity: 1; }
+}
+@keyframes rotate-card-l-fade {
+  0%, 30.833% { opacity: 0; }
+  35.833%, 89.167% { opacity: 1; }
+  94.167%, 100% { opacity: 0; }
+}
+/* 가로판을 못 받았을 때만: P 카드 옛 ±3° 흔들림(U1) */
+.board-rotate[data-mode='sway'] .is-p {
+  transform-origin: 50% 85%;
+  animation: board-rotate-sway 2.4s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes board-rotate-sway {
+  from { transform: rotate(-3deg); }
+  to { transform: rotate(3deg); }
+}
+/* 알약: 카드 상태와 무관하게 아래 가운데 고정 */
+.board-rotate-pill {
+  position: fixed;
+  left: 50%;
+  bottom: max(6vh, 16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(92vw, 460px);
+  padding: var(--space-3) var(--space-6);
+  border: 3px solid var(--gold-rim);
+  border-radius: var(--radius-full);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-popover);
+  text-align: center;
+}
+.board-rotate-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+}
+.board-rotate-icon::after {
+  /* 도는 방향을 보여 주는 3/4 원 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 5px solid var(--primary-edge);
+  border-left-color: transparent;
+  border-radius: var(--radius-full);
+}
+.board-rotate-device {
+  width: 40px;
+  height: 64px;
+  border: 5px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--background-cloud);
+  animation: board-rotate 2.4s var(--ease-standard) infinite;
+}
+@keyframes board-rotate {
+  0%, 25% { transform: rotate(0); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+.board-rotate-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+.board-rotate-text {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-body);
+  word-break: keep-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dice-btn { transition: none; }
+  .dice.is-ready .dice-halo { animation: none; }
+  .plaza-mask { transition: none; }
+  .tile-flag, .tile-bld { animation: none; }
+  .mono-band { animation: none; }
+  .board-rotate-device { animation: none; transform: rotate(-90deg); }
+  .board-rotate-card { animation: none !important; will-change: auto; }
+  .board-loading-dot { animation: none; }
+}
+
+/* ── 코인 연출(2026-10-28 사용자 요청): 롤링 숫자 · 증감 팝 · 코인 흐름. transform·opacity 만 움직인다 ── */
+.panel-coin-ico {
+  display: inline-flex;
+  flex: none;
+}
+.panel-coin-ico.is-shake {
+  animation: coin-shake 420ms ease-out;
+}
+@keyframes coin-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  20% { transform: translateX(-2px) rotate(-12deg); }
+  40% { transform: translateX(2px) rotate(10deg); }
+  60% { transform: translateX(-1.5px) rotate(-7deg); }
+  80% { transform: translateX(1px) rotate(4deg); }
+}
+
+/* 숫자: 글자마다 고정 폭 칸(릴). 바뀐 자리만 0~9 띠가 돌다 선다 */
+.coin-num {
+  --reel-h: 1.12em;
+  display: inline-flex;
+  height: var(--reel-h);
+  line-height: var(--reel-h);
+  transition: color var(--duration-base) linear;
+}
+.coin-num.is-gain { color: var(--gold-shine); }
+.coin-num.is-loss { color: color-mix(in srgb, var(--destructive) 45%, var(--background-cloud)); }
+.reel {
+  position: relative;
+  display: inline-block;
+  width: 0.56em;
+  height: var(--reel-h);
+  text-align: center;
+}
+.reel--comma { width: 0.26em; }
+.reel-strip { display: block; }
+.reel-cell {
+  display: block;
+  height: var(--reel-h);
+}
+.reel.is-spin {
+  /* 위아래만 자르고 옆 외곽선은 살린다 */
+  clip-path: inset(-1px -0.25em);
+}
+.reel.is-spin .reel-strip {
+  will-change: transform;
+  animation: reel-up var(--dur) cubic-bezier(0.18, 0.72, 0.24, 1.06) both;
+}
+.reel.is-spin.is-down .reel-strip { animation-name: reel-down; }
+.reel.is-exit { animation: reel-fade-out var(--dur, 700ms) ease-in both; }
+.reel.is-enter { animation: reel-fade-in 500ms ease-out both; }
+@keyframes reel-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(var(--n) * var(--reel-h) * -1)); }
+}
+@keyframes reel-down {
+  from { transform: translateY(calc(var(--n) * var(--reel-h) * -1)); }
+  to { transform: translateY(0); }
+}
+@keyframes reel-fade-out { 60% { opacity: 1; } to { opacity: 0; } }
+@keyframes reel-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* 증감 팝: 알약 위 가운데. 이유(작은 흰 글씨) 오른쪽에 큰 숫자. 여러 개면 줄(lane)마다 위로 쌓인다 */
+.coin-pops {
+  position: absolute;
+  left: 30%;
+  right: 0;
+  bottom: calc(100% - 6px);
+  height: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.coin-pop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--lane, 0) * 34px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.coin-pop-in {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 1px 12px 3px;
+  border: 2px solid var(--foreground);
+  border-radius: var(--radius-full);
+  background: linear-gradient(color-mix(in srgb, var(--foreground) 62%, transparent), color-mix(in srgb, var(--foreground) 80%, transparent));
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--foreground) 35%, transparent);
+  font-family: var(--font-display);
+  transform-origin: 50% 100%;
+  animation: coin-pop 1500ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.coin-pop.is-gain .coin-pop-in { border-color: var(--gold-rim-dark); }
+.coin-pop.is-loss .coin-pop-in { border-color: var(--destructive); }
+.coin-pop-why {
+  color: var(--background-cloud);
+  font-size: 15px;
+  line-height: 1.2;
+  text-shadow: 0 1px 0 var(--foreground);
+}
+.coin-pop-num {
+  font-size: 25px;
+  font-weight: var(--weight-regular);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: -1.5px -1.5px 0 var(--foreground), 1.5px -1.5px 0 var(--foreground), -1.5px 1.5px 0 var(--foreground), 1.5px 2.5px 0 var(--foreground);
+}
+.coin-pop.is-gain .coin-pop-num { color: var(--gold-shine); }
+.coin-pop.is-loss .coin-pop-num { color: #FF6B5E; }
+@keyframes coin-pop {
+  0% { opacity: 0; transform: translateY(14px) scale(0.5); }
+  14% { opacity: 1; transform: translateY(-6px) scale(1.14); }
+  24% { transform: translateY(0) scale(1); }
+  78% { opacity: 1; transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-20px) scale(0.96); }
+}
+.coin-pop.is-still .coin-pop-in { animation: coin-pop-still 1000ms linear both; }
+@keyframes coin-pop-still {
+  0% { opacity: 0; }
+  10%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 코인 흐름 층(HUD 스테이지 좌표, 패널 위) */
+.coin-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.coin-fx-img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 0 color-mix(in srgb, var(--foreground) 55%, transparent));
+}
+.coin-fx-fallback {
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--gold-shine), var(--coin) 55%, var(--coin-edge));
+}
+.coin-fly,
+.coin-drain,
+.coin-drop {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  will-change: transform, opacity;
+}
+/* 자리 → 자리: 바깥은 곧게(dx, dy), 안쪽은 포물선(arc), 맨 안은 동전 뒤집기 */
+.coin-fly { animation: coin-fly var(--dur) cubic-bezier(0.45, 0.05, 0.55, 0.95) var(--delay) both; }
+.coin-fly-arc { display: block; animation: coin-arc var(--dur) linear var(--delay) both; }
+.coin-fly-spin { display: block; animation: coin-spin 320ms linear infinite; }
+@keyframes coin-fly {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  12% { opacity: 1; transform: translate(calc(var(--dx) * 0.04), calc(var(--dy) * 0.04)) scale(1.1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.75); }
+}
+@keyframes coin-arc {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(0.3, 0.6, 0.6, 1); }
+  50% { transform: translateY(calc(var(--arc) * -1)); animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.4); }
+  100% { transform: translateY(0); }
+}
+@keyframes coin-spin {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.15); }
+}
+/* 은행에 냄: 아이콘에서 튀어 올랐다 아래로 떨어지며 사라진다 */
+.coin-drain { animation: coin-drain var(--dur) cubic-bezier(0.5, 0, 0.9, 0.6) var(--delay) both; }
+@keyframes coin-drain {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.7); }
+  15% { opacity: 1; transform: translate(calc(var(--sx) * 0.6), -16px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--sx) * 2.4), 62px) scale(0.8) rotate(40deg); }
+}
+/* 은행에서 받음: 위에서 떨어져 아이콘 속으로 */
+.coin-drop { animation: coin-drop var(--dur) cubic-bezier(0.55, 0, 0.85, 0.45) var(--delay) both; }
+@keyframes coin-drop {
+  0% { opacity: 0; transform: translate(calc(var(--sx) * 2), -78px) scale(1); }
+  20% { opacity: 1; }
+  85% { opacity: 1; transform: translate(0, 0) scale(0.9); }
+  100% { opacity: 0; transform: translate(0, 2px) scale(0.5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel.is-spin .reel-strip,
+  .reel.is-exit,
+  .reel.is-enter,
+  .panel-coin-ico.is-shake { animation: none; }
+  .coin-fx { display: none; }
+}

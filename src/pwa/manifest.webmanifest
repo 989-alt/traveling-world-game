@@ -1,0 +1,16 @@
+{
+  "name": "돌아라! 지구 한 바퀴",
+  "short_name": "지구 한 바퀴",
+  "description": "세계의 여러 나라를 여행하는 보드게임",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#8EC9F5",
+  "theme_color": "#3A8DE0",
+  "icons": [
+    { "src": "/webp/UI-logo.webp", "sizes": "512x512", "type": "image/webp", "purpose": "any" }
+  ]
+}

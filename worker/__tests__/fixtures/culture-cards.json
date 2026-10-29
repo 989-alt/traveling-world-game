@@ -1,0 +1,25 @@
+[
+  {
+    "continent": "asia",
+    "country": "th",
+    "id": "cc-th",
+    "image": "cc_th.png",
+    "intro": "짜오프라야강 곁에서 수상 시장이 열려요.",
+    "name": "타이"
+  },
+  {
+    "badge": {
+      "id": "badge-np",
+      "image": "badge_dalbhat.png",
+      "kind": "food",
+      "name": "달밧",
+      "origin": "outside"
+    },
+    "continent": "asia",
+    "country": "np",
+    "id": "cc-np",
+    "image": "cc_np.png",
+    "intro": "히말라야 산지에서 셰르파족이 등산객을 안내해요.",
+    "name": "네팔"
+  }
+]

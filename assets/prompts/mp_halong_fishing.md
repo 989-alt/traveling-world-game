@@ -1,0 +1,7 @@
+# mp_halong_fishing mission photo: fishing in Ha Long Bay, opaque
+Scene: one clear subject fills the frame like a travel photo: Ha Long Bay with its tall green limestone karst islands rising straight out of calm jade-green water, in the foreground a small wooden fishing boat where a fisherman in a conical palm-leaf hat and modern shirt hauls up a net full of silver fish while his partner steadies the oar, a floating fishing village of small houses on bamboo rafts with fish pens beside them, a round woven basket boat tied to the raft. People are shown with respect and dignity. The fishing boat and the net being pulled in are the center of the picture, so it reads at once as fishing as a way of life in the bay.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level from the water, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #4FA98E jade water, #7DCB4E green.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

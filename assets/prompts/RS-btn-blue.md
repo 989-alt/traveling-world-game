@@ -1,0 +1,7 @@
+# RS-btn-blue glossy blue pill button with a navy underside and a plain face, sprite source on magenta
+Scene: one game button alone, seen straight on: a rounded pill about two and a half units wide and one unit tall, a glossy bright blue face with a lighter blue highlight band across its upper 40 percent, a thick navy underside showing along the bottom edge, a thin dark outline, the face kept completely plain, the pill centered and filling about 80 percent of the frame width, readable at 44 pixels tall. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered and level.
+Lighting: soft top light with the glossy highlight band on the upper part and a darker shade at the bottom, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #5AA8F5 blue face, #1F6FD6 blue shade, #0F3F86 navy underside, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 16:9

@@ -1,0 +1,7 @@
+# mp_ski mission photo: ski resort slope, opaque
+Scene: one clear subject fills the frame like a travel photo: a snowy ski resort in high mountains, a wide groomed white slope running down between dark pine trees, three skiers in bright modern ski suits, helmets and goggles carving turns and sending up sprays of snow, a chairlift with red seats climbing the slope on steel pylons, a timber ski lodge with a snowy roof and a plain cream pennant at its peak at the bottom, pointed snow peaks under a clear blue sky behind. People are shown with respect and dignity. The skiers on the white slope and the chairlift are the center of the picture, so it reads at once as a ski resort.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level with gentle depth, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF snow, #2F6B3A pine green, #E6392E ski suit red.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

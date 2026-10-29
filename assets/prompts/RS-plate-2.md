@@ -1,0 +1,7 @@
+# RS-plate-2 results name plate, a cream pill with a gold rim and an orange band on its left third, plain face, sprite source on magenta
+Scene: one name plate alone, seen straight on: a long rounded pill about five units wide and one unit tall, a thick gold rim with a thin dark outline, the left 30 percent of its face filled with a flat bright orange band ending in a soft curved edge, the right 70 percent a plain cream face kept completely clear, a thin shadow line under the pill, the pill centered and filling about 90 percent of the frame width, readable at 60 pixels tall. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered and level.
+Lighting: soft top light with a faint glossy highlight along the upper edge of the gold rim, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #F97316 orange band, #FBF3DC cream face, #F2B21C gold rim, #B8860B dark gold, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 16:9

@@ -1,0 +1,61 @@
+/* 매달린 나무 간판(UI-sign-small 256×256: 밧줄 고리 y 0~48 · 테 x 12~244 y 48~249). 판만 9-slice 로 늘리고 고리는 clip 으로 자른다.
+ * 9-slice 폭 = 원본 × 0.25(위 72→18 · 옆 36→9 · 아래 30→7.5), 바깥 투명 여백만큼 outset(위 12 = 고리, 옆 3, 아래 2) */
+.hang {
+  position: absolute;
+  pointer-events: auto;
+  filter: drop-shadow(0 3px 0 color-mix(in srgb, var(--foreground) 25%, transparent)); /* 정적 */
+}
+.hang-plate {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 2px 6px 0;
+  border: 0;
+  border-image-source: var(--sign-img);
+  border-image-slice: 72 36 30 36 fill;
+  border-image-width: 18px 9px 7.5px 9px;
+  border-image-outset: 12px 3px 2px 3px;
+  border-image-repeat: stretch;
+  clip-path: inset(0 round 5px);
+  background: transparent;
+  color: var(--background-cloud);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: -1px -1px 0 var(--tile-side-dark), 1px -1px 0 var(--tile-side-dark), -1px 1px 0 var(--tile-side-dark), 1px 2px 0 var(--tile-side-dark);
+}
+/* 그림이 없을 때(매니페스트·로드 실패): 나무색 판 */
+.hang[style*='--sign-img: none'] .hang-plate {
+  border: 3px solid var(--tile-side-dark);
+  border-radius: 8px;
+  background: var(--wood-light);
+}
+button.hang-plate {
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+button.hang-plate:hover { transform: translateY(1px); }
+button.hang-plate:active { transform: translateY(3px); }
+button.hang-plate:focus-visible {
+  outline: 3px solid var(--ring, var(--accent));
+  outline-offset: 2px;
+  clip-path: none;
+}
+/* 밧줄 2 가닥: 간판 윗변에서 위로(꼰 밧줄 무늬) */
+.hang-rope {
+  position: absolute;
+  bottom: 100%;
+  width: 4px;
+  height: var(--rope);
+  border-radius: 2px;
+  background: repeating-linear-gradient(-35deg, #E3C48E 0 3px, #A8763C 3px 5px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tile-side-dark) 60%, transparent);
+}
+.hang-rope--l { left: calc(22% - 2px); }
+.hang-rope--r { right: calc(22% - 2px); }

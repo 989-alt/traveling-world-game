@@ -1,0 +1,7 @@
+# mp_elarco mission photo: El Arco rock arch at Cabo San Lucas, opaque
+Scene: one clear subject fills the frame like a travel photo: El Arco at the tip of the Baja California peninsula, a tall natural rock arch of pale granite standing at the end of a rocky point where the ocean waves pass right through the opening, jagged granite pinnacles beside it, a sea lion resting on a flat rock at its base, a small white tour boat with three people in sun hats and life vests floating beyond the arch, shown with respect and dignity. The arch opening with sea and sky visible through it is the center of the picture, so it reads at once as an arch-shaped rock standing in the sea.
+Camera: a travel photo framing in a square frame, one subject centered and filling most of the picture, eye level from the water, the far background softened by distance.
+Lighting: bright clear daylight, soft warm key from the upper left, light haze far away.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #3A8DE0 sky, #F6FBFF cloud, #B9A68A granite, #35B6C9 sea water.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

@@ -1,0 +1,147 @@
+/* 보드 캐릭터 (DESIGN §13). 움직임은 transform·opacity 만. filter·box-shadow 는 정적으로만 쓴다.
+   bc- 접두: 미션 선지 .ch(missions.css, Choice)와 겹치지 않게(QA4-css). */
+:is(.bc, .bcc) {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+:is(.bc, .bcc).is-moving {
+  will-change: transform;
+}
+.bc-air,
+.bc-motion,
+.bc-breath {
+  transform-origin: 0 0; /* = 발 앵커 */
+}
+.bc-breath {
+  animation: bc-breath var(--idle-breath) ease-in-out infinite;
+}
+:is(.bc, .bcc)[data-seat='1'] .bc-breath { animation-delay: -650ms; }
+:is(.bc, .bcc)[data-seat='2'] .bc-breath { animation-delay: -1300ms; }
+:is(.bc, .bcc)[data-seat='3'] .bc-breath { animation-delay: -1950ms; }
+.bc-breath.is-still {
+  animation: none;
+}
+@keyframes bc-breath {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.025); }
+}
+
+/* 발밑 자리 색 타원: 작아진 캐릭터도 누구인지 보인다(정적). 그림 위 땅에 칠한 듯 얇게 */
+.bc-foot {
+  position: absolute;
+  left: calc(var(--character-w) * -0.45);
+  top: -4px;
+  width: calc(var(--character-w) * 0.9);
+  height: 8px;
+  border: 1.5px solid var(--seat);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--seat) 30%, transparent);
+  opacity: 0.9;
+}
+/* 접지 그림자: 발밑 부드러운 어둠(정적) — 칸 그림 속 물체처럼 땅에 붙는다 */
+.bc-shadow {
+  position: absolute;
+  left: calc(var(--character-w) * -0.36);
+  top: -3.5px;
+  width: calc(var(--character-w) * 0.72);
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--shadow-contact), transparent);
+}
+
+/* 착지 먼지: 발 양옆으로 퍼지며 사라지는 작은 흙먼지 3개(transform·opacity, 한 번) */
+.bc-dust {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.bc-dust i {
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  width: 8px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--background-cloud) 85%, var(--wood-light)), transparent);
+  opacity: 0;
+  animation: bc-dust 420ms var(--ease-standard) forwards;
+}
+.bc-dust i:nth-child(1) { --dx: -15px; --dy: -3px; }
+.bc-dust i:nth-child(2) { --dx: 15px; --dy: -3px; }
+.bc-dust i:nth-child(3) { --dx: 0px; --dy: -7px; animation-delay: 40ms; }
+@keyframes bc-dust {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0.9; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1.5); opacity: 0; }
+}
+
+/* 스프라이트 상자 = 토큰 32×44. 발 앵커가 상자 바닥 가운데. 포즈 그림(정사각)은 바닥 맞춤 */
+.bc-sprite {
+  position: absolute;
+  left: calc(var(--character-w) / -2);
+  top: calc(var(--character-h) * -1);
+  width: var(--character-w);
+  height: var(--character-h);
+}
+.bc-pose {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.bc-img {
+  flex: none;
+  width: var(--character-h);
+  height: var(--character-h);
+}
+/* 그림 미로드: 자리 색 원 (DESIGN §14.3) */
+.bc-img.asset-fallback {
+  width: calc(var(--character-w) * 0.8);
+  height: calc(var(--character-w) * 0.8);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--foreground);
+  background: var(--seat) !important;
+}
+
+/* 칸 환경광(정적 SVG 필터, Board AmbientFilters): 눈·얼음 칸 차게, 사막 칸 따뜻하게, 그 밖은 그림 채도에 맞춤 */
+:is(.bc, .bcc)[data-ambient='base'] .bc-sprite { filter: url(#amb-base); }
+:is(.bc, .bcc)[data-ambient='cool'] .bc-sprite { filter: url(#amb-cool); }
+:is(.bc, .bcc)[data-ambient='warm'] .bc-sprite { filter: url(#amb-warm); }
+
+/* 파산: 회색(정적, 전환 없음) */
+:is(.bc, .bcc).is-grey .bc-sprite {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.bc-coin {
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  width: 14px;
+  height: 14px;
+  animation: bc-coin 1.2s var(--ease-standard) forwards;
+}
+.bc-coin-img {
+  width: 100%;
+  height: 100%;
+}
+@keyframes bc-coin {
+  from { transform: translate(-50%, 0); opacity: 1; }
+  to { transform: translate(-50%, -20px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-breath { animation: none; }
+  .bc-coin { display: none; }
+  .bc-dust { display: none; }
+}
+
+/* U5(§16.9.2): 광장 네 귀 돌 단 위 전신 캐릭터. 말과 같은 부품을 키 96 배율로(Board 가 h 96 을 넘김).
+   발밑 자리색 타원은 말 표시라 귀퉁이엔 얇게, 접지 그림자는 단 위 56×14 꼴(배율 2.18 × 23×7 ≈ 50×15) */
+.bcc .bc-foot {
+  opacity: 0.55;
+}
