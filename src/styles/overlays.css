@@ -13,6 +13,8 @@
 .ov-layer.is-dim { background: color-mix(in srgb, var(--foreground) 35%, transparent); pointer-events: auto; }
 .ov-layer--menu { z-index: 9; }
 .ov-layer--top { z-index: 40; }
+/* U10(DESIGN §18.5): 알림 카드(이벤트·통행료) 고정 레이어 — HUD·오버레이 위, 컷씬·세로 안내 아래 */
+.ov-layer--notice { z-index: var(--z-notice); }
 .ov-stage {
   position: absolute;
   left: 50%;
@@ -88,7 +90,7 @@
 .ov-btn--small { min-width: 0; min-height: 44px; padding: 0 var(--space-4); font-size: var(--text-lead); }
 .ov-btn:active:not(:disabled) { transform: translateY(3px); }
 .ov-btn:disabled { cursor: default; opacity: 0.55; }
-.ov-btn:focus-visible, .ov-ans:focus-visible, .tp-tile:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+.ov-btn:focus-visible, .ov-ans:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
 
 /* ── 답 버튼 2×2 (a 파랑·b 주황·c 초록·d 보라). R2 D4: 위 40% 광택 + 안쪽 밝은 테 1px + 밑단 6px + radius 20. 색은 그대로 ── */
 .ov-ans {
@@ -138,7 +140,10 @@
 [data-role="spectator"] .ov-ans:disabled, [data-role="spectator"][data-locked="1"] .ov-ans:disabled:not([aria-checked="true"]) { filter: none; opacity: 0.95; }
 
 /* ── 남은 시간 막대 ── */
-.ov-count { position: relative; height: 10px; flex: 1; border-radius: var(--radius-full); background: var(--timer-track); overflow: hidden; }
+.ov-countbox { position: relative; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ov-count { position: relative; height: 10px; border-radius: var(--radius-full); background: var(--timer-track); overflow: hidden; }
+/* U10(DESIGN §18.5): 막대가 0 에 멈춘 채 서버가 마감을 늘리는 동안(해설 shown 대기) — 막대 아래 1줄, 자리를 밀지 않게 띄운다 */
+.ov-count-wait { position: absolute; left: 0; right: 0; top: 14px; color: var(--muted-foreground); font: var(--weight-bold) 14px / 1.2 var(--font-body); text-align: center; }
 .ov-count-bar { position: absolute; inset: 0; background: var(--timer-arc); transform-origin: 0 50%; transition: transform 100ms linear; }
 
 /* ── 반짝이(정적) ── */
@@ -490,9 +495,38 @@
 .ex-tf-text { flex: 1; margin: 0; font-size: var(--text-lead); font-weight: var(--weight-bold); line-height: 1.4; word-break: keep-all; }
 .ex-tf-btns { display: flex; gap: var(--space-3); }
 .ex-tf-btn { width: 200px; min-height: 56px; font-size: 24px; }
+/* 참/거짓 결과 2초(DESIGN §18.5): 정답 선지 = correct.bright 테 3 + correct.soft 바탕, 오답 선지 .5. 아래 참가 자리 칩 3(닉네임 알약 120×28 + 자리색 띠) */
+.ex-tf.is-result { flex-wrap: wrap; row-gap: 8px; }
+.ex-tf.is-result .ex-tf-res { animation: ex-tf-fade var(--duration-fast) linear both; }
+.ex-tf-res.is-answer { background: var(--correct-soft); color: var(--correct); box-shadow: inset 0 -6px 0 color-mix(in srgb, var(--correct-bright) 45%, transparent), 0 0 0 3px var(--correct-bright), var(--shadow-button); }
+.ex-tf-res.is-off { opacity: 0.5; }
+@keyframes ex-tf-fade { from { opacity: 0.2; } }
+.ex-tf-res.is-off { animation-name: ex-tf-fade-off; }
+@keyframes ex-tf-fade-off { from { opacity: 1; } to { opacity: 0.5; } }
+.ex-tf-chips { flex-basis: 100%; display: flex; justify-content: center; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.ex-tf-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 120px;
+  height: 28px;
+  padding: 0 10px 0 14px;
+  border-radius: var(--radius-full);
+  background: var(--popover) linear-gradient(90deg, var(--seat) 0 8px, transparent 8px);
+  box-shadow: inset 0 0 0 2px var(--scroll-line);
+  color: var(--foreground);
+  font: var(--weight-bold) 15px / 1 var(--font-body);
+  opacity: 0.5;
+}
+.ex-tf-chip.is-ok { background: var(--correct-soft) linear-gradient(90deg, var(--seat) 0 8px, transparent 8px); box-shadow: inset 0 0 0 2px var(--seat); color: var(--correct); opacity: 1; }
+.ex-tf-chip .ex-check { width: 11px; height: 6px; flex: none; border-width: 0 0 2.5px 2.5px; }
+.ex-tf-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .ex-tf.is-result .ex-tf-res { animation: none; } }
 
 /* ── 행동 패널 480×220 (작은 두루마리) ── */
-.ap, .tp, .rules, .evc {
+.ap, .rules, .evc {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -529,31 +563,6 @@
 .ap-note { margin: 0; color: var(--muted-foreground); font-size: var(--text-caption); font-weight: var(--weight-bold); }
 
 @keyframes ov-rise { from { opacity: 0; transform: translate(-50%, 24px); } }
-
-/* ── 칸 고르기 ── */
-.tp { top: 90px; width: 900px; }
-.tp-paper { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--scroll-paper); box-shadow: inset 0 0 0 3px var(--scroll-line), var(--shadow-popover); }
-.tp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; width: 100%; }
-.tp-tile {
-  min-height: 48px;
-  padding: 2px 4px;
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--card);
-  color: var(--card-foreground);
-  box-shadow: inset 0 -5px 0 var(--muted), inset 0 0 0 2px var(--card-frame);
-  font: var(--weight-regular) 15px / 1.1 var(--font-display);
-  word-break: keep-all;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.tp-tile--asia { box-shadow: inset 0 -6px 0 var(--continent-asia), inset 0 0 0 2px var(--card-frame); }
-.tp-tile--europe { box-shadow: inset 0 -6px 0 var(--continent-europe), inset 0 0 0 2px var(--card-frame); }
-.tp-tile--africa { box-shadow: inset 0 -6px 0 var(--continent-africa), inset 0 0 0 2px var(--card-frame); }
-.tp-tile--namerica { box-shadow: inset 0 -6px 0 var(--continent-north-america), inset 0 0 0 2px var(--card-frame); }
-.tp-tile--samerica { box-shadow: inset 0 -6px 0 var(--continent-south-america), inset 0 0 0 2px var(--card-frame); }
-.tp-tile--oceania { box-shadow: inset 0 -6px 0 var(--tourist), inset 0 0 0 2px var(--card-frame); }
-.tp-tile:disabled { opacity: 0.55; cursor: default; }
 
 /* ── 이벤트 카드 ── */
 .evc { top: 50%; width: 560px; transform: translate(-50%, -50%); animation-name: ov-pop; cursor: pointer; }
@@ -659,7 +668,7 @@
 @keyframes cut-fade { from { opacity: 0; transform: scale(0.8); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .cc-wrap, .qs, .qs-peek, .ex, .ap, .tp, .rules, .evc, .ov-sparkles i { animation: none; }
+  .cc-wrap, .qs, .qs-peek, .ex, .ap, .rules, .evc, .ov-sparkles i { animation: none; }
   .qs-peek-img { transition: none; }
   .ov-btn, .ov-ans { transition: none; }
 }

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { continentTiles } from '../../shared/board';
 import type { GameState, Seat } from '../../shared/types';
 import { apply, createGame } from '../engine';
-import { botAction, botSeats, drawAccuracy, playBotGame, reserve, seededRand } from '../bot';
+import { BOT_DELAY_MS, botAction, botDelayMid, botDelayMs, botSeats, drawAccuracy, playBotGame, reserve, seededRand } from '../bot';
+import { STEP_MS } from '../../shared/economy';
 import { arrive, edit, full, newGame } from './helpers';
 import { BOT_ACCURACY } from '../../shared/economy';
 
@@ -183,5 +184,75 @@ describe('playBotGame', () => {
     const zero = state.log.filter((e) => e.ev === 'answer' && e.seat === 0);
     expect(zero.length).toBeGreaterThan(0);
     expect(zero.every((e) => e.ev === 'answer' && e.choice !== null && !e.correct)).toBe(true);
+  });
+});
+
+describe('봇 단계별 지연(PRD §4.5 U10)', () => {
+  it('표 값이 PRD 그대로', () => {
+    expect(BOT_DELAY_MS).toEqual({
+      roll: [1000, 2000], question: [5000, 8000], tf: [3000, 5000],
+      action: [2500, 3500], toll: [2500, 3500], takeover: [2500, 3500], mission: [8000, 12000],
+      reward: [2000, 3000], festival: [2000, 3000], travel: [2000, 3000], pickTile: [2000, 3000], shield: [2000, 3000],
+    });
+  });
+
+  it('참/거짓 1000회 추출 전부 < 6000(창 6초 — 봇이 마감을 넘겨 무응답이 되는 일 0), 범위 [3000, 5000]', () => {
+    const r = seededRand(21);
+    const xs = Array.from({ length: 1000 }, () => botDelayMs(r, 'tf'));
+    expect(xs.every((x) => x < STEP_MS.tf)).toBe(true);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(3000);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(5000);
+  });
+
+  it.each(Object.entries(BOT_DELAY_MS))('%s: 추출은 [하한, 상한] 안, 상한 < 그 단계 창', (step, [lo, hi]) => {
+    const r = seededRand(5);
+    const xs = Array.from({ length: 500 }, () => botDelayMs(r, step as keyof typeof BOT_DELAY_MS));
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(lo);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(hi);
+    expect(hi).toBeLessThan(STEP_MS[step as keyof typeof BOT_DELAY_MS]);
+    expect(botDelayMid(step as keyof typeof BOT_DELAY_MS)).toBe((lo + hi) / 2);
+  });
+
+  it('행동하지 않는 단계(문화 카드·해설·참/거짓 결과)는 지연 0, rand 를 쓰지 않는다', () => {
+    let n = 0;
+    const r = () => { n++; return 0.5; };
+    for (const st of ['culture', 'explanation', 'tfResult'] as const) {
+      expect(botDelayMs(r, st)).toBe(0);
+      expect(botDelayMid(st)).toBe(0);
+    }
+    expect(n).toBe(0);
+  });
+
+  it('문화 카드: 봇 차례여도 봇 자리 없음, 낼 행동 없음(시간으로만 닫힘)', () => {
+    const s = arrive(newGame(1, BOTS), 0, 2);
+    expect(s.turn.step).toBe('culture');
+    expect(botSeats(s)).toEqual([]);
+    expect(botAction(s, 0, full, seededRand(1), 1)).toBeNull();
+  });
+
+});
+
+describe('playBotGame 잰 턴 시간(turnMs 없음, PRD §4.3 U10)', () => {
+  const run = (seed: number, turnMs?: number) => {
+    const state = createGame({ seed, bots: BOTS, settings: { totalMinutes: 40, touristQuiz: false } });
+    return playBotGame({ state, content: full, rand: seededRand(seed), accuracy: [0.65, 0.65, 0.65, 0.65], turnMs, timeoutP: 0.05 });
+  };
+
+  it('결정적이고 끝까지 돈다. 턴 길이 합 ≈ 놀이 시간(마지막 턴만큼 넘을 수 있음)', () => {
+    const a = run(3), b = run(3);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(a.state.phase).toBe('finished');
+    const total = a.turnsMs.reduce((x, y) => x + y, 0);
+    expect(total).toBeGreaterThanOrEqual(40 * 60_000 - Math.max(...a.turnsMs));
+    expect(a.turnsMs.every((t) => t >= botDelayMid('roll'))).toBe(true);
+  });
+
+  it('턴 시간은 주사위 1회 최소 연출보다 길고, 고정 turnMs 를 주면 잰 값은 비어 있다', () => {
+    const a = run(4);
+    const sorted = [...a.turnsMs].sort((x, y) => x - y);
+    const median = sorted[sorted.length >> 1];
+    expect(median).toBeGreaterThan(10_000);
+    expect(median).toBeLessThan(120_000);
+    expect(run(4, 56_000).turnsMs).toEqual([]);
   });
 });

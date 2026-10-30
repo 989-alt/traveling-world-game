@@ -43,8 +43,8 @@ export interface Built { base: string; out: string; RoomCtor: typeof Room; close
 /** 기기 쪽 시간(해설 최소 표시 시간·알림 줄·컷씬)이 정해진 곳. uiScale 빌드에서 이 값들에 배율을 곱한다 */
 const UI_TIMES: [RegExp, RegExp][] = [
   [/ui\/overlays\/ExplainCard\.tsx$/, /\bSTEP_MS\.explanation(?:Full|Short)\b/g],
-  [/ui\/screens\/Game\.tsx$/, /\b(?:TOLL_NOTICE_MS|HELD_NOTICE_MS) = \d+/g],
-  [/ui\/overlays\/EventCard\.tsx$/, /\bEVENT_MS = \d+/g],
+  // 알림 카드 시간(U10: shared/timing 한 곳 — 서버 runnerImport 는 이 빌드와 따로라 서버 값은 그대로)
+  [/shared\/timing\.ts$/, /\b(?:EVENT_MS|TOLL_MS) = \d+/g],
   [/ui\/cutscene\/Cutscene\.tsx$/, /\bBANNER_ONLY_MS = \d+/g],
   [/shared\/protocol\.ts$/, /\b(?:CUT_MS|HOLD_MS) = \d+/g], // 컷씬 길이(Cutscene.tsx 가 여기서 가져온다)
 ];

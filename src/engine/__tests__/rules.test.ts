@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { apply, createGame, holdsReveal } from '../engine';
-import { ANTARCTIC_TILE, continentTiles, CONTINENTS, monopolyNeedsBuilding, TRAVEL_TILE } from '../../shared/board';
+import { apply, createGame, holdsReveal, stepMs } from '../engine';
+import { botSeats } from '../bot';
+import { ANTARCTIC_TILE, BOARD, continentTiles, CONTINENTS, monopolyNeedsBuilding, TRAVEL_TILE } from '../../shared/board';
 import type { GameState, Seat } from '../../shared/types';
-import { KOREA_BONUS, SALARY, TAKEOVER_RATE } from '../../shared/economy';
+import { KOREA_BONUS, SALARY, STEP_MS, TAKEOVER_RATE } from '../../shared/economy';
+import { TF_RESULT_MS } from '../../shared/timing';
 import { answerAndSkip, arrive, edit, evs, full, landAndAnswer, last, newGame, run, sample, withDice } from './helpers';
 
 const T = { type: 'timeout' } as const;
@@ -201,12 +203,33 @@ describe('무응답', () => {
     expect(s.players.map((p) => p.coin)).toEqual([5480, 5050, 5000, 5000]); // 0번은 출발 통과 월급
   });
 
-  it('3명 모두 답하면 참/거짓이 바로 닫힌다', () => {
+  it('U10: 3명 모두 답해도 바로 닫지 않고 결과 2초(tfResult) 뒤 닫힌다', () => {
     let s = arrive(newGame(), 0, 2);
     s = run(s, [T, { type: 'answer', seat: 0, choice: 1, ms: 500 }, T]);
     s = run(s, [1, 2, 3].map((seat) => ({ type: 'tfAnswer', seat: seat as Seat, value: true })));
+    expect(s.turn.step).toBe('tfResult');
+    expect(stepMs(s)).toBe(TF_RESULT_MS);
+    expect(s.turn.tf).not.toBeNull(); // 결과 표시용으로 남는다
+    expect(evs(s, 'tf_answer')).toHaveLength(3); // 결과(누가 맞혔는지)·코인은 결과 단계가 열릴 때 이미 나온다
+    expect(apply(s, { type: 'tfAnswer', seat: 1, value: false }, full)).toBe(s); // 결과 단계엔 답 없음
+    s = apply(s, T, full);
     expect(s.turn.step).toBe('action');
-    expect(evs(s, 'tf_answer')).toHaveLength(3);
+    expect(s.turn.tf).toBeNull();
+  });
+
+  it('U10: 참/거짓 전원 무응답 → 6초 마감 → 결과 2초 → 닫힘(총 8초)', () => {
+    let s = arrive(newGame(), 0, 2);
+    s = run(s, [T, { type: 'answer', seat: 0, choice: 1, ms: 500 }, T]);
+    expect(s.turn.step).toBe('tf');
+    expect(stepMs(s)).toBe(STEP_MS.tf);
+    s = apply(s, T, full);
+    expect(s.turn.step).toBe('tfResult');
+    expect(stepMs(s)).toBe(2000);
+    expect(STEP_MS.tf + stepMs(s)).toBe(8000);
+    expect(evs(s, 'tf_answer').map((e) => (e as { value: unknown }).value)).toEqual([null, null, null]);
+    expect(botSeats(edit(s, (d) => { d.seats.forEach((x) => { x.isBot = true; }); }))).toEqual([]); // 봇도 기다린다
+    s = apply(s, T, full);
+    expect(s.turn.step).toBe('action');
   });
 });
 
@@ -616,6 +639,8 @@ describe('특수 칸', () => {
     s = apply(s, T, full);
     expect(last(s, 'tf')).toMatchObject({ cardId: m.id, stmtId: `${m.id}-tf`, mTag: m.spectatorTf.mTags[0] ?? null });
     expect(s.log.findIndex((e) => e.ev === 'tf')).toBeLessThan(s.log.findIndex((e) => e.ev === 'tf_answer'));
+    expect(s.turn.step).toBe('tfResult');
+    s = apply(s, T, full);
     expect(s.turn.step).toBe('reward');
     expect(s.turn.rewardOptions.length).toBeGreaterThanOrEqual(2);
     expect(s.turn.rewardOptions.length).toBeLessThanOrEqual(3);
@@ -623,7 +648,7 @@ describe('특수 칸', () => {
 
   it('미션 실패 → 보상 없음', () => {
     let s = arrive(newGame(), 0, 20);
-    s = run(s, [{ type: 'missionAnswer', seat: 0, answer: {}, ms: 1 }, T]);
+    s = run(s, [{ type: 'missionAnswer', seat: 0, answer: {}, ms: 1 }, T, T]); // tf 6초 → 결과 2초
     expect(last(s, 'mission')).toMatchObject({ success: false });
     expect(s.turn).toMatchObject({ seat: 1, step: 'roll' });
   });
@@ -642,16 +667,21 @@ describe('특수 칸', () => {
     s = apply(s, T, full);
     expect(evs(s, 'tf_answer').map((e) => (e as { value: unknown }).value)).toEqual([ans, !ans, ans]);
     expect(s.players.map((p) => p.coin).slice(1)).toEqual([5050, 5000, 5050]);
+    expect(s.turn).toMatchObject({ seat: 0, step: 'tfResult' });
+    expect(holdsReveal(s)).toBe(false);
+    s = apply(s, T, full);
     expect(s.turn).toMatchObject({ seat: 1, step: 'roll' });
   });
 
-  it('QA4-reveal: 미션 성공 tf 는 기존대로 다 답하면 바로 닫힌다(reveal 없음)', () => {
+  it('QA4-reveal: 미션 성공 tf 는 기존대로 다 답하면 닫힌다(reveal 없음) — U10: 결과 2초 뒤', () => {
     let s = arrive(newGame(), 0, 6);
     const m = full.missions.find((x) => x.id === s.turn.missionId)!;
     const answer = m.type === 'connect' ? { pairs: m.pairs } : { steps: m.steps };
     s = apply(s, { type: 'missionAnswer', seat: 0, answer, ms: 9000 }, full);
     expect(holdsReveal(s)).toBe(false);
     s = run(s, [1, 2, 3].map((seat) => ({ type: 'tfAnswer', seat: seat as Seat, value: true })));
+    expect(s.turn.step).toBe('tfResult');
+    s = apply(s, T, full);
     expect(s.turn.step).toBe('reward');
     expect(evs(s, 'tf_answer')).toHaveLength(3);
   });
@@ -903,6 +933,8 @@ describe('fix round 1 minors', () => {
     expect(s.turn.step).toBe('tf');
     expect(apply(s, { type: 'tfAnswer', seat: 3, value: true }, full)).toBe(s);
     s = run(s, [{ type: 'tfAnswer', seat: 1, value: true }, { type: 'tfAnswer', seat: 2, value: true }]);
+    expect(s.turn.step).toBe('tfResult');
+    s = apply(s, T, full);
     expect(s.turn.step).toBe('action');
     expect(evs(s, 'tf_answer').map((e) => (e as { value: unknown }).value).at(-1)).toBeNull();
   });
@@ -969,5 +1001,87 @@ describe('미션 활동 고르기: 안 만난 대번호 우선 (§3.5, 2026-10-2
     expect(['m-1', 'm-2']).toContain(missionAt(edit(both, (d) => { d.usedMissionIds = ['m-1', 'm-2']; })));
     // 안 쓴 활동이 이미 만난 대번호뿐이면 그것을 낸다(쓴 활동으로 돌아가지 않는다)
     expect(missionAt(edit(withTopics(newGame(3), ['8.1']), (d) => { d.usedMissionIds = ['m-2']; }))).toBe('m-1');
+  });
+});
+
+describe('U10 보드에서 칸 고르기(PRD §3.6.1) · 단계 시간(§4.3)', () => {
+  const atTravel = () => edit(newGame(), (d) => { d.turn.step = 'travel'; d.players[0].pos = TRAVEL_TILE; d.players[0].travelPending = true; });
+  const atPick = (step: 'pickTile' | 'festival') => edit(own(own(newGame(), 2, 0), 12, 0), (d) => { d.turn.step = step; d.turn.tile = step === 'festival' ? 9 : 6; d.players[0].pos = step === 'festival' ? 9 : 6; });
+  const P = (tile: number | null, seat: Seat = 0) => ({ type: 'pickPreview', seat, tile }) as const;
+
+  it('세계여행: 선택 미리보기는 옮길 수 있고, 마감에 그 칸으로 확정(via travel)', () => {
+    let s = atTravel();
+    s = apply(s, P(5), full);
+    expect(s.turn.preview).toBe(5);
+    s = apply(s, P(14), full); // 다른 칸 = 선택 옮김
+    expect(s.turn.preview).toBe(14);
+    expect(evs(s, 'move')).toHaveLength(0); // 확정 아님
+    s = apply(s, T, full);
+    expect(last(s, 'move')).toMatchObject({ seat: 0, from: TRAVEL_TILE, to: 14, via: 'travel' });
+    expect(s.players[0].travelPending).toBe(false);
+    expect(s.turn.preview).toBeUndefined();
+  });
+
+  it('세계여행: 미리보기가 없으면(또는 해제했으면) 마감에 travelPending=false 로 주사위 단계(현행)', () => {
+    for (const s0 of [atTravel(), apply(apply(atTravel(), P(5), full), P(null), full)]) {
+      const s = apply(s0, T, full);
+      expect(s.turn).toMatchObject({ seat: 0, step: 'roll' });
+      expect(s.players[0].travelPending).toBe(false);
+      expect(evs(s, 'move')).toHaveLength(0);
+    }
+  });
+
+  it('고를 수 없는 칸·남의 차례·고르기 아닌 단계의 미리보기는 거부(같은 참조)', () => {
+    const s = atTravel();
+    expect(apply(s, P(TRAVEL_TILE), full)).toBe(s); // 세계여행 칸 자신
+    expect(apply(s, P(30), full)).toBe(s);
+    expect(apply(s, P(5, 1), full)).toBe(s); // 고르는 사람이 아님
+    expect(apply(s, P(null), full)).toBe(s); // 이미 선택 없음
+    const p = atPick('pickTile');
+    expect(apply(p, P(3), full)).toBe(p); // 내 땅 아님(옅은 칸)
+    const roll = newGame();
+    expect(apply(roll, P(5), full)).toBe(roll);
+    const once = apply(s, P(5), full);
+    expect(apply(once, P(5), full)).toBe(once); // 같은 칸 다시 = 바뀐 것 없음(확정은 travel 액션)
+  });
+
+  it('내 땅으로: 마감에 미리보기 칸으로 이동(via mission), 없으면 이동 없이 차례 끝', () => {
+    let s = apply(atPick('pickTile'), P(12), full);
+    expect(s.turn.preview).toBe(12);
+    s = apply(s, T, full);
+    expect(last(s, 'move')).toMatchObject({ seat: 0, from: 6, to: 12, via: 'mission' });
+    expect(s.turn.preview).toBeUndefined();
+    const none = apply(atPick('pickTile'), T, full);
+    expect(evs(none, 'move')).toHaveLength(0);
+    expect(none.turn).toMatchObject({ seat: 1, step: 'roll' });
+  });
+
+  it('세계 축제: 마감에 미리보기 칸을 지정, 없으면 지정 없음', () => {
+    const s = apply(apply(atPick('festival'), P(2), full), T, full);
+    expect(s.tiles[2].festivalTarget).toBe(true);
+    expect(s.turn).toMatchObject({ seat: 1, step: 'roll' });
+    const none = apply(atPick('festival'), T, full);
+    expect(none.tiles.some((t) => t.festivalTarget)).toBe(false);
+  });
+
+  it('확정(travel 액션)은 미리보기와 무관하게 누른 칸으로, 미리보기는 지워진다', () => {
+    const s = apply(apply(atTravel(), P(5), full), { type: 'travel', seat: 0, tile: 7 }, full);
+    expect(last(s, 'move')).toMatchObject({ to: 7, via: 'travel' });
+    expect(s.turn.preview).toBeUndefined();
+  });
+
+  it('단계 시간: 고르기 3종 15초, 문화 카드 첫 방문 5초 · 다시 온 나라 3초, 참/거짓 결과 2초', () => {
+    expect(stepMs(atTravel())).toBe(15_000);
+    expect(stepMs(atPick('pickTile'))).toBe(15_000);
+    expect(stepMs(atPick('festival'))).toBe(15_000);
+    const first = arrive(newGame(), 0, 2);
+    expect(first.turn.step).toBe('culture');
+    expect(last(first, 'culture_card')).toMatchObject({ firstVisit: true });
+    expect(stepMs(first)).toBe(5_000);
+    expect(apply(first, { type: 'ack', seat: 0 }, full)).toBe(first); // 첫 방문은 넘길 수 없다
+    const again = arrive(edit(newGame(), (d) => { d.seenCountries = [BOARD[2].country!]; }), 0, 2);
+    expect(last(again, 'culture_card')).toMatchObject({ firstVisit: false });
+    expect(stepMs(again)).toBe(3_000);
+    expect(STEP_MS.tfResult).toBe(TF_RESULT_MS);
   });
 });

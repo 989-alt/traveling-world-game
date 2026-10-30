@@ -20,7 +20,7 @@ import missions from '../src/data/missions.json';
 import { missionReveal } from './reveal';
 import { botAction, botDelayMs, botSeats, drawAccuracy } from '../src/engine/bot';
 import { nextFloat } from '../src/engine/rng';
-import { movesShowMs } from '../src/shared/timing';
+import { movesShowMs, PICK_BOT_FLASH_MS } from '../src/shared/timing';
 
 export const CONTENT = { cards, questions, tf, culture, missions } as unknown as Content;
 export const EXPIRE_MS = 14 * 86_400_000;
@@ -211,6 +211,8 @@ export class Room {
   content: Content = CONTENT;
   private dirty = false;
   private resync: WebSocket | null = null; // 이 처리 끝에 전체 로그를 받을 기기(입장·sync)
+  /** 이 처리에서 봇이 칸을 골랐다(세계여행·내 땅으로·축제 지정) → 화면은 그 칸을 PICK_BOT_FLASH_MS 반짝인 뒤 이동한다 */
+  private botPicked = false;
 
   constructor(private ctx: DurableObjectState, _env: unknown) {
     this.load();
@@ -413,7 +415,10 @@ export class Room {
       let moved = false;
       for (const seat of botSeats(this.game!)) {
         const a = botAction(this.game!, seat, this.content, this.botRand, r.botAccuracy[seat]);
-        if (a && this.act(a)) moved = true;
+        if (a && this.act(a)) {
+          moved = true;
+          if (a.type === 'travel' || a.type === 'pickTile' || (a.type === 'pickFestival' && a.tile !== null)) this.botPicked = true;
+        }
       }
       if (!moved) r.botStuck = r.stepKey;
       this.settle(now);
@@ -447,8 +452,11 @@ export class Room {
       r.cutscene = { at: now, seat: lm.seat, next: null }; // seat = 세운 사람(그다음 차례가 '다음 도착자')
       r.lastCut = { tile: lm.tile, seat: lm.seat, at: now };
     }
-    // 이동 연출(줌 in · 홉 · 착지 머묾 · 복귀, shared/timing): 화면은 연출이 끝난 뒤 카드·문항을 연다 → 그 단계 마감·봇 행동을 그만큼 늦춘다
-    const moveShow = movesShowMs(g.log.slice(r.cutsceneScan));
+    // 화면 연출(주사위 · 줌 in · 홉 · 착지 머묾 · 복귀 · 알림 카드, shared/timing): 화면은 연출·알림이 끝난 뒤 카드·문항을 연다
+    // → 그 단계 마감·봇 행동을 그만큼 늦춘다(PRD §4.3 U10). 봇이 칸을 골랐으면 그 칸 반짝임 1초도 앞에 붙는다
+    const moveShow = movesShowMs(g.log.slice(r.cutsceneScan), { step: g.turn.step, tile: g.turn.tile })
+      + (this.botPicked ? PICK_BOT_FLASH_MS : 0);
+    this.botPicked = false;
     r.cutsceneScan = g.log.length;
     // 로그 길이를 넣는 까닭: 더블 뒤 같은 자리·같은 roll 단계도 새 마감이어야 한다
     const key = g.phase === 'playing' ? stepKey(g.turn.seat, g.turn.step, g.log.length) : g.phase;
@@ -478,7 +486,7 @@ export class Room {
       const m = this.content.missions.find((x) => x.id === g.turn.missionId);
       if (m && SHUFFLED.has(m.type)) r.missionOrder = missionOrder(g.rngSeed, m, g.log.length);
     }
-    if (g.phase === 'playing' && r.botAt === null && r.botStuck !== key && botSeats(g).length) r.botAt = Math.max(now, r.showUntil ?? 0) + botDelayMs(this.botRand); // 봇도 이동 연출이 끝난 뒤에
+    if (g.phase === 'playing' && r.botAt === null && r.botStuck !== key && botSeats(g).length) r.botAt = Math.max(now, r.showUntil ?? 0) + botDelayMs(this.botRand, g.turn.step); // 봇도 연출·알림이 끝나 창이 열린 뒤 단계별 지연(PRD §4.5 U10 BOT_DELAY_MS)
   }
 
   private schedule() {
@@ -504,6 +512,12 @@ export class Room {
     const now = Date.now();
     switch (msg.t) {
       case 'sync': this.resync = ws; return;
+      case 'pickPreview': {
+        // 선택 옮김: 엔진이 단계·차례·고를 수 있는 칸을 본다(아니면 상태 그대로). 바뀌면 방송 = 관전자 중계
+        if (att.seat === null || !this.game) return 'notSeated';
+        this.act({ type: 'pickPreview', seat: att.seat, tile: msg.tile });
+        return;
+      }
       case 'shown': {
         if (att.seat === null) return 'notSeated';
         const g = this.game;
@@ -714,7 +728,8 @@ export class Room {
       // 정답·카드 id 는 해설이 시작될 때까지 아무 기기에도 안 보낸다. 참/거짓은 문장 id 만
       const q = turn.question;
       const question = q && (turn.step === 'question' ? (({ answer: _x, cardId: _y, ...rest }) => rest)(q) : q);
-      const tf = turn.tf && { stmtId: turn.tf.stmtId };
+      // 결과 단계(tfResult)엔 정답도(결과 2초 동안 정답 선지를 밝힌다). 답하는 동안엔 문장 id 만
+      const tf = turn.tf && (turn.step === 'tfResult' ? { stmtId: turn.tf.stmtId, answer: turn.tf.answer } : { stmtId: turn.tf.stmtId });
       // 실패 해설(정답 키 + explain)은 참/거짓 단계에 실패한 도착자 자리에만(PRD §3.5). 관전자·구경 소켓·풀이 중엔 없음
       const reveal = viewer === undefined || viewer === turn.seat ? this.missionRevealOf(g) : null;
       game = { ...pub, turn: { ...turn, question, tf, mission: this.missionShown(g), reveal } };
@@ -724,7 +739,7 @@ export class Room {
       seats: r.seats.map((s, i) => ({
         taken: s.claimed, isBot: g ? g.seats[i].isBot : false, connected: s.connected, nick: s.nick, charId: s.charId,
       })),
-      game, deadlineAt: r.deadlineAt, stepAt: r.stepAt, now, cards: this.publicCards(),
+      game, deadlineAt: r.deadlineAt, stepAt: r.stepAt, showUntil: g?.phase === 'playing' ? r.showUntil ?? null : null, now, cards: this.publicCards(),
       notice: r.notice,
       cutscene: g?.phase === 'playing' && lc && now < lc.at + CUT_RESUME_MS ? { tile: lc.tile, builder: lc.seat, t0: lc.at } : null,
       // 문항 mTags(오답 선지 태그 모음)는 참/거짓 형식이면 정답을 알려 준다(거짓 문장만 태그가 있음) → 방송에선 뺀다.
@@ -738,7 +753,7 @@ export class Room {
   private missionShown(g: GameState): MissionShown | null {
     const mo = this.rec!.missionOrder;
     const t = g.turn;
-    if (!mo || mo.id !== t.missionId || (t.step !== 'mission' && t.step !== 'tf')) return null;
+    if (!mo || mo.id !== t.missionId || (t.step !== 'mission' && t.step !== 'tf' && t.step !== 'tfResult')) return null;
     const m = this.content.missions.find((x) => x.id === mo.id);
     if (!m) return null;
     const ps = m.pairs ?? [];
@@ -754,7 +769,8 @@ export class Room {
   /** 실패 해설: 판정 뒤(참/거짓 단계) 실패했을 때만. 풀이 중(mission)·성공·다른 단계엔 null */
   private missionRevealOf(g: GameState): MissionReveal | null {
     const t = g.turn;
-    if (g.phase !== 'playing' || t.step !== 'tf' || !t.missionId || t.missionSuccess) return null;
+    // 참/거짓 창과 이어지는 결과 2초(tfResult) 동안
+    if (g.phase !== 'playing' || (t.step !== 'tf' && t.step !== 'tfResult') || !t.missionId || t.missionSuccess) return null;
     const m = this.content.missions.find((x) => x.id === t.missionId);
     if (!m) return null;
     const mo = this.rec!.missionOrder;
@@ -773,7 +789,7 @@ export class Room {
     };
     if (g.phase === 'playing') {
       const q = g.turn.question;
-      return q && (g.turn.step === 'explanation' || g.turn.step === 'tf') ? pub(q.cardId) : [];
+      return q && (g.turn.step === 'explanation' || g.turn.step === 'tf' || g.turn.step === 'tfResult') ? pub(q.cardId) : [];
     }
     const landmarks = new Set<string>(g.log.flatMap((e) => (e.ev === 'build' && e.level === 4 ? [BOARD[e.tile].country ?? ''] : [])));
     const ids = new Set([...g.revealedCards, ...this.content.cards.filter((c) => c.level < 4 && landmarks.has(c.country)).map((c) => c.id)]);

@@ -18,6 +18,7 @@ import {
 import { MAP_OF_IMAGE } from './map-spots'; // 이름→지도 위치·구역 표(SPOT_OF·ZONE_OF_LABEL)는 번들에 싣지 않는다: 서버가 at·zones 로 보낸다
 import { Placement, type BlockDef, type SlotDef } from './Placement';
 import { TfPick } from './TfPick';
+import type { TfResult } from '../overlays/ExplainCard';
 import { Timer, useNow } from './Timer';
 import { WorldMap } from './WorldMap';
 
@@ -36,6 +37,8 @@ export interface MissionPanelProps {
   onSubmit?: (a: MissionAnswerMsg) => void;
   onTf?: (v: boolean) => void;
   tfPicked?: boolean | null;
+  /** 참/거짓 결과 2초(tfResult): 관전자 띠가 정답 + 맞힌 사람으로 바뀐다 */
+  tfResult?: TfResult | null;
   /** 시험용: 그림 주소 */
   urlFor?: (key: string) => string | null;
   /** 서버가 섞어 내려 준 연결·블록·순서 목록(지도 칸 위치·구역 포함). 그 순서 그대로 그리고 표시 번호로 답한다.
@@ -177,7 +180,7 @@ export function MissionPanel(p: MissionPanelProps) {
       </header>
       <div class="mp-area" aria-disabled={frozen}>{activity}</div>
       {p.phase === 'tf' && !player ? (
-        <TfPick text={m.spectatorTf.text} onPick={(v) => p.onTf?.(v)} picked={p.tfPicked} />
+        <TfPick text={m.spectatorTf.text} onPick={(v) => p.onTf?.(v)} picked={p.tfPicked} result={p.tfResult} />
       ) : rv ? (
         // 실패 해설 띠: 보상 띠 자리에 크림 판(금테) + 초록 '정답' 꼬리표
         <footer class="mp-foot mp-foot--reveal">

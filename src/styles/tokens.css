@@ -259,4 +259,19 @@
   --idle-interval-min: 5000ms;
   --idle-interval-max: 10000ms;
   --idle-concurrent-max: 2;
+  /* U10(DESIGN §18): 보드에서 칸 고르기 · 알림 레이어 (motion.pick · size.pick-sign · size.pick-bubble · opacity.pick-dim · z.notice) */
+  --pick-lift: 200ms;
+  --pick-bubble: 150ms;
+  --pick-confirm: 200ms;
+  --pick-bot-flash: 1000ms;
+  --pick-bot-flash-step: 250ms;
+  --pick-sign-w: 300px;
+  --pick-sign-h: 110px;
+  --pick-sign-h-festival: 150px;
+  --pick-sign-rope: 33px;
+  --pick-bubble-w: 180px;
+  --pick-bubble-h: 80px;
+  --pick-bubble-tail: 10px;
+  --opacity-pick-dim: 0.45;
+  --z-notice: 20;
 }

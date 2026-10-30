@@ -32,6 +32,8 @@ export interface CharacterProps {
   ambient?: Ambient | null;
   /** 광장 귀퉁이 전신 캐릭터(U5): 루트 클래스 .bcc(말 .bc 와 따로 센다) */
   corner?: boolean;
+  /** U10 고르기(DESIGN §18.1): 서 있는 칸이 들어올려진 만큼(4·8px) 같이 올라 접지가 그대로다. CSS translate(transform 과 따로) */
+  lift?: number;
 }
 
 const SHIFT_MS = 200;
@@ -129,6 +131,7 @@ export function Character(p: CharacterProps) {
       data-tile={p.tile}
       data-motion={p.playing?.motion ?? ''}
       data-ambient={p.ambient ?? 'base'}
+      data-lift={p.lift ? p.lift : undefined}
       style={{ zIndex: Math.round(p.y * 10), '--seat': `var(--seat-${p.seat + 1})` }}
     >
       <span class="bc-foot" aria-hidden="true" />

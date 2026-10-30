@@ -60,6 +60,9 @@ export type ClientMsg =
   | { t: 'sync' }
   /** 이 기기가 해설 카드를 표시 시간(§3.1)만큼 그렸다. 자동 전송(버튼 없음). stepKey = 그 해설 단계 */
   | { t: 'shown'; stepKey: string }
+  /** 고르기 단계(세계여행·내 땅으로·세계 축제)에서 선택 옮김(확정 아님, PRD §3.6.1). 서버가 관전자에게 중계하고,
+   *  마감 때 선택 표시 중인 칸이 있으면 그 칸으로 확정한다. null = 선택 해제(Esc). 고를 수 없는 칸은 거부 */
+  | { t: 'pickPreview'; tile: number | null }
   | { t: 'act'; a: ClientAct };
 
 export type ErrorCode = 'bad' | 'full' | 'started' | 'pin' | 'locked' | 'notHost' | 'notSeated' | 'logFull';
@@ -86,7 +89,8 @@ export type PublicCard = Omit<ExplanationCard, 'mTags' | 'topics'>;
 /** 방송용 턴: 문항 정답·카드 id 는 question 단계 동안 없다(해설부터 있음). 참/거짓은 문장 id 만(정답·남의 선택 없음) */
 export type PublicTurn = Omit<TurnState, 'question' | 'tf'> & {
   question: Omit<PendingQuestion, 'answer' | 'cardId'> & { answer?: PendingQuestion['answer']; cardId?: string } | null;
-  tf: { stmtId: string } | null;
+  /** answer: 참/거짓 결과 단계(tfResult)에서만 — 답하는 동안(tf)엔 없다 */
+  tf: { stmtId: string; answer?: boolean } | null;
   mission: MissionShown | null;
   /** 실패 해설: 참/거짓 단계에 실패한 도착자 자리에게만. 그 밖의 자리·단계엔 없음(null) */
   reveal?: MissionReveal | null;
@@ -110,6 +114,9 @@ export type ServerMsg =
       deadlineAt: number | null;
       /** 지금 단계가 시작된 서버 시각. 현재 시각이 아니다(재접속 때 이것을 '지금'으로 보면 남은 시간이 부풀어 보인다) */
       stepAt: number;
+      /** 지금 단계 시작 때 서버가 더한 화면 연출(주사위·이동·알림 카드·봇 고르기 반짝)이 끝나는 서버 시각(shared/timing movesShowMs).
+       *  재접속·중간 합류 기기는 알림을 이 시각까지 남은 만큼만 보인다. 게임 밖·옛 서버는 없음 */
+      showUntil?: number | null;
       /** 이 메시지를 만든 순간의 서버 시각. 기기는 매 메시지(전체·증분)마다 시계 차이 = now − Date.now() 로 다시 잰다 */
       now: number;
       /** 카드 글: 해설·참/거짓 단계엔 그 카드, 정지·끝엔 함께 본 카드 + 랜드마크 나라 1~3단계(결과 마그넷). 그 밖엔 [] */
@@ -175,6 +182,7 @@ export const MSG_SPEC: Record<ClientMsg['t'], Record<string, F>> = {
   resume: {},
   sync: {},
   shown: { stepKey: match(SHOWN_KEY_RE) },
+  pickPreview: { tile: either(TILE, oneOf(null)) },
   act: { a: act },
 };
 

@@ -10,11 +10,14 @@ vi.mock('../../styles/tokens.css?raw', async () => {
 import { BOARD } from '../../shared/board';
 import type { ClientAct } from '../../shared/protocol';
 import { hasAsset } from '../../assets/manifest';
+import { bubbleGeo, PICK_BUBBLE, PICK_SIGN, pickSignBox } from './geometry';
 import { BODY_BOTTOM_AT_BRIDGE, boxesHit, BRIDGES, CHAR, CORNER_FEET, CORNER_H, CORNER_HS, CORNER_PADS, cornerBoxes, HUD, hudBoxes, ISLAND_TOP, TILE_BOX, insetOf, PLAZA, PLAZA_ART, plateBox, plateSide, RING_TOP, SIGNPOSTS, STAGE, TILES, V_OVERLAP_MAX, type Box } from './geometry';
 import { maxH, place, violations } from './layout';
 import manifest from '../../../assets/manifest.json';
 import { camShift, camTransform, worldCover, ZOOM } from './camera';
 import { gaugeAt } from './DiceCup';
+import { PICK_LIFT, pickNote, stepTile } from './PickLayer';
+import { PICK_BOT_FLASH_MS } from '../../shared/timing';
 import { CROWD_CAP, crowdFrames, cuesFor, IDLE_MOTIONS, isTokenMotion, MOTIONS, poseKey } from '../characters/motions';
 import { MotionScheduler } from '../characters/scheduler';
 
@@ -570,5 +573,75 @@ describe('땅 표시 C2 — 앞 모서리 발코니(§17.2·§17.2.1)', () => {
     expect(o.posts.map((p) => p.x - g.img.x)).toEqual([9, 115]);
     expect(o.pennants).toHaveLength(OWN.pennants);
     for (const p of o.pennants) { expect(p.y - g.img.y).toBeGreaterThanOrEqual(2); expect(p.y + p.h - g.img.y).toBeLessThanOrEqual(23); }
+  });
+});
+
+describe('U10 보드에서 칸 고르기 — 간판·말풍선 자리 (DESIGN §18.2·§18.3)', () => {
+  it('간판 (533,290)~(833,400) 300×110, 축제 300×150(y 290~440), 밧줄 33 = 남은 시간 간판 아랫변 257 에서', () => {
+    expect(pickSignBox(false)).toEqual({ x: 533, y: 290, w: 300, h: 110 });
+    expect(pickSignBox(true)).toEqual({ x: 533, y: 290, w: 300, h: 150 });
+    expect(PICK_SIGN.rope).toBe(33);
+    expect(HUD.timer.y + HUD.timer.h / 2 + PICK_SIGN.rope).toBe(PICK_SIGN.top);
+  });
+  it('간판 가림 검산: 패널 4·규칙/멈춤·남은 시간 간판·이정표 판·귀퉁이 캐릭터·칸 상자와 교차 0, 광장 안', () => {
+    for (const fest of [false, true]) {
+      const s = pickSignBox(fest);
+      for (const o of hudBoxes()) if (o.id !== 'dice') expect(boxesHit(s, o.box), `간판(${fest ? '축제' : '보통'})·${o.id}`).toBe(false);
+      for (const c of cornerBoxes()) expect(boxesHit(s, c.box), c.id).toBe(false);
+      for (const g of TILES) expect(boxesHit(s, g.img), `칸 ${g.index}`).toBe(false);
+      expect(s.y).toBeGreaterThanOrEqual(PLAZA.y);
+      expect(s.y + s.h).toBeLessThanOrEqual(PLAZA.y + PLAZA.h);
+    }
+    // 틈: 패널 53 · 아시아 이정표 판 17(축제)
+    const s = pickSignBox(true);
+    const asia = SIGNPOSTS.find((x) => x.continent === 'asia')!.board;
+    expect(asia.y - (s.y + s.h)).toBeGreaterThanOrEqual(10);
+  });
+  it('말풍선 30칸 전부: 스테이지 x 8~1358 · y 0~768 안, 꼬리는 칸 중심, 윗줄(r0)만 칸 아래, 패널과 교차 0', () => {
+    for (const w of [PICK_BUBBLE.w, PICK_BUBBLE.wMax]) for (const g of TILES) {
+      const { box: b, below, tailX } = bubbleGeo(g.index, w);
+      expect(below, `칸 ${g.index}`).toBe(g.row === 0);
+      expect(b.x).toBeGreaterThanOrEqual(8);
+      expect(b.x + b.w).toBeLessThanOrEqual(STAGE.w - 8);
+      expect(b.y).toBeGreaterThanOrEqual(0);
+      expect(b.y + b.h).toBeLessThanOrEqual(STAGE.h);
+      expect(b.x + tailX).toBeCloseTo(g.center.x, 6);
+      expect(tailX).toBeGreaterThanOrEqual(12); // 꼬리(폭 20)가 말풍선 몸 안
+      expect(tailX).toBeLessThanOrEqual(w - 12);
+      // 몸과 칸 상자 틈 6(§18.3 "칸 상자 윗변 − 6")
+      if (below) expect(b.y - (g.img.y + g.img.h)).toBeCloseTo(6, 6);
+      else expect(g.img.y - (b.y + b.h)).toBeCloseTo(6, 6);
+      // 이정표 판은 가려도 된다(§18.3 z: 이정표 위). 패널(HUD)은 윗줄 말풍선(칸 아래 y 177~257 — 위 패널 y 238~)만 잠깐 덮는다(말풍선이 HUD 위, U10-b 보고)
+      for (const o of hudBoxes()) if (o.id.startsWith('panel') && !below) expect(boxesHit(b, o.box), `칸 ${g.index} 말풍선·${o.id}`).toBe(false);
+    }
+  });
+  it('왼쪽 열(c0)·오른쪽 열(c10) 은 클램프: 말풍선이 8 / 1358 에 붙고 꼬리만 칸 중심', () => {
+    expect(bubbleGeo(28).box.x).toBe(8);
+    expect(bubbleGeo(12).box.x + PICK_BUBBLE.w).toBe(STAGE.w - 8);
+    expect(bubbleGeo(28).tailX).toBeCloseTo(TILES[28].center.x - 8, 6);
+  });
+  it('키보드 고리 순서: 다음·이전 고를 수 있는 칸(옅은 칸 건너뜀, 끝에서 처음으로)', () => {
+    expect(stepTile([3, 7, 12], 3, 1)).toBe(7);
+    expect(stepTile([3, 7, 12], 12, 1)).toBe(3);
+    expect(stepTile([3, 7, 12], 3, -1)).toBe(12);
+    expect(stepTile([12, 3, 7], 5, 1)).toBe(7); // 고를 수 없는 칸에서 출발
+    expect(stepTile([12, 3, 7], 5, -1)).toBe(3);
+    const all = BOARD.map((t) => t.index).filter((i) => i !== 25);
+    expect(stepTile(all, 24, 1)).toBe(26); // 세계여행 칸(25) 건너뜀
+  });
+  it('관전 간판 문구: ○○가 갈 곳 / 땅을 고르고 있어요, 내 화면은 PRD §3.6.1 안내', () => {
+    expect(pickNote({ kind: 'travel', mine: true, name: '하늘' })).toBe('가고 싶은 나라 칸을 눌러요');
+    expect(pickNote({ kind: 'pickTile', mine: true, name: '하늘' })).toBe('갈 내 땅을 눌러요');
+    expect(pickNote({ kind: 'festival', mine: true, name: '하늘' })).toBe('통행료를 두 배로 받을 내 땅을 눌러요');
+    expect(pickNote({ kind: 'travel', mine: false, name: '하늘' })).toBe('하늘이 갈 곳을 고르고 있어요');
+    expect(pickNote({ kind: 'festival', mine: false, name: '로봇 2' })).toBe('로봇 2가 땅을 고르고 있어요');
+  });
+  it('토큰 사본(tokens.css): 들어올림·말풍선·확정·봇 반짝 시간, 간판·말풍선 크기, 옅음 .45, z.notice', async () => {
+    const css = (await import('../../styles/tokens.css?raw')).default;
+    const v = (n: string) => css.match(new RegExp(`--${n}:\\s*([^;]+);`))?.[1].trim();
+    expect([v('pick-lift'), v('pick-bubble'), v('pick-confirm'), v('pick-bot-flash'), v('pick-bot-flash-step')]).toEqual(['200ms', '150ms', '200ms', `${PICK_BOT_FLASH_MS}ms`, '250ms']);
+    expect(v('opacity-pick-dim')).toBe('0.45');
+    expect(v('z-notice')).toBe('20');
+    expect(PICK_LIFT).toEqual({ dim: 0, lit: 4, sel: 8, confirm: 8, flash: 8 });
   });
 });

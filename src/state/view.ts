@@ -1,5 +1,6 @@
 // 서버 상태에서 화면을 고르는 순수 함수들. 단위 테스트 대상.
 import type { PublicGame } from '../shared/protocol';
+import { noticeMs } from '../shared/timing';
 import type { LogEvent, Seat } from '../shared/types';
 import { nickName } from './nick';
 import type { RoomView } from './store';
@@ -43,7 +44,8 @@ export function stepView(g: PublicGame, log: LogEvent[], me: Seat | null): StepV
       const cc = lastOf(log, 'culture_card');
       return { kind: 'culture', tile: t.tile ?? 0, firstVisit: cc?.firstVisit ?? true };
     }
-    case 'tf': return t.missionId ? { kind: 'mission' } : { kind: 'tf' };
+    // tfResult(참/거짓 결과 2초, U10): 같은 창이 결과로 바뀐다(TfRow 결과 상태 · 미션은 같은 패널)
+    case 'tf': case 'tfResult': return t.missionId ? { kind: 'mission' } : { kind: 'tf' };
     default: return { kind: t.step };
   }
 }
@@ -66,13 +68,20 @@ export type Notice =
   /** t0: 재접속으로 이어 보는 컷씬의 서버 시작 시각(DESIGN §12.3). 새로 세운 것이면 없음 */
   | { kind: 'cutscene'; seat: Seat; tile: number; t0?: number };
 
+/** 알림 규칙(어떤 로그가 알림을 띄우나·몇 초)은 서버와 같은 shared/timing noticeMs 한 곳(PRD §4.3 U10) — 서버가 마감에 더한 시간과 화면이 어긋나지 않게 */
 export function noticesFrom(fresh: LogEvent[], g: PublicGame | null): Notice[] {
   const out: Notice[] = [];
   for (const e of fresh) {
-    if (e.ev === 'event' && e.kind !== 'tourist' && !(e.kind === 'island' && 'escape' in e.payload)) out.push({ kind: 'event', ev: e });
-    // 인수 단계로 넘어가면 행동 패널이 같은 문구를 보여 주므로 알림은 안 띄운다
-    if (e.ev === 'toll') out.push({ kind: 'toll', ev: e, takeoverNext: g?.turn.step === 'takeover' && g.turn.tile === e.tile });
+    if (e.ev === 'event' && noticeMs(e) > 0) out.push({ kind: 'event', ev: e });
+    // 인수 단계로 넘어가면 행동 패널이 같은 문구를 보여 주므로 알림은 안 띄운다(noticeMs = 0)
+    if (e.ev === 'toll') {
+      const takeoverNext = g?.turn.step === 'takeover' && g.turn.tile === e.tile;
+      if (noticeMs(e, takeoverNext) > 0) out.push({ kind: 'toll', ev: e, takeoverNext });
+    }
     if (e.ev === 'build' && e.level === 4) out.push({ kind: 'cutscene', seat: e.seat, tile: e.tile });
   }
-  return out.filter((n) => !(n.kind === 'toll' && n.takeoverNext));
+  return out;
 }
+
+/** 알림 한 장이 보이는 시간(컷씬은 제 길이라 0 = 타이머 없음) */
+export const noticeShowMs = (n: Notice): number => (n.kind === 'cutscene' ? 0 : n.kind === 'toll' ? noticeMs(n.ev, n.takeoverNext) : noticeMs(n.ev));

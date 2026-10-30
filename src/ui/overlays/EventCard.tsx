@@ -8,7 +8,7 @@ import { josa } from '../../state/nick';
 import { REWARD_TEXT } from '../missions/RewardPick';
 import { CONTINENT_NAME, keyActivate, useAutoFocus, won } from './parts';
 
-export const EVENT_MS = 3200;
+// 보이는 시간은 shared/timing EVENT_MS(3.2초) 한 곳 — 서버가 같은 값을 다음 마감에 더한다(PRD §4.3 U10)
 type Ev = Extract<LogEvent, { ev: 'event' }>;
 
 /** 기후 사건 → 생활 영향(1단원 범위) */
@@ -28,7 +28,7 @@ export function eventText(e: Ev, name: string): { title: string; body: string; k
       return { title: `${who('이', '가')} 무인도에 갇혔어요`, key: 'event.island',
         body: `세 번 쉬어 가요. 주사위 두 개가 같은 눈이면 나올 수 있고, 탈출 카드나 ${won(ISLAND_ESCAPE_COST)}코인으로 바로 나와도 돼요.` };
     case 'travel':
-      return { title: '세계여행 칸에 왔어요', key: 'event.travel', body: '다음 차례에 가고 싶은 칸을 골라 바로 날아가요.' };
+      return { title: '세계여행 칸에 왔어요', key: 'event.travel', body: '다음 내 차례가 오면 보드에서 가고 싶은 칸을 눌러 바로 날아가요.' };
     case 'festival':
       return { title: '세계 축제가 열렸어요', key: 'event.festival',
         body: Number(p.fund) > 0 ? `${who('이', '가')} 모인 기금 ${won(Number(p.fund))}코인을 받았어요.` : '아직 모인 기금은 없어요. 내 땅이 있으면 하나 골라 통행료를 두 배로 올려요.' };

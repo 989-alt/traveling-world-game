@@ -15,7 +15,9 @@ import { Character, type Ambient } from '../characters/Character';
 import { cuesFor, isTokenMotion, type MotionId } from '../characters/motions';
 import { MotionScheduler } from '../characters/scheduler';
 import { playConfetti } from '../cutscene/confetti';
-import { DICE, HOP_GAP_MS, MAX_HOP } from '../../shared/timing';
+import { HOP_GAP_MS, MAX_HOP, PICK_BOT_FLASH_MS } from '../../shared/timing';
+import { PICK_STEPS } from '../../shared/types';
+import { PICK_LIFT, PickLayer, type BoardPick, type TilePick } from './PickLayer';
 import { camShift, useCamera, ZOOM } from './camera';
 import { DiceCup } from './DiceCup';
 import { ROLL_GIVE_UP_MS, rollTimes, type RollShow } from './dice-show';
@@ -50,6 +52,10 @@ export interface BoardProps {
   zoomHoldMs?: number;
   /** game.clock 을 받은 이 기기 시각(ms). 있으면 다음 상태가 올 때까지 간판 시계를 1초마다 줄여 보인다(표시만) */
   clockAt?: number;
+  /** U10 보드에서 칸 고르기(DESIGN §18): 세계여행·내 땅으로·축제 단계. 없으면 평소 판 */
+  pick?: BoardPick | null;
+  /** 알림 카드가 떠 있음(§18.5): 내 컵 disabled + 옅게 .6 */
+  locked?: boolean;
 }
 
 /** 독점 연출 타임라인(§16.5, ms) */
@@ -70,7 +76,7 @@ type Mono = { continent: Continent; seat: Seat };
 /** 판 그림을 못 받아도 이 시간 뒤엔 판을 연다(그림마다 실패 폴백이 있다) */
 export const BOARD_LOAD_LIMIT_MS = 8000;
 
-export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onCamera, zoomHoldMs, clockAt }: BoardProps) {
+export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onCamera, zoomHoldMs, clockAt, pick = null, locked = false }: BoardProps) {
   // ── 판 그림 받기: 로비를 거치지 않고 들어오면(새로고침·재접속) 빈 칸 대신 '판 펼치는 중' ──
   const [art, setArt] = useState(() => isLoaded(boardKeys()));
   useEffect(() => {
@@ -124,11 +130,11 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
   /** 주사위 연출 중(§17.1.2): 줌처럼 카드·문항을 늦춘다(Game 의 onCamera). 이동이 시작돼 줌이 걸리면 그쪽이 이어받는다 */
   const [, setDiceHoldS] = useState(false);
   // 줌 걸림 || 주사위 연출 중 → onCamera. 바뀐 그 자리에서 바로 알린다(한 렌더 늦으면 줌이 풀린 직후 카드가 늦게 뜬다)
-  const camRef = useRef({ zoomed: false, hold: false, sent: false as boolean | null });
+  const camRef = useRef({ zoomed: false, hold: false, flash: false, sent: false as boolean | null });
   const camCb = useRef(onCamera);
   camCb.current = onCamera;
   const reportCam = () => {
-    const c = camRef.current, on = c.zoomed || c.hold;
+    const c = camRef.current, on = c.zoomed || c.hold || c.flash;
     if (c.sent === on) return;
     c.sent = on;
     camCb.current?.(on);
@@ -206,8 +212,9 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     const now = performance.now();
     const cur = rollRef.current;
     if (cur && cur.mine && cur.d1 === undefined && cur.seat === e.seat) return showRoll({ ...cur, d1: e.d1, d2: e.d2, gotAt: now });
-    const bot = !reduced && !!players.find((p) => p.seat === e.seat)?.isBot;
-    showRoll({ id: ++rollSeq.current, seat: e.seat, t0: now + (bot ? DICE.botShake : 0), shakeFrom: bot ? now : undefined, d1: e.d1, d2: e.d2, gotAt: now, mine: false, reduced });
+    // U10(S13 실측): 봇 굴림도 받은 순간 바로 쏟는다. 옛 '흔들기 600 뒤 쏟기'는 서버 연출 합(DICE_SHOW_MS 1830)에 없는 화면 시간이라
+    // 그만큼 이동·도착 카드가 늦게 떠 문화 카드 첫 방문이 4.3초만 보였다(서버 마감은 그대로). 화면 = 서버 시간
+    showRoll({ id: ++rollSeq.current, seat: e.seat, t0: now, d1: e.d1, d2: e.d2, gotAt: now, mine: false, reduced });
   };
 
   // 새 로그 → 반응·내 턴 모션, 독점 연출
@@ -241,6 +248,86 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     coins: game.players.map((p) => p.coin), bankrupt: game.players.map((p) => p.bankrupt), owners: game.tiles.map((t) => t.owner),
     log, instant: !!noZoom || hidden, reduced,
   });
+
+  // ── U10 칸 고르기(DESIGN §18): 내 선택 · 확정 · 봇 반짝 ──
+  const pickKey = pick ? `${pick.kind}|${pick.seat}` : '';
+  const [sel, setSel] = useState<number | null>(null);
+  const [rover, setRover] = useState(-1);
+  /** 확정한(또는 사람이 확정해 이동이 온) 칸: scale 200ms 를 끝까지 보이고 걷는다. tile −1 = 축제 "이번엔 안 고를래요"(칸 없음, 잠금만).
+   *  seat = 테 자리색(고르기 단계가 끝난 뒤에도 해제까지 자리색 유지, §18.1) */
+  const [conf, setConf] = useState<{ tile: number; key: number; seat: Seat } | null>(null);
+  const confSeq = useRef(0);
+  const pickRef = useRef(pick);
+  pickRef.current = pick;
+  useEffect(() => {
+    // 다시 받기(새로고침·재접속) 중 고르던 사람: 서버에 남은 선택 표시(turn.preview)로 시작 — 마감 때 그 칸으로 확정되므로 내 화면에도 보여야 한다
+    setSel(pick?.mine && pick.preview !== null && pick.eligible.includes(pick.preview) ? pick.preview : null);
+    if (pick) setRover(pick.eligible.length ? [...pick.eligible].sort((a, b) => a - b)[0] : -1);
+    if (pick) setConf(null);
+  }, [pickKey]);
+  useEffect(() => {
+    if (!conf) return;
+    const k = conf.key;
+    // 고르기가 끝났으면 220ms(확정 scale) 뒤 해제. 아직 고르는 중이면(서버가 확정을 거부·유실) ROLL_GIVE_UP_MS 뒤 풀어 다시 고를 수 있게
+    const h = setTimeout(() => setConf((c) => (c?.key === k ? null : c)), pickRef.current ? ROLL_GIVE_UP_MS : 220);
+    return () => clearTimeout(h);
+  }, [conf?.key, pickKey]);
+  const select = (t: number) => {
+    if (!pick?.mine || conf || sel === t) return;
+    setSel(t);
+    pick.onPreview?.(t); // 선택이 바뀔 때만 서버에 보낸다(관전자 중계)
+  };
+  const clearSel = () => {
+    if (!pick?.mine || conf || sel === null) return;
+    setSel(null);
+    pick.onPreview?.(null);
+  };
+  const confirm = (t: number) => {
+    if (!pick?.mine || conf || !pick.eligible.includes(t)) return;
+    setConf({ tile: t, key: ++confSeq.current, seat: pick.seat });
+    pick.onConfirm?.(t); // 한 번만: 그 뒤 칸·단추 disabled
+  };
+  /** 축제 "이번엔 안 고를래요": 확정과 같이 한 번만, 그 뒤 칸·단추 잠금 */
+  const skip = () => {
+    if (!pick?.mine || conf || !pick.onSkip) return;
+    setConf({ tile: -1, key: ++confSeq.current, seat: pick.seat });
+    pick.onSkip();
+  };
+  // 고르기 단계가 끝남(서버 상태): 그 칸 = 이동 로그(세계여행 · 내 땅으로) 또는 축제 지정(festivalTarget).
+  // 봇이 골랐으면 그 칸을 1초 반짝인 뒤에 이동을 시작한다(서버가 PICK_BOT_FLASH_MS 를 마감에 더함), 사람이면 확정 scale 만
+  const [flash, setFlash] = useState<{ tile: number; seat: Seat; key: number } | null>(null);
+  const flashGate = useRef<{ seat: number; until: number } | null>(null);
+  const flashTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => flashTimers.current.forEach(clearTimeout), []);
+  const prevPick = useRef<{ seat: Seat; step: string; logLen: number } | null>(null);
+  useEffect(() => {
+    const { seat, step } = game.turn;
+    const len = log?.length ?? 0;
+    const prev = prevPick.current;
+    const picking = (PICK_STEPS as readonly string[]).includes(step);
+    if (picking && prev?.seat === seat && prev.step === step) return; // 아직 고르는 중
+    prevPick.current = picking ? { seat, step, logLen: len } : null;
+    if (!prev || noZoom || document.hidden) return;
+    let tile = -1;
+    if (prev.step === 'festival') tile = game.tiles.findIndex((t) => t.owner === prev.seat && t.festivalTarget);
+    else {
+      const via = prev.step === 'travel' ? 'travel' : 'mission';
+      for (let i = len - 1; i >= prev.logLen && log; i--) {
+        const e = log[i];
+        if (e.ev === 'move' && e.seat === prev.seat) { if (e.via === via) tile = e.to; break; }
+      }
+    }
+    if (tile < 0) return;
+    if (players.find((p) => p.seat === prev.seat)?.isBot) {
+      const key = Date.now();
+      flashGate.current = { seat: prev.seat, until: performance.now() + PICK_BOT_FLASH_MS };
+      setFlash({ tile, seat: prev.seat, key });
+      camRef.current.flash = true; // 반짝이는 동안 카드·문항을 늦춘다(줌이 이어받는다)
+      reportCam();
+      flashTimers.current.push(setTimeout(() => setFlash((f) => (f?.key === key ? null : f)), PICK_BOT_FLASH_MS));
+      flashTimers.current.push(setTimeout(() => { camRef.current.flash = false; reportCam(); }, PICK_BOT_FLASH_MS + 250));
+    } else setConf((c) => (c?.tile === tile ? c : { tile, key: ++confSeq.current, seat: prev.seat }));
+  }, [game.turn.seat, game.turn.step, log?.length]);
 
   // ── 이동: 칸당 1홉 ──
   const [shown, setShown] = useState(() => ({ pos: game.players.map((p) => p.pos), hop: game.players.map(() => false), busy: game.players.map(() => false) }));
@@ -282,7 +369,8 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
       const to = p.pos;
       // 주사위 B(§17.1.2): 이 자리의 굴림 연출이 끝난 뒤(뗌 +1830)에 홉·줌을 시작하고, 합 숫자는 말 머리 위 칩으로 옮겨 탄다
       const r = rollRef.current;
-      const wait = r && r.seat === s ? Math.max(0, moveGate.current - performance.now()) : 0;
+      const fg = flashGate.current;
+      const wait = Math.max(r && r.seat === s ? moveGate.current - performance.now() : 0, fg && fg.seat === s ? fg.until - performance.now() : 0, 0);
       const chip = r && r.seat === s && !r.reduced && r.d1 !== undefined && mv?.via === 'dice' ? r.d1 + r.d2! : null;
       const go = () => {
         setWaitMove((w) => w.filter((x) => x !== s));
@@ -351,6 +439,20 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
   const ownerOf = (c: Continent) => painted.find((m) => m.continent === c)?.seat ?? null;
   const nameOf = (s: Seat) => players.find((p) => p.seat === s)?.name ?? `${s + 1}번`;
 
+  // 칸 묶음 상태(§18.1): 고르기 단계엔 줌이 없다 — 줌이 걸려 있으면(앞 사람 이동 연출) 풀린 뒤에 밝힌다
+  const pickOn = !!pick && !cam.active;
+  const eligible = new Set(pickOn ? pick!.eligible : []);
+  const mark = pickOn ? (pick!.mine ? sel : pick!.preview) : null;
+  const tilePick = (i: number): TilePick | undefined => {
+    if (flash?.tile === i) return 'flash';
+    if (conf?.tile === i) return 'confirm';
+    if (!pickOn) return undefined;
+    if (!eligible.has(i)) return 'dim';
+    return mark === i ? 'sel' : 'lit';
+  };
+  const ringSeat = flash ? flash.seat : pick ? pick.seat : conf ? conf.seat : null;
+  const pickStates = TILES.map((g) => tilePick(g.index));
+
   return (
     <div class="board-root" data-hopping={shown.busy.some(Boolean) || waitMove.length > 0 ? '1' : '0'} data-art={art ? '1' : '0'}>
       <Pic k="ui.boardBg" class="board-bg" fallback={<span class="board-bg board-bg--fallback" />} eager />
@@ -365,7 +467,8 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
           {SIGNPOSTS.map((s) => <PlazaMask key={s.continent} continent={s.continent} seat={ownerOf(s.continent)} reduced={reduced} />)}
 
           {TILES.map((g) => (
-            <Island key={g.index} g={g} tile={BOARD[g.index]} current={game.turn.tile === g.index} glow={glowTiles.includes(g.index)} />
+            <Island key={g.index} g={g} tile={BOARD[g.index]} current={game.turn.tile === g.index} glow={glowTiles.includes(g.index)}
+              pick={pickStates[g.index]} ring={ringSeat} />
           ))}
           <Bridges />
           {SIGNPOSTS.map((s) => <Signpost key={s.continent} s={s} seat={ownerOf(s.continent)} />)}
@@ -374,7 +477,7 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
               윗면 가운데(공터 = 말 자리)엔 아무것도 없다 — 건물이 칸 풍경을 가리지 않는다(사용자 2026-10-30) */}
           {TILES.map((g) => {
             const ts = game.tiles[g.index];
-            return ts.owner === null ? null : <Ownership key={g.index} g={g} seat={ts.owner} level={ts.level} />;
+            return ts.owner === null ? null : <Ownership key={g.index} g={g} seat={ts.owner} level={ts.level} pick={pickStates[g.index]} />;
           })}
 
           {players.map((p) => {
@@ -383,7 +486,8 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
             const t = shown.pos[p.seat];
             return (
               <Character key={p.seat} seat={p.seat} tile={t} charId={p.charId} name={p.name} x={f.x} y={f.y} h={f.h} ambient={AMBIENT[t] ?? null}
-                hop={shown.hop[p.seat]} crowded={occupants[t].length > 1} playing={token.get(id(p.seat))} grey={token.isGrey(id(p.seat))} reduced={reduced} />
+                hop={shown.hop[p.seat]} crowded={occupants[t].length > 1} playing={token.get(id(p.seat))} grey={token.isGrey(id(p.seat))} reduced={reduced}
+                lift={!shown.busy[p.seat] && pickStates[t] ? PICK_LIFT[pickStates[t]!] : 0} />
             );
           })}
           {hopChip && feet.get(hopChip.seat) && (() => {
@@ -412,9 +516,9 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
               me={p.seat === mySeat} out={game.players[p.seat].bankrupt} veiled={veiled.has(`panel${p.seat + 1}`)} />
           ))}
 
-          <div class={`dice-wrap${cam.active ? ' is-cam' : ''}`} style={{ left: `${HUD.dice.x}px`, top: `${HUD.dice.y}px` }}>
+          <div class={`dice-wrap${cam.active ? ' is-cam' : ''}${pick || conf ? ' is-pick' : ''}${locked && !roll ? ' is-locked' : ''}`} style={{ left: `${HUD.dice.x}px`, top: `${HUD.dice.y}px` }}>
             <DiceCup
-              enabled={myTurn && !moving}
+              enabled={myTurn && !moving && !locked && !pick}
               dim={!myTurn && !roll}
               show={roll}
               holdSum={moving}
@@ -428,6 +532,11 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
               }}
             />
           </div>
+
+          {pickOn && (
+            <PickLayer pick={pick!} sel={mark} conf={conf?.tile ?? null} rover={rover} setRover={setRover}
+              onSelect={select} onConfirm={confirm} onClear={clearSel} onSkip={skip} />
+          )}
 
           <CoinFlyLayer flies={coinFx.flies} />
           {band && <MonopolyBand key={band.key} name={nameOf(band.seat)} continent={band.continent} seat={band.seat} reduced={reduced} />}
@@ -446,13 +555,13 @@ const box = (b: { x: number; y: number; w: number; h: number }) => ({ left: `${b
 
 /** 땅 주인·건물 C2(§17.2·§17.2.1) 한 칸. 기둥·밧줄 = 코드 SVG(다리 밧줄과 같은 선), 삼각기 1장 × 7, 세로 깃발 1장을 clip-path 로 4단,
  *  4단계 금별, 발코니(자리색 테) + 건물 미니어처(BLD 1~3 · LM). 새로 꽂힘(주인)·지어짐(단계)은 key 가 바뀔 때 한 번 튀어 오른다(§13 C) */
-const Ownership = memo(function Ownership({ g, seat, level }: { g: TileGeo; seat: Seat; level: number }) {
+const Ownership = memo(function Ownership({ g, seat, level, pick }: { g: TileGeo; seat: Seat; level: number; pick?: TilePick }) {
   const o = ownGeo(g, seat, level);
   const at = (b: { x: number; y: number; w: number; h: number }) => box({ x: b.x - g.img.x, y: b.y - g.img.y, w: b.w, h: b.h });
   const n = seat + 1;
   const L = (p: { x: number; y: number }) => `${(p.x - g.img.x).toFixed(1)} ${(p.y - g.img.y).toFixed(1)}`;
   return (
-    <div class="own" data-tile={g.index} data-owner={seat} data-level={level}
+    <div class="own" data-tile={g.index} data-owner={seat} data-level={level} data-pick={pick}
       style={{ ...box(g.img), zIndex: g.z + 1, '--seat': `var(--seat-${n})` }} aria-hidden="true">
       <div key={`f${seat}`} class="own-flagset">
         <svg class="own-rig" viewBox={`0 0 ${g.img.w} ${g.img.h}`} width={g.img.w} height={g.img.h}>
@@ -499,13 +608,22 @@ function Pennants({ g, boxes, n }: { g: TileGeo; boxes: { x: number; y: number; 
 }
 
 /** 칸 그림 한 장. 이름표는 그림 속 볼트 판 — 그림을 못 불러올 때만 코드 이름표(폴백) */
-const Island = memo(function Island({ g, tile, current, glow }: { g: TileGeo; tile: Tile; current: boolean; glow: boolean }) {
+/** pick(U10 §18.1): 고르기 상태 — 글로우 요소(.tile-pick, 그림 아래)와 칸 묶음 옅음·들어올림. ring = 자리색 테의 자리 */
+const Island = memo(function Island({ g, tile, current, glow, pick, ring }: { g: TileGeo; tile: Tile; current: boolean; glow: boolean; pick?: TilePick; ring?: Seat | null }) {
   return (
     <div class={`tile tile--${g.side}${current ? ' is-current' : ''}${glow ? ' is-glow' : ''}`} data-tile={g.index} data-kind={tile.kind} data-plate={g.plate}
       data-top={g.top.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')}
       data-anchor={`${g.anchor.x.toFixed(2)},${g.anchor.y.toFixed(2)}`} data-top-w={g.topW.toFixed(2)}
       data-land={`${g.land.x.toFixed(2)},${g.land.y.toFixed(2)},${g.land.w.toFixed(2)},${g.land.h.toFixed(2)}`}
-      style={{ ...box(g.img), zIndex: g.z }}>
+      data-pick={pick}
+      style={{ ...box(g.img), zIndex: g.z, '--ring': pick && ring != null ? `var(--seat-${ring + 1})` : undefined }}>
+      {/* 글로우 요소(§18.1, 그림 아래): 같은 칸 그림 사본에 정적 drop-shadow — 섬 모양을 따라 금 글로우 · 자리색 테(새 그림 0장). 고르기 동안만 */}
+      {pick && pick !== 'dim' && (
+        <span class="tile-pick" aria-hidden="true">
+          <Pic k={`tile.${g.index}`} class="tile-pick-glow" eager fallback={<span class="tile-pick-box" />} />
+          {pick !== 'lit' && <Pic k={`tile.${g.index}`} class="tile-pick-ring" eager fallback={<span class="tile-pick-box is-ring" />} />}
+        </span>
+      )}
       {current && <span class="tile-current" style={{ left: `${g.anchor.x - g.img.x}px`, top: `${g.anchor.y - g.img.y}px` }} />}
       <Pic k={`tile.${g.index}`} class="tile-img" alt={tile.name} eager fallback={
         <span class="tile-fallback" data-band={tile.continent ?? 'wood'}>

@@ -37,13 +37,28 @@ export function ContinentChip({ continent }: { continent?: string }) {
   return <span class={`ov-chip ov-chip--${continent}`}>{CONTINENT_NAME[continent]}</span>;
 }
 
-/** 줄어드는 막대(해설 7초·문화 카드 3초 등). transform 하나로 줄인다 */
+/** 줄어드는 막대(해설 7초·문화 카드 5초 등). transform 하나로 줄인다.
+ *  줄기만 한다(DESIGN §18.5, PRD §4.3 U10): 표시 값 = min(직전 표시 값, 남은 시간). 서버가 마감을 늘려도(해설 shown 대기) 다시 차지 않고,
+ *  0 에 멈춘 채 마감이 아직 남았으면 막대 아래 "잠깐만요" 한 줄 */
 export function Countdown({ deadline, total, label }: { deadline: number | null; total: number; label?: string }) {
   const now = useNow(100);
-  const left = deadline === null ? 0 : Math.max(0, deadline - now);
+  const raw = deadline === null ? 0 : Math.max(0, deadline - now);
+  // 직전 표시 값에서 실제로 흐른 시간만큼 줄인 값과 남은 시간 중 작은 쪽: 마감이 늘어도(연장·시계 차 재측정) 막대가 멈추거나 다시 차지 않는다
+  const shown = useRef<{ total: number; v: number; at: number; zeroAt: number | null } | null>(null);
+  if (!shown.current || shown.current.total !== total) shown.current = { total, v: Infinity, at: now, zeroAt: null };
+  const left = Math.max(0, Math.min(shown.current.v - (now - shown.current.at), raw));
+  shown.current.v = left;
+  shown.current.at = now;
+  if (left <= 0 && shown.current.zeroAt === null) shown.current.zeroAt = now;
+  // 0 인데 마감이 늘었거나(방송됨), 0 이 된 지 300ms 가 지나도 단계가 그대로면(서버가 shown 을 기다리며 마감을 늘림 — 방송 없이도) "잠깐만요"
+  const wait = left <= 0 && (raw > 0 || now - (shown.current.zeroAt ?? now) >= 300);
   return (
-    <div class="ov-count" role="timer" aria-label={label ? `${label} ${Math.ceil(left / 1000)}초` : undefined} data-left={Math.ceil(left / 1000)}>
-      <span class="ov-count-bar" style={{ transform: `scaleX(${Math.min(1, left / total)})` }} />
+    <div class={`ov-countbox${wait ? ' is-wait' : ''}`}>
+      <div class="ov-count" role="timer" aria-label={label ? `${label} ${Math.ceil(left / 1000)}초` : undefined}
+        data-left={Math.ceil(left / 1000)} data-ms={Math.round(left)}>
+        <span class="ov-count-bar" style={{ transform: `scaleX(${Math.min(1, left / total)})` }} />
+      </div>
+      {wait && <span class="ov-count-wait" role="status">잠깐만요</span>}
     </div>
   );
 }

@@ -87,7 +87,12 @@ export function answerAndSkip(s: GameState, correct: boolean, content: Content =
   s = apply(s, { type: 'answer', seat: s.turn.seat, choice, ms: 1000 }, content);
   s = apply(s, { type: 'timeout' }, content); // 해설
   if (s.turn.step === 'tf') s = apply(s, { type: 'timeout' }, content);
-  return s;
+  return skipTfResult(s, content);
+}
+
+/** 참/거짓 결과 2초(tfResult, PRD §4.3 U10)를 timeout 으로 넘긴다 */
+export function skipTfResult(s: GameState, content: Content = full): GameState {
+  return s.turn.step === 'tfResult' ? apply(s, { type: 'timeout' }, content) : s;
 }
 
 /** 도착 → 문화 카드 → 문항 → 해설 → 참/거짓 까지 */

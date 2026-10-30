@@ -162,7 +162,8 @@ export function useCoinFx({ coins, bankrupt, owners, log, instant, reduced }: Co
     if (coins.every((c, i) => c === before[i])) return;
     const changes = coinChanges(fresh, own, before, coins, bankrupt);
     const now = performance.now();
-    const start = Math.max(now + (reduced ? 0 : movesShowMs(fresh)), busyUntil.current);
+    // 주사위·이동 연출이 끝난 뒤에 돈이 움직인다. 알림 카드 시간(U10 부터 movesShowMs 가 셈)은 기다리지 않는다 — 통행료 알림과 코인 흐름이 같이 보인다
+    const start = Math.max(now + (reduced ? 0 : movesShowMs(fresh.filter((e) => e.ev === 'dice' || e.ev === 'move'))), busyUntil.current);
     const p = plan(changes, start);
     busyUntil.current = p.end;
     const final = coins;

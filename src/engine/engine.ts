@@ -7,6 +7,7 @@ import {
   ANTARCTIC_BONUS, GAUGE_REROLL, ISLAND_ESCAPE_COST, ISLAND_TURNS, ITEM_LIMIT, KOREA_BONUS,
   SALARY, SELL_RATE, START_COIN, STEP_MS, TAKEOVER_MAX_LEVEL, TF_REWARD, CLIMATE_TURNS,
 } from '../shared/economy';
+import { PICK_STEPS } from '../shared/types';
 import type {
   Action, Content, GameState, ItemKind, LogEvent, MissionAnswer, PendingQuestion, Reward, Seat, Settings, TurnState,
 } from '../shared/types';
@@ -61,7 +62,18 @@ export function apply(state: S, a: Action, content: C): S {
 export function stepMs(s: S): number {
   const st = s.turn.step;
   if (st === 'explanation') return s.turn.question?.variant === 'short' ? STEP_MS.explanationShort : STEP_MS.explanationFull;
+  // 문화 카드: 첫 방문 5초 고정, 다시 온 나라 3초(PRD §4.3 U10). culture 단계의 마지막 로그는 늘 culture_card
+  if (st === 'culture') { const cc = s.log[s.log.length - 1]; return cc?.ev === 'culture_card' && !cc.firstVisit ? STEP_MS.cultureRevisit : STEP_MS.culture; }
   return STEP_MS[st];
+}
+
+/** 고르기 단계에서 seat 이 고를 수 있는 칸인가(PRD §3.6.1). 세계여행 = 세계여행 칸 뺀 29칸, 내 땅으로·축제 = 내 땅 */
+export function canPick(s: GameState, seat: Seat, tile: number): boolean {
+  if (!Number.isInteger(tile) || tile < 0 || tile >= BOARD_SIZE) return false;
+  const st = s.turn.step;
+  if (st === 'travel') return tile !== TRAVEL_TILE;
+  if (st === 'pickTile' || st === 'festival') return s.tiles[tile].owner === seat;
+  return false;
 }
 
 // ── 공용 ────────────────────────────────────────────────
@@ -126,16 +138,24 @@ function handle(s: S, a: Action, c: C): boolean {
   if (a.seat !== s.turn.seat) return false;
 
   switch (a.type) {
+    case 'pickPreview': {
+      // 선택 옮김(확정 아님). 같은 칸이면 바뀐 것 없음. null = 선택 해제
+      if (!(PICK_STEPS as readonly string[]).includes(step) || (a.tile !== null && !canPick(s, a.seat, a.tile))) return false;
+      if ((s.turn.preview ?? null) === a.tile) return false;
+      s.turn.preview = a.tile;
+      return true;
+    }
     case 'roll': return step === 'roll' && doRoll(s, c, a.gauge);
     case 'escape': return step === 'roll' && escape(s, a.method);
     case 'travel':
       if (step !== 'travel' || !Number.isInteger(a.tile) || a.tile < 0 || a.tile >= BOARD_SIZE || a.tile === TRAVEL_TILE) return false;
       me(s).travelPending = false;
+      delete s.turn.preview;
       moveForwardTo(s, c, a.tile, 'travel');
       return true;
     case 'ack': {
       const cc = s.log[s.log.length - 1]; // culture 단계의 마지막 로그는 늘 culture_card
-      if (step !== 'culture' || cc?.ev !== 'culture_card' || cc.firstVisit) return false; // 첫 방문은 3초 고정
+      if (step !== 'culture' || cc?.ev !== 'culture_card' || cc.firstVisit) return false; // 첫 방문은 5초 고정
       afterCulture(s, c);
       return true;
     }
@@ -155,6 +175,7 @@ function handle(s: S, a: Action, c: C): boolean {
     case 'chooseReward': return step === 'reward' && chooseReward(s, c, a.index);
     case 'pickTile':
       if (step !== 'pickTile' || s.tiles[a.tile]?.owner !== a.seat) return false;
+      delete s.turn.preview;
       moveForwardTo(s, c, a.tile, 'mission');
       return true;
     case 'pickFestival':
@@ -166,19 +187,32 @@ function handle(s: S, a: Action, c: C): boolean {
 }
 
 function onTimeout(s: S, c: C, shown: Seat[]): boolean {
+  // 고르기 마감: 선택 표시 중인 칸이 있으면 그 칸으로 확정(PRD §3.6.1). 없으면 현행
+  const preview = s.turn.preview ?? null;
+  const picked = preview !== null && canPick(s, s.turn.seat, preview) ? preview : null;
+  delete s.turn.preview; // 고르기 단계를 떠나면 선택 표시도 없어진다
   switch (s.turn.step) {
     case 'roll': return doRoll(s, c, undefined);
-    case 'travel': me(s).travelPending = false; s.turn.step = 'roll'; return true;
+    case 'travel':
+      me(s).travelPending = false;
+      if (picked !== null) { moveForwardTo(s, c, picked, 'travel'); return true; }
+      s.turn.step = 'roll';
+      return true;
     case 'culture': afterCulture(s, c); return true;
     case 'question': return answer(s, c, null, STEP_MS.question);
     case 'explanation': afterExplanation(s, c, shown); return true;
     case 'tf': closeTf(s, c); return true;
+    case 'tfResult': endTfResult(s, c); return true;
     case 'toll': payToll(s, null); return true;
-    case 'action': case 'takeover': case 'pickTile': endTurn(s); return true;
+    case 'pickTile':
+      if (picked !== null) { moveForwardTo(s, c, picked, 'mission'); return true; }
+      endTurn(s);
+      return true;
+    case 'action': case 'takeover': endTurn(s); return true;
     case 'shield': blockTakeover(s); return true; // 무응답 = 자동 방어
     case 'mission': return missionResult(s, c, null, STEP_MS.mission);
     case 'reward': return chooseReward(s, c, 0);
-    case 'festival': pickFestival(s, null); return true;
+    case 'festival': pickFestival(s, picked); return true;
   }
 }
 
@@ -498,6 +532,12 @@ function closeTf(s: S, c: C) {
     if (correct && !s.players[i].bankrupt) s.players[i].coin += TF_REWARD;
     push(s, { ev: 'tf_answer', seat: i as Seat, stmtId: tf.stmtId, value, correct, isBot: x.isBot });
   });
+  // 바로 닫지 않는다: 결과(정답 + 누가 맞혔는지) STEP_MS.tfResult 2초 뒤 timeout 으로 닫힌다(PRD §4.3 U10). tf 는 결과 표시용으로 남긴다
+  s.turn.step = 'tfResult';
+}
+
+/** 참/거짓 결과 2초가 끝남 → 도착 칸의 다음 일 */
+function endTfResult(s: S, c: C) {
   s.turn.tf = null;
   afterTf(s, c);
 }

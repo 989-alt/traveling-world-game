@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // 봇 4명 자동 대국 시뮬 (PRD §6 S1~S3). 엔진만 쓴다, 시드 고정, 실시간 아님.
 // 사용: sim.mjs --games N --seed S [--minutes 40|60|80] [--zero-bot] [--humans k --human-acc p] [--bot-acc lo-hi]
-//              [--content <폴더>] [--json] [--assert "a,b"] [--confirm N:M]
+//              [--content <폴더>] [--json] [--assert "a,b"] [--confirm N:M] [--turn-ms N|measured]
+//   턴 시간(2026-10-31 QA13, PRD §4.3·§4.4): 기본 64000(사람 속도, S 판정 기준). --turn-ms measured = 잰 값 — 한 턴 = shared/timing 연출 합(주사위·이동·알림·봇 칸 반짝)
+//     + 봇 지연 중앙값(engine/bot BOT_DELAY_MS) + 무응답 단계의 남은 마감. 옛 고정 56초는 --turn-ms 56000 으로 비교만.
+//     보고서 turnMedianMs·turnP10Ms·turnP90Ms·turnsPerGame(= tick 수, 더블 포함)
 //   --confirm N:M (2026-10-29 QA7, PRD §6 표본 규칙) = 비율형 assert(zero-win-rate·human-win·gap-top2 의 F·tie-top2) 중 하나라도 --games 판 값이
 //     경계 ±M 안이면 같은 시드로 N 판을 돌려 그 값으로 모든 assert 를 다시 판정한다(종료 코드도). report.confirm 에 처음·확정 값
 //   --minutes = 놀이 시간(2026-10-28 U1, 기본 40). 옛 2차시×35분 설정은 없어졌다. U3: 20 은 종료 코드 2.
@@ -69,7 +72,10 @@ if (BOT_ACC_ARG) {
 /** 봇 자리 정답률: 덧씌움이 없으면 엔진 drawAccuracy(서버와 같은 함수), 있으면 그 범위에서 균일 */
 const botAcc = (rand) => (BOT_ACC_ARG ? BOT_RANGE[0] + (BOT_RANGE[1] - BOT_RANGE[0]) * rand() : drawAccuracy(rand, MINUTES));
 const CONTENT_DIR = arg('--content', path.join(HERE, '../src/data'));
-const TURN_MS = 56_000; // PRD §4.3 턴 ≈ 56초
+const TURN_ARG = arg('--turn-ms', '64000');
+// 판정 기준 = 사람 속도 64초 고정(PRD §4.3·§4.4 QA13). 'measured' = 잰 봇 4명 속도(U10-c, 참고 지표)
+const TURN_MS = TURN_ARG === 'measured' ? undefined : Number(TURN_ARG);
+if (TURN_MS !== undefined && !(TURN_MS > 0)) { console.error('--turn-ms 는 양수'); process.exit(2); }
 const TIMEOUT_P = 0.05; // 무응답(타이머 만료) 경로
 const MAJORS = [...COVERAGE_MAJORS]; // 2~5·7~10 (엔진과 같은 출처)
 if (!(GAMES > 0) || !Number.isFinite(SEED)) { console.error('--games N(>0) --seed S 필요'); process.exit(2); }
@@ -120,8 +126,8 @@ function playGame(g) {
   const humanSeats = Array.from({ length: HUMANS }, (_, j) => (g + j) % 4); // 사람 대리도 돌린다
   const acc = [0, 1, 2, 3].map((i) => (i === zeroSeat ? 0 : humanSeats.includes(i) ? HUMAN_ACC : botAcc(rand)));
   const state = createGame({ seed: Math.floor(rand() * 2 ** 32), bots: [true, true, true, true], settings: { totalMinutes: MINUTES, touristQuiz: false } });
-  const { state: s, bankruptHalf } = playBotGame({ state, content, rand, accuracy: acc, turnMs: TURN_MS, timeoutP: TIMEOUT_P });
-  return { ...summarize(s, zeroSeat, bankruptHalf), humanWon: humanSeats.includes(s.winner.seat) };
+  const { state: s, bankruptHalf, turnsMs } = playBotGame({ state, content, rand, accuracy: acc, turnMs: TURN_MS, timeoutP: TIMEOUT_P });
+  return { ...summarize(s, zeroSeat, bankruptHalf), humanWon: humanSeats.includes(s.winner.seat), turnsMs };
 }
 
 /** 월급(출발 통과·도착) 받은 횟수를 로그에서 센다. 엔진은 moveBy 에서만 준다: 주사위 = from + 합 ≥ 30, 세계여행·미션 이동 = to ≤ from.
@@ -181,8 +187,14 @@ function aggregate(rs) {
   const monopolyByContinent = Object.fromEntries(CONTINENTS.map((k) => [k, count((r) => r.monopoly.includes(k))]));
   const zeroWins = rs.filter((r) => r.zeroWon);
   const majorHits = Object.fromEntries(MAJORS.map((m) => [m, count((r) => r.majors.includes(m))]));
+  const allTurns = rs.flatMap((r) => r.turnsMs).sort((x, y) => x - y);
+  const pct = (q) => (allTurns.length ? allTurns[Math.min(allTurns.length - 1, Math.floor(allTurns.length * q))] : TURN_MS);
   return {
     games: n, seed: SEED, minutes: MINUTES, zeroBot: ZERO,
+    turnModel: TURN_MS === undefined ? 'measured' : `fixed ${TURN_MS}`,
+    turnMedianMs: pct(0.5), turnP10Ms: pct(0.1), turnP90Ms: pct(0.9),
+    turnMeanMs: allTurns.length ? Math.round(allTurns.reduce((x, y) => x + y, 0) / allTurns.length) : TURN_MS,
+    turnsPerGame: TURN_MS === undefined ? allTurns.length / n : null,
     humans: HUMANS, humanAcc: HUMANS ? HUMAN_ACC : null, botAcc: BOT_RANGE, botAccOverride: !!BOT_ACC_ARG,
     humanWinRate: HUMANS ? count((r) => r.humanWon) / n : null,
     gapTop2Ge480Rate: count((r) => r.gapTop2 >= 480) / n,

@@ -581,3 +581,7 @@
 @media (prefers-reduced-motion: reduce) {
   .blk.is-back { transition: none; }
 }
+/* U10 참/거짓 결과 2초(DESIGN §18.5) — 미션 관전 띠도 해설 띠와 같은 결과(정답 선지 테 + 맞힌 사람 칩, overlays.css .ex-tf-res·.ex-tf-chips) */
+.tf.is-result { flex-wrap: wrap; row-gap: 8px; }
+.tf.is-result .tf-btn.is-answer { opacity: 1; }
+.tf.is-result .tf-btn.is-off { opacity: 0.5; }

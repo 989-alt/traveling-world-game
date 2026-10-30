@@ -37,19 +37,24 @@ export const GAUGE_REROLL = 0.6;
 export const STEP_MS = {
   roll: 15_000,
   travel: 15_000,
-  culture: 3_000,
+  /** 문화 카드 첫 방문 5초 고정, 다시 온 나라 3초(누르면 넘김) — PRD §4.3 U10 */
+  culture: 5_000,
+  cultureRevisit: 3_000,
   question: 20_000,
   explanationFull: 7_000,
   explanationShort: 4_000,
   tf: 6_000,
+  /** 참/거짓 결과 2초(= shared/timing TF_RESULT_MS). 전원 답해도·6초 마감 뒤에도 이만큼 보인 뒤 닫힌다 */
+  tfResult: 2_000,
   toll: 10_000,
   action: 10_000,
   takeover: 10_000,
   shield: 5_000,
   mission: 45_000,
   reward: 10_000,
-  pickTile: 10_000,
-  festival: 10_000,
+  /** 보드에서 칸 고르기(§3.6.1): 세계여행·내 땅으로·세계 축제 모두 15초 */
+  pickTile: 15_000,
+  festival: 15_000,
 };
 
 /** 봇 정답률 추출 범위 [하한, 상한) — 놀이 시간별(PRD §4.5, 2026-10-28 U2). sim·worker 공용 단일 출처.

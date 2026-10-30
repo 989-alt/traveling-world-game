@@ -1,40 +1,10 @@
-// 칸 고르기(세계여행·내 땅으로·세계 축제)와 무인도 탈출, 방패 팝업. 전부 버튼으로만 고른다.
+// 무인도 탈출, 방패 팝업. 전부 버튼으로만 고른다.
+// (세계여행·내 땅으로·세계 축제 칸 고르기는 U10 부터 보드에서 직접 — board/PickLayer, DESIGN §18)
 import { useRef, useState } from 'preact/hooks';
-import { BOARD, TRAVEL_TILE } from '../../shared/board';
 import { ISLAND_ESCAPE_COST, STEP_MS } from '../../shared/economy';
 import { josa } from '../../state/nick';
 import { Timer } from '../missions/Timer';
 import { useAutoFocus, won } from './parts';
-
-export function TilePicker({ title, note, tiles, deadline, totalMs, onPick, skipLabel, onSkip }: {
-  title: string; note: string; tiles: number[]; deadline: number | null; totalMs: number;
-  onPick: (tile: number) => void; skipLabel?: string; onSkip?: () => void;
-}) {
-  const [done, setDone] = useState(false);
-  const first = useAutoFocus<HTMLButtonElement>();
-  const once = (f: () => void) => { if (done) return; setDone(true); f(); };
-  return (
-    <section class="tp" role="dialog" aria-label={title}>
-      <header class="ap-bar"><i class="sp-cap sp-cap--l" aria-hidden="true" /><i class="sp-cap sp-cap--r" aria-hidden="true" />
-        <h2 class="ap-title">{title}</h2>
-        {deadline !== null && <div class="ap-timer"><Timer deadlineAt={deadline} totalMs={totalMs} /></div>}
-      </header>
-      <div class="tp-paper">
-        <p class="ap-line">{note}</p>
-        <div class="tp-grid">
-          {tiles.map((t) => (
-            <button type="button" key={t} ref={t === tiles[0] ? first : undefined} class={`tp-tile tp-tile--${BOARD[t].continent ?? BOARD[t].kind}`} data-tile={t} disabled={done} onClick={() => once(() => onPick(t))}>
-              {BOARD[t].name}
-            </button>
-          ))}
-        </div>
-        {onSkip && <button type="button" class="ov-btn ov-btn--secondary" disabled={done} onClick={() => once(onSkip)}>{skipLabel}</button>}
-      </div>
-    </section>
-  );
-}
-
-export const travelTiles = () => BOARD.map((t) => t.index).filter((i) => i !== TRAVEL_TILE);
 
 export function IslandPanel({ turnsLeft, coin, hasCard, onEscape }: {
   turnsLeft: number; coin: number; hasCard: boolean; onEscape: (m: 'coin' | 'item') => void;

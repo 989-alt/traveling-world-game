@@ -9,8 +9,8 @@ import { FIXTURE, advance, advanceTo, asWS, connect, game, join, newRoom, runUnt
 import { SHOWN_SLACK_MS, SHOWN_WAIT_MS } from '../room';
 import { CUT_RESUME_MS, CUTSCENE_MS } from '../../src/shared/protocol';
 import { STEP_MS } from '../../src/shared/economy';
-import { DICE_SHOW_MS, moveShowMs } from '../../src/shared/timing';
-import { BOARD } from '../../src/shared/board';
+import { DICE_SHOW_MS, EVENT_MS, moveShowMs, movesShowMs, PICK_BOT_FLASH_MS, TF_RESULT_MS } from '../../src/shared/timing';
+import { BOARD, TRAVEL_TILE } from '../../src/shared/board';
 
 afterEach(() => { vi.useRealTimers(); });
 
@@ -51,11 +51,11 @@ describe('턴 타이머 — 가짜 시계, 전 단계', () => {
     expect(ev[0]).toMatchObject({ ev: 'dice', seat: 0 });
   });
 
-  it('도착 흐름: 문화 3 → 문항 20(무응답=오답) → 해설 전체판 7 → 참/거짓 6(null) → 행동 10 → 더블이면 다시 주사위 15', async () => {
+  it('도착 흐름: 문화 5(첫 방문) → 문항 20(무응답=오답) → 해설 전체판 7 → 참/거짓 6(null) → 결과 2 → 행동 10 → 더블이면 다시 주사위 15', async () => {
     const { ctx, room, ws } = started();
     room.game = withDice(game(room), 1, 1); // 0 → 2 타이(첫 방문), 더블
     say(room, ws[0], { t: 'act', a: { type: 'roll' } });
-    await expires(room, ctx, 'culture', 3_000 + DICE_SHOW_MS + moveShowMs(0, 2)); // 문화 카드 마감 = 3초 + 주사위 연출(U8 §17.1) + 이동 연출(2홉)
+    await expires(room, ctx, 'culture', 5_000 + DICE_SHOW_MS + moveShowMs(0, 2)); // 문화 카드 마감 = 5초(U10) + 주사위 연출(U8 §17.1) + 이동 연출(2홉)
     const q = await expires(room, ctx, 'question', 20_000);
     expect(q[0]).toMatchObject({ ev: 'answer', seat: 0, choice: null, correct: false, ms: 20_000 });
     expect(room.rec!.deadlineAt! - Date.now()).toBe(7_000);
@@ -64,6 +64,7 @@ describe('턴 타이머 — 가짜 시계, 전 단계', () => {
     await expires(room, ctx, 'explanation', SHOWN_SLACK_MS);
     const tf = await expires(room, ctx, 'tf', 6_000);
     expect(tf.filter((e) => e.ev === 'tf_answer').map((e) => e.ev === 'tf_answer' && e.value)).toEqual([null, null, null]);
+    await expires(room, ctx, 'tfResult', 2_000); // U10: 6초 마감 뒤 결과 2초
     const act = await expires(room, ctx, 'action', 10_000);
     expect(act.some((e) => e.ev === 'buy')).toBe(false); // 시간 넘기면 pass
     expect(game(room).turn.seat).toBe(0); // 더블 → 같은 자리
@@ -391,7 +392,8 @@ describe('이동 연출 늦춤(R4 T-E 수정 1, shared/timing)', () => {
     const mv = game(room).log.slice(len).find((e) => e.ev === 'move')!;
     expect(mv).toMatchObject({ seat: 1 });
     expect(room.rec!.showUntil! - Date.now()).toBeGreaterThan(DICE_SHOW_MS + moveShowMs(0, 2) - 60);
-    expect(room.rec!.botAt).toBeGreaterThanOrEqual(room.rec!.showUntil!);
+    expect(game(room).turn.step).toBe('culture');
+    expect(room.rec!.botAt).toBeNull(); // 문화 카드: 봇은 넘기지 않는다(PRD §4.5 U10) — 마감으로만 닫힌다
     const at = game(room).log.length;
     await advance(room, ctx, DICE_SHOW_MS + moveShowMs(0, 2) - 100);
     expect(game(room).log.length).toBe(at); // 연출 중엔 봇이 아무것도 안 함
@@ -433,7 +435,12 @@ describe('미션 실패 해설 6초 창(QA4-reveal, PRD §3.5)', () => {
     expect(reveal(room)).not.toBeNull();
     await advanceTo(room, ctx, end);
     expect(game(room).log.filter((e) => e.ev === 'tf_answer').map((e) => e.ev === 'tf_answer' && e.value !== null)).toEqual([true, true, true]);
-    expect(game(room).turn.step).not.toBe('tf');
+    // U10: 마감 뒤 결과 2초(tfResult) — 같은 창이 결과로 바뀌므로 도착자 해설은 그동안 남는다
+    expect(game(room).turn.step).toBe('tfResult');
+    expect(untilDeadline(room)).toBe(STEP_MS.tfResult);
+    expect(reveal(room)).not.toBeNull();
+    await advanceTo(room, ctx, end + STEP_MS.tfResult);
+    expect(game(room).turn.step).not.toBe('tfResult');
     expect(reveal(room)).toBeNull();
   });
 
@@ -465,5 +472,122 @@ describe('미션 실패 해설 6초 창(QA4-reveal, PRD §3.5)', () => {
     const end = room.rec!.deadlineAt!;
     await runUntil(room, ctx, () => game(room).turn.step !== 'tf');
     expect(Date.now()).toBeLessThan(end);
+  });
+});
+
+describe('U10 알림·결과·봇 고르기 시간(PRD §4.3, shared/timing)', () => {
+  /** 혼자 + 봇 3명. 자리 0 이 남극 칸 참/거짓 결과(tfResult) 단계 */
+  function antarcticResult() {
+    const { ctx, room } = setup();
+    const ws = join(room, ctx, 1);
+    say(room, ws[0], { t: 'start' });
+    inject(room, ws[0], (d) => {
+      d.players[0].pos = 8;
+      d.turn = { ...d.turn, seat: 0, step: 'tfResult', tile: 8, correct: false, tf: { stmtId: 'x', answer: true, answers: [] } };
+    });
+    expect(BOARD[8].kind).toBe('antarctic');
+    expect(untilDeadline(room)).toBe(STEP_MS.tfResult);
+    return { ctx, room, ws };
+  }
+
+  it('알림 2장 연속(남극 탐험 → 기후 사건): showUntil·다음 마감에 3.2 × 2, 다음 봇은 그 뒤 1~2초에 굴림', async () => {
+    const { ctx, room } = antarcticResult();
+    await advance(room, ctx, untilDeadline(room));
+    expect(game(room).turn).toMatchObject({ seat: 1, step: 'roll' });
+    const kinds = game(room).log.slice(-2).map((e) => (e as { kind?: string }).kind);
+    expect(kinds).toEqual(['antarctic', 'climate']);
+    expect(room.rec!.showUntil! - Date.now()).toBe(2 * EVENT_MS);
+    expect(untilDeadline(room)).toBe(STEP_MS.roll + 2 * EVENT_MS);
+    const wait = room.rec!.botAt! - room.rec!.showUntil!;
+    expect(wait).toBeGreaterThanOrEqual(1000);
+    expect(wait).toBeLessThanOrEqual(2000);
+    const len = game(room).log.length;
+    await advance(room, ctx, 2 * EVENT_MS + 999);
+    expect(game(room).log.length).toBe(len); // 알림이 떠 있는 동안 봇은 안 굴린다
+    await runUntil(room, ctx, () => game(room).log.length > len);
+    expect(game(room).log[len]).toMatchObject({ ev: 'dice', seat: 1 });
+  });
+
+  it('재접속 중간 합류: state.showUntil 로 알림 남은 시간만 보인다(전체 다시 받기도 같은 값)', async () => {
+    const { ctx, room } = antarcticResult();
+    await advance(room, ctx, untilDeadline(room));
+    const until = room.rec!.showUntil!;
+    await advance(room, ctx, 2_000);
+    const late = connect(room, ctx);
+    say(room, late, { t: 'sync' });
+    const full = late.of('state').find((m) => m.logFrom === 0)!;
+    expect(full.showUntil).toBe(until);
+    expect(full.showUntil! - full.now).toBe(2 * EVENT_MS - 2_000);
+  });
+
+  it('참/거짓 결과 2초: 결과 단계엔 봇이 없고 마감 = 2초', () => {
+    const { room } = antarcticResult();
+    expect(room.rec!.botAt).toBeNull();
+    expect(TF_RESULT_MS).toBe(STEP_MS.tfResult);
+  });
+
+  it('봇이 세계여행 칸을 고르면: 반짝 1초 + 이동 연출이 다음 마감·showUntil 에 더해진다', async () => {
+    const { ctx, room } = setup();
+    const ws = join(room, ctx, 1);
+    say(room, ws[0], { t: 'start' });
+    inject(room, ws[0], (d) => {
+      d.players[1].pos = TRAVEL_TILE;
+      d.players[1].travelPending = true;
+      d.turn = { ...d.turn, seat: 1, step: 'travel', tile: null };
+    });
+    expect(untilDeadline(room)).toBe(15_000);
+    const len = game(room).log.length;
+    await runUntil(room, ctx, () => game(room).log.slice(len).some((e) => e.ev === 'move'));
+    const mv = game(room).log.slice(len).find((e) => e.ev === 'move')!;
+    expect(mv).toMatchObject({ seat: 1, from: TRAVEL_TILE, via: 'travel' });
+    const to = (mv as { to: number }).to;
+    const fresh = game(room).log.slice(len);
+    expect(room.rec!.showUntil! - Date.now()).toBe(PICK_BOT_FLASH_MS + movesShowMs(fresh, { step: game(room).turn.step, tile: game(room).turn.tile }));
+    expect(movesShowMs(fresh)).toBeGreaterThanOrEqual(moveShowMs(TRAVEL_TILE, to));
+  });
+});
+
+describe('U10-c 봇 단계별 지연(PRD §4.5, engine/bot BOT_DELAY_MS)', () => {
+  /** 혼자 + 봇 3명. 봇 자리 1 이 0 에서 주사위 (d1, d2) 로 굴리는 차례 */
+  async function botRolls(d1: number, d2: number) {
+    const { ctx, room } = setup();
+    const ws = join(room, ctx, 1);
+    say(room, ws[0], { t: 'start' });
+    inject(room, ws[0], (d) => { d.players[1].pos = 0; d.turn = { ...d.turn, seat: 1, step: 'roll', tile: null, question: null, tf: null }; });
+    room.game = withDice(game(room), d1, d2);
+    const len = game(room).log.length;
+    await runUntil(room, ctx, () => game(room).log.slice(len).some((e) => e.ev === 'move'));
+    return { ctx, room, ws };
+  }
+
+  it('미션: 봇 행동 시각 = showUntil(이동 연출 끝) + 8~12초, 그 전엔 답하지 않는다', async () => {
+    const { ctx, room } = await botRolls(2, 4); // 0 → 6 미션 칸
+    expect(game(room).turn).toMatchObject({ seat: 1, step: 'mission' });
+    expect(room.rec!.showUntil! - Date.now()).toBe(DICE_SHOW_MS + moveShowMs(0, 6));
+    const wait = room.rec!.botAt! - room.rec!.showUntil!;
+    expect(wait).toBeGreaterThanOrEqual(8_000);
+    expect(wait).toBeLessThanOrEqual(12_000);
+    expect(room.rec!.botAt! - room.rec!.stepAt).toBeLessThan(untilDeadline(room)); // 45초(+연출) 창 안
+    const len = game(room).log.length;
+    await advanceTo(room, ctx, room.rec!.botAt! - 1);
+    expect(game(room).turn.step).toBe('mission');
+    expect(game(room).log.length).toBe(len);
+    await advance(room, ctx, 1);
+    expect(game(room).log.slice(len).some((e) => e.ev === 'mission')).toBe(true);
+  });
+
+  it('문화 카드: 봇 차례여도 아무것도 보내지 않고 마감(5초 + 연출)에 닫힌다, 이어지는 문항은 창이 열린 뒤 5~8초', async () => {
+    const { ctx, room } = await botRolls(1, 1); // 0 → 2 나라 칸, 첫 방문
+    expect(game(room).turn).toMatchObject({ seat: 1, step: 'culture' });
+    expect(room.rec!.botAt).toBeNull();
+    const len = game(room).log.length;
+    await advance(room, ctx, untilDeadline(room) - 1);
+    expect(game(room).log.length).toBe(len);
+    expect(game(room).turn.step).toBe('culture');
+    await advance(room, ctx, 1);
+    expect(game(room).turn.step).toBe('question');
+    const wait = room.rec!.botAt! - Math.max(room.rec!.stepAt, room.rec!.showUntil!);
+    expect(wait).toBeGreaterThanOrEqual(5_000);
+    expect(wait).toBeLessThanOrEqual(8_000);
   });
 });

@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { Pic } from '../../assets/AssetImg';
 import { audio } from '../../audio/engine';
-import { DICE } from '../../shared/timing';
+import { DICE, PRESS_MAX_MS } from '../../shared/timing';
 import { bouncePath, CUP, CUP_BOX, rollTimes, type RollShow } from './dice-show';
 
 export const GAUGE_PERIOD_MS = 1200;
@@ -56,16 +56,24 @@ export function DiceCup(p: DiceCupProps) {
 
   // ── 누름 ──
   const setArc = (g: number) => { for (const el of [arc.current, edge.current]) if (el) el.style.strokeDashoffset = String(100 - g * 100); };
+  const pressCap = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const start = () => {
     if (!p.enabled || pressAt.current !== null || phase !== 'idle') return;
     pressAt.current = performance.now();
+    // 누름 상한(DESIGN §18.5, PRD §4.3): 2.9초가 되면 손을 뗀 것과 같은 길로 그 순간 게이지 값을 보낸다. 그 뒤 뗌·취소는 무시(pressAt = null)
+    pressCap.current = setTimeout(() => finishRef.current(true), PRESS_MAX_MS);
     setGauge(0);
     setPhase('press');
     gaugeAnim.current = [arc.current, edge.current].flatMap((el) => el ? [el.animate([{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }, { strokeDashoffset: 100 }], { duration: GAUGE_PERIOD_MS, iterations: Infinity })] : []);
     p.onPressStart?.();
   };
+  const inside = (e: { currentTarget: EventTarget | null; clientX: number; clientY: number }) => {
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  };
   const finish = (send: boolean) => {
     if (pressAt.current === null) return;
+    clearTimeout(pressCap.current);
     const g = gaugeAt(performance.now() - pressAt.current);
     pressAt.current = null;
     gaugeAnim.current.forEach((a) => a.cancel());
@@ -81,13 +89,15 @@ export function DiceCup(p: DiceCupProps) {
       p.onCancel?.();
     }
   };
+  const finishRef = useRef(finish);
+  finishRef.current = finish;
   // 누른 채로 차례가 끝나거나(enabled=false) 초점을 잃으면 그 누름은 버린다(굴리지 않음)
   useEffect(() => { if (!p.enabled) finish(false); }, [p.enabled]);
 
   // ── 굴림 타임라인 ──
   const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
   const stopSwap = () => { clearInterval(swap.current); swap.current = undefined; };
-  useEffect(() => () => { clear(); stopSwap(); }, []);
+  useEffect(() => () => { clear(); stopSwap(); clearTimeout(pressCap.current); }, []);
   const face = (i: number, n: number) => { const el = dieEls[i].current; if (el) el.dataset.face = String(n); };
   /** 주사위가 쟁반 위에 나와 있음(쏟은 지 +120 부터 이동 시작까지) */
   const out = (on: boolean) => dieEls.forEach((r) => { if (!r.current) return; if (on) r.current.dataset.out = '1'; else delete r.current.dataset.out; });
@@ -218,11 +228,9 @@ export function DiceCup(p: DiceCupProps) {
         disabled={!p.enabled || phase !== 'idle' && phase !== 'press'}
         aria-label="주사위 굴리기: 컵을 누르고 있다가 원하는 곳에서 떼요"
         onPointerDown={(e) => { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); start(); }}
-        onPointerUp={(e) => {
-          // 포인터 이탈 = 누름 취소(DESIGN §17.1.2). 포인터를 잡고 있어 밖에서 떼도 여기로 오므로 자리를 본다.
-          const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          finish(e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom);
-        }}
+        // 포인터 이탈 = 누름 취소(DESIGN §17.1.2). 포인터를 잡고 있어 밖으로 나가도 move·up 이 여기로 오므로 자리를 본다(QA r13: 나간 채 2.9초 자동 굴림 금지)
+        onPointerMove={(e) => { if (pressAt.current !== null && !inside(e)) finish(false); }}
+        onPointerUp={(e) => finish(inside(e))}
         onPointerCancel={() => finish(false)}
         onLostPointerCapture={() => finish(false)}
         onBlur={() => finish(false)}

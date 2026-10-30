@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ACT_SPEC, MAX_MESSAGE_CHARS, MSG_SPEC, parseClient, parseSettings } from '../../src/shared/protocol';
 import type { ClientAct, ClientMsg } from '../../src/shared/protocol';
-import { withDice } from '../../src/engine/__tests__/helpers';
+import { edit, withDice } from '../../src/engine/__tests__/helpers';
+import { TRAVEL_TILE } from '../../src/shared/board';
 import { FIXTURE, FakeWS, advance, asWS, connect, join, runUntil, say, setup, game } from './fakes';
 import { untilDeadline } from './fakes';
 
@@ -31,6 +32,7 @@ const MSGS: ClientMsg[] = [
   { t: 'hello', charId: 5 },
   { t: 'rejoin', seat: 2, pin: '0429' },
   { t: 'start' }, { t: 'pause' }, { t: 'resume' }, { t: 'sync' }, { t: 'shown', stepKey: '1|explanation|42' },
+  { t: 'pickPreview', tile: 14 },
   ...Object.values(ACTS).map((a) => ({ t: 'act', a }) as ClientMsg),
 ];
 const ok = (m: unknown) => parseClient(JSON.stringify(m));
@@ -234,5 +236,64 @@ describe('서버 → 클라이언트', () => {
     const ws = connect(room, ctx);
     room.webSocketMessage(asWS(ws), new ArrayBuffer(8));
     expect(ws.last('error')?.code).toBe('bad');
+  });
+});
+
+describe('U10 고르기 미리보기 pickPreview (PRD §3.6.1)', () => {
+  /** 사람 4명, 자리 0 이 세계여행 고르기 단계 */
+  function atTravel() {
+    const { ctx, room } = setup();
+    const ws = join(room, ctx, 4);
+    say(room, ws[0], { t: 'start' });
+    room.game = edit(game(room), (d) => { d.turn.step = 'travel'; d.players[0].pos = TRAVEL_TILE; d.players[0].travelPending = true; });
+    say(room, ws[0], { t: 'sync' });
+    return { ctx, room, ws };
+  }
+  const previewOf = (w: FakeWS) => w.last('state')!.game!.turn.preview ?? null;
+
+  it('스키마: 칸 0~29 또는 null 만, 그 밖은 bad', () => {
+    for (const tile of [0, 29, null]) expect(ok({ t: 'pickPreview', tile })).not.toBeNull();
+    for (const tile of [-1, 30, 2.5, '5', undefined]) expect(ok({ t: 'pickPreview', tile })).toBeNull();
+    expect(ok({ t: 'pickPreview', tile: 3, seat: 1 })).toBeNull();
+  });
+
+  it('선택 옮김은 관전자 화면에 중계되고, 마감에 그 칸으로 확정된다', async () => {
+    const { ctx, room, ws } = atTravel();
+    const n = ws[2].of('state').length;
+    say(room, ws[0], { t: 'pickPreview', tile: 5 });
+    expect(ws[2].of('state').length).toBe(n + 1); // 같은 처리에서 바로 방송(500ms 안)
+    expect(previewOf(ws[2])).toBe(5);
+    say(room, ws[0], { t: 'pickPreview', tile: 14 });
+    expect(ws.map(previewOf)).toEqual([14, 14, 14, 14]);
+    expect(game(room).log.some((e) => e.ev === 'move')).toBe(false); // 확정 아님
+    await advance(room, ctx, untilDeadline(room));
+    expect(game(room).log.filter((e) => e.ev === 'move').at(-1)).toMatchObject({ seat: 0, from: TRAVEL_TILE, to: 14, via: 'travel' });
+  });
+
+  it('고를 수 없는 칸(세계여행 칸 25)·남의 차례·고르기 아닌 단계는 거부: 상태 변화 0, 방송 0', () => {
+    const { ctx, room, ws } = atTravel();
+    const before = JSON.stringify(game(room));
+    const others = ws[2].of('state').length;
+    say(room, ws[0], { t: 'pickPreview', tile: TRAVEL_TILE });
+    say(room, ws[1], { t: 'pickPreview', tile: 5 }); // 고르는 사람이 아님
+    expect(JSON.stringify(game(room))).toBe(before);
+    expect(ws[2].of('state').length).toBe(others);
+    // 내 땅으로: 내 땅이 아닌 칸(옅은 칸)
+    room.game = edit(game(room), (d) => { d.turn.step = 'pickTile'; d.tiles[2].owner = 0; });
+    const b2 = JSON.stringify(game(room));
+    say(room, ws[0], { t: 'pickPreview', tile: 3 });
+    expect(JSON.stringify(game(room))).toBe(b2);
+    say(room, ws[0], { t: 'pickPreview', tile: 2 });
+    expect(game(room).turn.preview).toBe(2);
+    // 고르기 아닌 단계(주사위)
+    room.game = edit(game(room), (d) => { d.turn.step = 'roll'; delete d.turn.preview; });
+    const b3 = JSON.stringify(game(room));
+    say(room, ws[0], { t: 'pickPreview', tile: 5 });
+    expect(JSON.stringify(game(room))).toBe(b3);
+    // 구경 소켓(자리 없음)
+    const watcher = connect(room, ctx);
+    say(room, watcher, { t: 'pickPreview', tile: 5 });
+    expect(watcher.last('error')?.code).toBe('notSeated');
+    expect(JSON.stringify(game(room))).toBe(b3);
   });
 });

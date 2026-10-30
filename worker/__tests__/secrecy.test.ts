@@ -59,7 +59,7 @@ describe('문항 단계: 정답·카드 id·카드 글·태그가 어떤 소켓�
     }
     const realCard = game(room).log.find((e) => e.ev === 'explanation')!;
     const card = FIXTURE.cards.find((c) => realCard.ev === 'explanation' && c.id === realCard.cardId)!;
-    for (const st of ['explanation', 'tf']) {
+    for (const st of ['explanation', 'tf', 'tfResult']) {
       expect(at(st).length).toBeGreaterThan(0);
       for (const m of at(st)) {
         expect(m.game!.turn.question!.cardId).toBe(card.id);
@@ -69,11 +69,14 @@ describe('문항 단계: 정답·카드 id·카드 글·태그가 어떤 소켓�
     // 방송 로그: 문항 mTags 는 비움(참/거짓 형식이면 정답을 알려 주므로), tf 이벤트는 tf_answer 와 함께 닫힐 때
     for (const m of ss) for (const e of m.log) if (e.ev === 'question') expect(e.mTags).toEqual([]);
     for (const m of at('tf')) expect(m.log.some((e) => e.ev === 'tf' || e.ev === 'tf_answer')).toBe(false);
+    // U10: 참/거짓 정답은 답하는 동안(tf) 어떤 소켓에도 없고, 결과 2초(tfResult)에만 실린다
+    for (const m of at('tf')) expect(m.game!.turn.tf).toEqual({ stmtId: expect.any(String) });
+    for (const m of at('tfResult')) expect(m.game!.turn.tf).toEqual({ stmtId: expect.any(String), answer: expect.any(Boolean) });
     expect(game(room).log.filter((e) => e.ev === 'question').length).toBe(1); // 서버 로그는 그대로(태그 유지)
     // 고른 선지 태그는 답한 뒤 로그로 간다(결과 화면용)
     expect(game(room).log.find((e) => e.ev === 'answer')).toHaveProperty('chosenMTags');
     // 그 밖의 단계엔 카드 글 없음
-    for (const m of ss.filter((x) => !['explanation', 'tf'].includes(x.game!.turn.step))) expect(m.cards).toEqual([]);
+    for (const m of ss.filter((x) => !['explanation', 'tf', 'tfResult'].includes(x.game!.turn.step))) expect(m.cards).toEqual([]);
   });
 
   it('정지 때 카드 글: 함께 본 카드 + 랜드마크 나라 1~3단계(결과 마그넷)', async () => {
@@ -291,7 +294,13 @@ describe('미션 실패 해설(PRD §3.5, QA r3): 정답 키·explain 은 판정
     expect(game(room).turn.step).toBe('tf');
     expect(revealOf(ws[0])).toEqual(rv);
     await advance(room, ctx, untilDeadline(room));
-    expect(game(room).turn.step).not.toBe('tf');
+    // U10: 결과 2초(tfResult) 동안은 같은 창이라 도착자에게만 남는다. 관전자는 여전히 없음
+    expect(game(room).turn.step).toBe('tfResult');
+    expect(revealOf(ws[0])).toEqual(rv);
+    say(room, ws[2], { t: 'sync' });
+    expect(revealOf(ws[2])).toBeNull();
+    await advance(room, ctx, untilDeadline(room));
+    expect(game(room).turn.step).not.toBe('tfResult');
     expect(revealOf(ws[0])).toBeNull();
   });
 

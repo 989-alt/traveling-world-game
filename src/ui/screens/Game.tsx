@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { hasAsset, tileLazyKeys } from '../../assets/manifest';
 import { preload } from '../../assets/preload';
 import { buildCost, landPrice, tollQuote } from '../../engine/pay';
-import { BOARD, countryLabel } from '../../shared/board';
+import { BOARD, countryLabel, TRAVEL_TILE } from '../../shared/board';
 import { STEP_MS, TAKEOVER_MAX_LEVEL, TOLL_RATE } from '../../shared/economy';
 import type { Mission } from '../../shared/content-types';
 import type { GameState, LogEvent } from '../../shared/types';
@@ -12,8 +12,9 @@ import type { GameClient } from '../../state/client';
 import { cardIn, cultureOf, materialOf, missionOf, questionOf, tfOf } from '../../state/content';
 import { josa } from '../../state/nick';
 import { localDeadline, stepKeyOf, type ClientState } from '../../state/store';
-import { lastOf, noticesFrom, seatViews, stepView, type Notice } from '../../state/view';
+import { lastOf, noticeShowMs, noticesFrom, seatViews, stepView, type Notice } from '../../state/view';
 import { Board, type BoardGame } from '../board/Board';
+import type { BoardPick } from '../board/PickLayer';
 import { HUD } from '../board/geometry';
 import { HangSign } from '../board/HangSign';
 import { RotateGuard, usePortrait } from '../board/RotateGuard';
@@ -22,19 +23,16 @@ import { MissionPanel } from '../missions/MissionPanel';
 import { RewardPick } from '../missions/RewardPick';
 import { BUILDING, priceLine, ScrollPanel, TollNotice, type NoTakeover } from '../overlays/ActionPanel';
 import { CultureCard } from '../overlays/CultureCard';
-import { EventCard, EVENT_MS } from '../overlays/EventCard';
-import { ExplainCard } from '../overlays/ExplainCard';
-import { IslandPanel, ShieldPopup, TilePicker, travelTiles } from '../overlays/Pickers';
+import { EventCard } from '../overlays/EventCard';
+import { ExplainCard, type TfResult } from '../overlays/ExplainCard';
+import { IslandPanel, ShieldPopup } from '../overlays/Pickers';
 import { Stage, won } from '../overlays/parts';
 import { QuestionScroll } from '../overlays/QuestionScroll';
 import { Rules } from './Rules';
 import { stakeLine } from './stake';
 
-export const TOLL_NOTICE_MS = 3000;
 /** 줌이 풀리길 기다리지 않는 단계 */
-const NO_CAM_HOLD = new Set<string>(['explanation', 'tf', 'reward']);
-/** 문항이 알림 뒤에서 기다릴 때 알림 상한 */
-export const HELD_NOTICE_MS = 1000;
+const NO_CAM_HOLD = new Set<string>(['explanation', 'tf', 'tfResult', 'reward']);
 
 /** ending: 독점승으로 판이 끝났지만 보드에서 독점 연출(§16.5)을 보이는 3초 — 오버레이·알림·메뉴 없이 보드만 */
 export function Game({ client, s, ending = false }: { client: GameClient; s: ClientState; ending?: boolean }) {
@@ -73,11 +71,29 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   const [mtf, setMtf] = useState<{ id: string; v: boolean } | null>(null); // 미션 관전 참/거짓: 고른 값(잠금 표시)
 
   // ── 새 로그 → 알림 줄. 알림마다 고유 id(같은 칸 컷씬이 연달아 와도 새로 마운트) ──
+  // afterMove: 같은 묶음에 이동이 있었던 알림 = 그 이동의 줌이 풀린 뒤에 연다(서버가 이동 연출 + 알림 시간을 마감에 더한다, PRD §4.3 U10)
   const nextId = useRef(0);
-  // 전체 다시 받기(입장·재접속): 진행 중인 컷씬만 남은 구간부터 이어 본다(DESIGN §12.3). 나머지 지난 알림은 버린다
-  const resumed = (): { id: number; n: Notice }[] => {
+  /** ms: 재접속으로 남은 구간만 보이는 알림의 표시 시간(없으면 noticeShowMs) */
+  type Queued = { id: number; n: Notice; afterMove: boolean; ms?: number };
+  // 전체 다시 받기(입장·재접속): 진행 중인 컷씬은 남은 구간부터 이어 보고(DESIGN §12.3), 서버 표시 창(showUntil)이 남은 알림은
+  // 그 남은 시간만큼만 다시 연다(QA r14, PRD §4.3 U10). 창이 끝난 지난 알림은 버린다
+  const resumed = (): Queued[] => {
     const c = s.room?.cutscene;
-    return c ? [{ id: ++nextId.current, n: { kind: 'cutscene', seat: c.builder, tile: c.tile, t0: c.t0 } }] : [];
+    if (c) return [{ id: ++nextId.current, n: { kind: 'cutscene', seat: c.builder, tile: c.tile, t0: c.t0 }, afterMove: false }];
+    const su = s.room?.showUntil;
+    let left = su ? su - s.skew - Date.now() : 0;
+    if (left <= 0) return [];
+    // 이번 차례 묶음(마지막 주사위·세계여행 이동 뒤)의 알림을 끝에서부터 남은 시간만큼
+    let from = s.log.length;
+    while (from > 0 && !(s.log[from - 1].ev === 'dice' || (s.log[from - 1].ev === 'move' && (s.log[from - 1] as { via?: string }).via !== 'dice'))) from--;
+    const ns = noticesFrom(s.log.slice(from), g).filter((n) => n.kind !== 'cutscene');
+    const out: Queued[] = [];
+    for (let i = ns.length - 1; i >= 0 && left > 0; i--) {
+      const full = noticeShowMs(ns[i]);
+      out.unshift({ id: 0, n: ns[i], afterMove: false, ms: Math.min(full, left) });
+      left -= full;
+    }
+    return out.map((x) => ({ ...x, id: ++nextId.current }));
   };
   const [queue, setQueue] = useState(resumed);
   const seenSeq = useRef(s.seq);
@@ -85,7 +101,8 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
     if (s.seq === seenSeq.current) return;
     seenSeq.current = s.seq;
     if (s.resynced) { setQueue(resumed()); return; }
-    const add = noticesFrom(s.fresh, g).map((n) => ({ id: ++nextId.current, n }));
+    const moved = s.fresh.some((e) => e.ev === 'move' && e.from !== e.to);
+    const add = noticesFrom(s.fresh, g).map((n) => ({ id: ++nextId.current, n, afterMove: moved }));
     if (add.length) setQueue((q) => [...q, ...add]);
     // 주사위가 나온 순간 도착 칸 그림을 미리 받는다
     for (const e of s.fresh) if (e.ev === 'move') void preload(tileLazyKeys(e.to));
@@ -93,22 +110,29 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   // 이동 직후에 오는 단계만 줌을 기다린다. 해설·참거짓·보상은 답이 나온 뒤라 기다리지 않는다(해설을 본 신호 shown 이 빠지지 않게)
   // 서버가 도착 단계 마감을 이동 연출 시간만큼 늦춘다(shared/timing movesShowMs) → 줌이 끝난 뒤에 열어도 제 시간이 남는다
   const camHold = cam && !NO_CAM_HOLD.has(t.step);
+  // 줌이 한 번 풀리면 줄에 있는 알림은 더는 줌을 기다리지 않는다(다음 사람 줌이 와도 숨지 않음)
+  useEffect(() => { if (!cam) setQueue((q) => (q.some((x) => x.afterMove) ? q.map((x) => (x.afterMove ? { ...x, afterMove: false } : x)) : q)); }, [cam]);
   const head = queue[0];
-  // 알림도 줌이 풀린 뒤에 연다. 단 이미 재생 중인 컷씬은 줌이 시작돼도 끊지 않는다(다시 마운트하면 처음부터·건너뜀이 꼬인다)
-  const headHold = camHold && head?.n.kind !== 'cutscene';
+  /** 이 알림은 이미 열렸다: 줌·이동·다음 단계와 무관하게 제 시간(EVENT_MS 3.2초 · TOLL_MS 3초)을 다 채운다(DESIGN §18.5) */
+  const opened = useRef<number | null>(null);
+  // 아직 안 연 알림만 제 이동의 줌이 풀리길 기다린다. 이미 재생 중인 컷씬은 끊지 않는다
+  const noticeWait = !!head && opened.current !== head.id && head.afterMove && cam && head.n.kind !== 'cutscene';
+  if (head && !noticeWait && !ending) opened.current = head.id;
   const pop = (id: number) => setQueue((q) => q.filter((x) => x.id !== id));
 
   const view = stepView(g, s.log, me);
-  // 알림이 남아 있으면 문화 카드·문항은 알림이 다 끝난 뒤에 띄운다(겹침 방지).
-  // 문화 카드·문항이 기다리는 동안은 통행료·이벤트 알림을 1초로 줄여 볼·답할 시간을 덜 깎는다(컷씬은 누르면 바로 넘어감)
+  // 알림이 남아 있으면 문화 카드·문항은 알림이 다 끝난 뒤에 띄운다(겹침 방지). 알림은 줄이지 않는다 — 서버가 알림 시간을 마감에 더했다
   const holding = !!head && (view.kind === 'culture' || view.kind === 'question');
+  const headOpen = !!head && opened.current === head.id;
   useEffect(() => {
-    if (!head || head.n.kind === 'cutscene' || headHold) return;
-    const ms = holding ? HELD_NOTICE_MS : head.n.kind === 'toll' ? TOLL_NOTICE_MS : EVENT_MS;
+    if (!head || !headOpen) return;
+    const ms = head.ms ?? noticeShowMs(head.n);
+    if (ms <= 0) return; // 컷씬은 제 길이
     const h = setTimeout(() => pop(head.id), ms);
     return () => clearTimeout(h);
-  }, [head?.id, holding, headHold]);
-  const overlay = holding || ending || camHold ? null : renderStep();
+  }, [head?.id, headOpen]);
+  const picking = view.kind === 'travel' || view.kind === 'pickTile' || view.kind === 'festival';
+  const overlay = holding || ending || camHold || picking ? null : renderStep();
   const covered = !!overlay || !!head;
 
   function waiting(text: string) {
@@ -151,7 +175,7 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
           tile={t.tile ?? 0} variant={q.variant} correct={t.correct} charId={arriver.charId}
           timedOut={s.log.some((e) => e.ev === 'answer' && e.qid === q.qid && e.choice === null && e.seat === t.seat)} arriverName={arriver.name} mine={mine} deadline={deadline}
           onShown={view.kind === 'explanation' && me !== null ? () => client.send({ t: 'shown', stepKey: shownKey }) : undefined} covered={!!head || portrait || rules}
-          tf={stmt ? { text: stmt.text, canAnswer: eligible, deadline, onPick: (value) => act({ type: 'tfAnswer', value }) } : null} /></Stage>;
+          tf={stmt ? { text: stmt.text, canAnswer: eligible && t.step === 'tf', deadline, onPick: (value) => act({ type: 'tfAnswer', value }), result: tfResult() } : null} /></Stage>;
       }
       case 'mission':
       case 'reward': {
@@ -163,8 +187,8 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
         return <Stage dim label="미션"><div class="ov-center"><MissionPanel key={m.id} mission={m as unknown as Mission} role={mine ? 'player' : 'spectator'}
           phase={t.step === 'mission' ? 'play' : 'tf'} deadlineAt={deadline ?? Date.now()} success={t.missionSuccess}
           onSubmit={mine ? (a) => act({ type: 'missionAnswer', ...a }) : undefined}
-          onTf={eligible ? (value) => { setMtf({ id: m.id, v: value }); act({ type: 'tfAnswer', value }); } : undefined}
-          tfPicked={mtf?.id === m.id ? mtf.v : null} shown={t.mission} reveal={mine ? t.reveal : null} /></div></Stage>;
+          onTf={eligible && t.step === 'tf' ? (value) => { setMtf({ id: m.id, v: value }); act({ type: 'tfAnswer', value }); } : undefined}
+          tfPicked={mtf?.id === m.id ? mtf.v : null} tfResult={tfResult()} shown={t.mission} reveal={mine ? t.reveal : null} /></div></Stage>;
       }
       case 'toll': {
         if (t.tile === null) return null;
@@ -213,22 +237,40 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
         if (me !== null && me === owner) return <Stage dim><ShieldPopup attacker={arriver.name} tileName={tile!.name} deadline={deadline} onAnswer={(use) => act({ type: 'shield', use })} /></Stage>;
         return waiting(`${josa(seats[owner ?? 0].name, '이', '가')} 방패를 쓸지 고르고 있어요`);
       }
-      case 'travel':
-        if (!mine) return waiting(`${who('이', '가')} 세계여행으로 갈 곳을 고르고 있어요`);
-        return <Stage><TilePicker title="어디로 떠날까요?" note="고른 칸으로 바로 날아가요. 출발 칸을 지나면 월급도 받아요." tiles={travelTiles()}
-          deadline={deadline} totalMs={STEP_MS.travel} onPick={(tile) => act({ type: 'travel', tile })} /></Stage>;
-      case 'pickTile': {
-        if (!mine) return waiting(`${who('이', '가')} 갈 땅을 고르고 있어요`);
-        const own = g.tiles.flatMap((x, i) => (x.owner === t.seat ? [i] : []));
-        return <Stage><TilePicker title="내 땅으로 가요" note="갈 땅을 하나 골라요." tiles={own} deadline={deadline} totalMs={STEP_MS.pickTile} onPick={(tile) => act({ type: 'pickTile', tile })} /></Stage>;
-      }
-      case 'festival': {
-        if (!mine) return waiting(`${who('이', '가')} 축제를 열 땅을 고르고 있어요`);
-        const own = g.tiles.flatMap((x, i) => (x.owner === t.seat ? [i] : []));
-        return <Stage><TilePicker title="축제를 열 땅을 골라요" note="고른 땅은 통행료가 두 배가 돼요." tiles={own} deadline={deadline} totalMs={STEP_MS.festival}
-          onPick={(tile) => act({ type: 'pickFestival', tile })} skipLabel="이번엔 안 고를래요" onSkip={() => act({ type: 'pickFestival', tile: null })} /></Stage>;
-      }
+      // 세계여행 · 내 땅으로 · 축제: 오버레이 없이 보드에서 칸을 직접 고른다(Board pick, DESIGN §18)
+      case 'travel': case 'pickTile': case 'festival':
+        return null;
     }
+  }
+
+  /** 오버레이 마운트 키의 단계: 미션 → 참/거짓 → 결과는 'mission' 하나, 해설 참/거짓 → 결과는 'tf' 하나 */
+  function overlayStep(): string {
+    if (t.missionId && (t.step === 'tf' || t.step === 'tfResult')) return 'mission';
+    return t.step === 'tfResult' ? 'tf' : t.step;
+  }
+
+  /** 고르기 단계(PRD §3.6.1): 고를 수 있는 칸 = 세계여행은 세계여행 칸 뺀 29칸, 내 땅으로·축제는 내 땅 */
+  function boardPick(): BoardPick | null {
+    if (ending || !picking) return null;
+    const kind = view.kind as BoardPick['kind'];
+    const eligible = kind === 'travel' ? BOARD.map((x) => x.index).filter((i) => i !== TRAVEL_TILE) : g.tiles.flatMap((x, i) => (x.owner === t.seat ? [i] : []));
+    const send = (tile: number) => act(kind === 'travel' ? { type: 'travel', tile } : kind === 'pickTile' ? { type: 'pickTile', tile } : { type: 'pickFestival', tile });
+    return {
+      kind, seat: t.seat, mine, name: arriver.name, eligible, preview: t.preview ?? null, deadline, total: STEP_MS[kind],
+      onPreview: mine ? (tile) => client.send({ t: 'pickPreview', tile }) : undefined,
+      onConfirm: mine ? send : undefined,
+      onSkip: mine && kind === 'festival' ? () => act({ type: 'pickFestival', tile: null }) : undefined,
+    };
+  }
+
+  /** 참/거짓 결과 2초(tfResult): 정답 + 참가 자리(도착자 제외)가 맞혔는지 — 닫을 때 남긴 tf_answer 로그 */
+  function tfResult(): TfResult | null {
+    if (t.step !== 'tfResult' || !t.tf || t.tf.answer === undefined) return null;
+    const stmt = t.tf.stmtId;
+    const got = new Map<number, boolean>();
+    for (let i = s.log.length - 1; i >= 0; i--) { const e = s.log[i]; if (e.ev === 'tf_answer' && e.stmtId === stmt && !got.has(e.seat)) got.set(e.seat, e.correct && e.value !== null); else if (e.ev !== 'tf_answer' && got.size) break; }
+    const chips = seats.filter((x) => x.seat !== t.seat).map((x) => ({ seat: x.seat, name: x.name, correct: got.get(x.seat) ?? false }));
+    return { answer: t.tf.answer, chips };
   }
 
   /** 건설 문항(내 나라 땅, 4단계 전): 문항 오른쪽 미리보기(R2 D5) — 지금 단계 → 다음 단계 + 건설비 */
@@ -245,14 +287,14 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
 
   function renderNotice({ id, n }: { id: number; n: Notice }) {
     const pop1 = () => pop(id);
-    if (n.kind === 'event') return <Stage><EventCard key={id} ev={n.ev} name={seats[n.ev.seat].name} onClose={pop1} /></Stage>;
+    if (n.kind === 'event') return <Stage class="ov-layer--notice"><EventCard key={id} ev={n.ev} name={seats[n.ev.seat].name} onClose={pop1} /></Stage>;
     if (n.kind === 'cutscene') {
       const b = seats[n.seat];
       return <Cutscene tile={n.tile} charId={b.charId} builder={b.name} country={BOARD[n.tile].name}
         toll={Math.round((BOARD[n.tile].price ?? 0) * TOLL_RATE[4])} startedAt={n.t0 === undefined ? undefined : n.t0 - s.skew} onDone={pop1} key={id} />;
     }
     const e = n.ev;
-    return <Stage><TollNotice payerName={seats[e.payer].name} ownerName={seats[e.owner].name} tileName={BOARD[e.tile].name}
+    return <Stage class="ov-layer--notice"><TollNotice payerName={seats[e.payer].name} ownerName={seats[e.owner].name} tileName={BOARD[e.tile].name}
       full={Math.round(e.base * e.multiplier)} paid={e.paid} why={whyNoTakeover(s.log, e, g.tiles[e.tile].level)} /></Stage>;
   }
 
@@ -260,11 +302,14 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   return (
     <div class="game" data-ending={ending ? '1' : undefined} data-step={t.step} data-seat={me ?? ''} data-turn={t.seat}>
       <Board game={g as unknown as BoardGame} players={players} mySeat={me} log={s.log} covered={covered}
-        onRoll={(gauge) => act({ type: 'roll', gauge })} noZoom={s.resynced} onCamera={setCam} clockAt={s.clockAt} />
+        onRoll={(gauge) => act({ type: 'roll', gauge })} noZoom={s.resynced} onCamera={setCam} clockAt={s.clockAt}
+        pick={boardPick()} locked={!!head && !ending} />
       {/* 단계가 바뀌면 오버레이를 새로 마운트(같은 컴포넌트의 잠금 상태가 다음 단계로 새지 않게).
-          단 미션 → 관전 참/거짓(tf)은 같은 패널: 푼 사람의 선·블록이 남아 있어야 실패 해설이 그 위에 겹친다(QA r3) */}
-      <Fragment key={`${t.seat}|${t.step === 'tf' && t.missionId ? 'mission' : t.step}|${t.tile}`}>{overlay}</Fragment>
-      {head && !ending && !headHold && <Fragment key={head.id}>{renderNotice(head)}</Fragment>}
+          단 미션 → 관전 참/거짓(tf) → 결과(tfResult)는 같은 패널: 푼 사람의 선·블록이 남아 있어야 실패 해설이 그 위에 겹친다(QA r3).
+          해설 참/거짓 → 결과도 같은 창(선지가 결과로 바뀐다, DESIGN §18.5) */}
+      <Fragment key={`${t.seat}|${overlayStep()}|${t.tile}`}>{overlay}</Fragment>
+      {/* 알림 카드: 게임 루트 고정 레이어(z.notice — HUD·오버레이 위, 세로 안내 아래). 한 번 열리면 제 시간을 다 채운다 */}
+      {head && !ending && headOpen && <Fragment key={head.id}>{renderNotice(head)}</Fragment>}
       {!ending && <GameMenu host={host} pending={!!g.clock.pauseBy} onRules={() => setRules(true)} onPause={() => client.send({ t: 'pause' })} />}
       {rules && <Rules onClose={() => setRules(false)} />}
       {/* 세로 안내: 마지막 자식 + fixed 전용 z → 모든 레이어 위, 형제는 inert(DESIGN §4.2, QA6) */}

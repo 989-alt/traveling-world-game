@@ -23,6 +23,14 @@ export interface TfBar {
   canAnswer: boolean;
   deadline: number | null;
   onPick: (v: boolean) => void;
+  /** 참/거짓 결과 2초(tfResult, DESIGN §18.5): 정답 + 맞힌 사람. 있으면 같은 띠가 결과로 바뀐다 */
+  result?: TfResult | null;
+}
+
+export interface TfResult {
+  answer: boolean;
+  /** 참가 자리(도착자 제외) — correct: 맞힘 / 틀림·답 없음 */
+  chips: { seat: number; name: string; correct: boolean }[];
 }
 
 export interface ExplainCardProps {
@@ -148,6 +156,19 @@ export function ExplainCard(p: ExplainCardProps) {
   </>);
 }
 
+/** 참/거짓 결과 칩(참가 자리, 맞힌 사람 = correct.soft + 자리색 테). 해설 참/거짓 · 미션 관전 참/거짓 공용 */
+export function TfChips({ result: r }: { result: TfResult }) {
+  return (
+    <ul class="ex-tf-chips" role="status" aria-label={`정답은 ${r.answer ? '참' : '거짓'}`}>
+      {r.chips.map((c) => (
+        <li key={c.seat} class={`ex-tf-chip${c.correct ? ' is-ok' : ''}`} data-seat={c.seat} style={{ '--seat': `var(--seat-${c.seat + 1})` }}>
+          {c.correct && <span class="ex-check" aria-hidden="true" />}<span class="ex-tf-chip-name">{c.name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function TfRow(t: TfBar) {
   const [picked, setPicked] = useState<boolean | null>(null);
   const sent = useRef(false);
@@ -159,6 +180,20 @@ function TfRow(t: TfBar) {
     setPicked(v);
     t.onPick(v);
   };
+  if (t.result) {
+    const r = t.result;
+    const opt = (v: boolean) => `ov-ans ${v ? 'ov-ans--c' : 'ov-ans--b'} ex-tf-btn ex-tf-res${r.answer === v ? ' is-answer' : ' is-off'}`;
+    return (
+      <footer class="ex-tf is-result" role="group" aria-label="참 거짓 결과" data-answer={String(r.answer)}>
+        <p class="ex-tf-text">{t.text}</p>
+        <div class="ex-tf-btns">
+          <button type="button" class={opt(true)} data-tf="true" aria-pressed={picked === true} disabled>참</button>
+          <button type="button" class={opt(false)} data-tf="false" aria-pressed={picked === false} disabled>거짓</button>
+        </div>
+        <TfChips result={r} />
+      </footer>
+    );
+  }
   if (!t.canAnswer) return <div class="ex-tf ex-tf--wait" role="status">친구들이 참·거짓을 고르는 중이에요</div>;
   return (
     <footer class="ex-tf" role="group" aria-label="참 거짓 고르기">

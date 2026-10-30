@@ -202,7 +202,7 @@ test('주사위 B: 관전 기기도 같은 눈·합·더블 칩을 본다(멈춤
   await close();
 });
 
-test('주사위 B: 서버 마감 = 단계 기본 + 1830 + 이동 연출, 봇 굴림은 흔들기 600 뒤 쏟는다', async ({ browser }) => {
+test('주사위 B: 서버 마감 = 단계 기본 + 1830 + 이동 연출, 봇 굴림은 받은 순간 쏟는다(U10: 옛 흔들기 600 은 서버 연출 합에 없어 뺐다)', async ({ browser }) => {
   test.setTimeout(120_000);
   const { srv, pages: [a], close } = await room(browser, 1);
   srv.do((g) => { g.players[0].pos = 3; g.turn = { ...g.turn, ...TURN(0, 'roll') }; g.rngState = rngFor(1, 2); });
@@ -214,15 +214,15 @@ test('주사위 B: 서버 마감 = 단계 기본 + 1830 + 이동 연출, 봇 굴
   const show = (r.showUntil ?? 0) - clock.now();
   expect(show, '서버 연출 늦춤(주사위 + 3홉)').toBeGreaterThan(DICE_SHOW_MS + moveShowMs(3, 6) - 200);
   expect(show).toBeLessThanOrEqual(DICE_SHOW_MS + moveShowMs(3, 6));
-  // 봇(자리 1) 차례: 누름 없이 컵 흔들기(shake) → 쏟기
+  // 봇(자리 1) 차례: 누름·흔들기 없이 서버 눈이 온 순간 쏟기(U10 S13 — 화면 연출 = 서버 DICE_SHOW_MS)
   await expect(a.locator('.dice')).toHaveAttribute('data-d1', '1'); // 내 굴림 연출이 화면에 왔다
   await still(a);
   await expect(a.locator('.dice')).toHaveAttribute('data-phase', 'idle');
   await watchPop(a);
   srv.do((g) => { g.turn = { ...g.turn, ...TURN(1, 'roll') }; });
-  await expect(a.locator('.dice')).toHaveAttribute('data-phase', 'shake', { timeout: 6000 });
+  await expect(a.locator('.dice')).toHaveAttribute('data-phase', /tilt|pour/, { timeout: 6000 });
   await a.screenshot({ path: `${SHOTS}dice-bot-shake-${proj()}.png`, clip: await diceClip(a) });
-  await expect(a.locator('.dice')).toHaveAttribute('data-phase', /tilt|pour/, { timeout: 1000 });
+  await expect(a.locator('.dice')).not.toHaveAttribute('data-phase', 'shake');
   await expect(a.locator('.dice')).toHaveAttribute('data-seat', '1');
   await expect.poll(async () => (await pops(a)).length, { timeout: 3000 }).toBeGreaterThan(0);
   const d = lastDice(srv)!;

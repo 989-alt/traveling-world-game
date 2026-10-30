@@ -29,7 +29,12 @@ export interface Settings {
 
 export type Step =
   | 'roll' | 'travel' | 'culture' | 'question' | 'explanation' | 'tf' | 'toll' | 'action'
-  | 'takeover' | 'shield' | 'mission' | 'reward' | 'pickTile' | 'festival';
+  | 'takeover' | 'shield' | 'mission' | 'reward' | 'pickTile' | 'festival'
+  /** 참/거짓 결과 2초(PRD §4.3 U10): 전원 답했거나 6초 마감 뒤. 입력 없음, timeout 으로만 넘어간다 */
+  | 'tfResult';
+
+/** 보드에서 칸 고르기 단계(PRD §3.6.1) */
+export const PICK_STEPS = ['travel', 'pickTile', 'festival'] as const;
 
 export interface TileState { owner: Seat | null; level: 0 | 1 | 2 | 3 | 4; festivalTarget: boolean }
 
@@ -88,6 +93,9 @@ export interface TurnState {
   missionSuccess: boolean;
   rewardOptions: Reward[];
   takeoverCost: number;
+  /** 고르기 단계(travel·pickTile·festival)에서 지금 선택 표시 중인 칸(확정 아님, PRD §3.6.1). 관전자 화면에 따라가고,
+   *  마감 때 있으면 그 칸으로 확정. 없음 = null. 옛 저장본은 필드 없음(= null) */
+  preview?: number | null;
 }
 
 export interface GameState {
@@ -132,6 +140,8 @@ export type Action =
   | { type: 'chooseReward'; seat: Seat; index: number }
   | { type: 'pickTile'; seat: Seat; tile: number }
   | { type: 'pickFestival'; seat: Seat; tile: number | null }
+  /** 고르기 단계 선택 옮김(확정 아님). tile null = 선택 해제. 고를 수 없는 칸이면 거부 */
+  | { type: 'pickPreview'; seat: Seat; tile: number | null }
   // 서버(신뢰)만 보내는 입력
   /** shown: 해설 단계를 닫을 때만 쓴다 — 마감 전에 해설 카드를 다 봤다고 알려 온 자리(기기 신호, T05c) */
   | { type: 'timeout'; shown?: Seat[] }

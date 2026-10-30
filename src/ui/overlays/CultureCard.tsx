@@ -65,7 +65,7 @@ export function CultureCard(p: CultureCardProps) {
       </div>
       <footer class="cc-foot">
         <span class="cc-hint">{p.firstVisit ? '처음 와 본 곳이에요. 천천히 둘러봐요' : canSkip ? '다 봤으면 카드를 눌러요' : `${josa(p.arriverName, '이', '가')} 다시 찾아왔어요`}</span>
-        <Countdown deadline={p.deadline} total={STEP_MS.culture} />
+        <Countdown deadline={p.deadline} total={p.firstVisit ? STEP_MS.culture : STEP_MS.cultureRevisit} />
       </footer>
     </section>
     </div>

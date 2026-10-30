@@ -90,7 +90,7 @@ type R = Room & { run(f: WebSocket | null, b: () => void): void; act(a: unknown)
 class Srv {
   ctx = new FakeCtx();
   room: R;
-  got: { tag: string; msg: string }[] = [];
+  got: { tag: string; msg: string; at: number }[] = [];
   private tick: ReturnType<typeof setInterval>;
   constructor(public code: string) {
     this.room = new RoomCtor(this.ctx as unknown as DurableObjectState, {}) as R;
@@ -99,7 +99,7 @@ class Srv {
   }
   attach(route: WebSocketRoute, tag: string) {
     const b = new Bridge(route, tag);
-    route.onMessage((m) => { this.got.push({ tag, msg: String(m) }); this.room.webSocketMessage(b as unknown as WebSocket, String(m)); });
+    route.onMessage((m) => { this.got.push({ tag, msg: String(m), at: Date.now() }); this.room.webSocketMessage(b as unknown as WebSocket, String(m)); });
     route.onClose(() => { if (b.closed) return; b.closed = true; this.room.webSocketClose(b as unknown as WebSocket); });
     this.room.accept(b as unknown as WebSocket);
   }
@@ -567,10 +567,10 @@ test('알림 줄: 같은 칸 컷씬 연달아·전체 다시 받기면 비움·�
   await close(srv, ps);
 });
 
-test('해설 카드가 알림에 덮인 시간은 본 시간으로 안 센다: 덮인 채 7초가 지나면 shown 없음 → false', async ({ browser }) => {
+test('해설 카드가 알림에 덮인 시간은 본 시간으로 안 센다: 알림 2장(6.4초)이 걷힌 뒤 7초를 더 봐야 shown — 서버는 알림 시간을 마감에 더한다(U10)', async ({ browser }) => {
   const { srv, ps } = await room(browser, 2); // 자리 2·3 = 봇
   srv.arrive(0, 2);
-  await expect.poll(() => srv.g.turn.step, { timeout: 9000 }).toBe('question'); // 문화 3초 + 주사위 1.83초(U8) + 이동 연출
+  await expect.poll(() => srv.g.turn.step, { timeout: 12_000 }).toBe('question'); // 문화 첫 방문 5초(U10) + 주사위 1.83초(U8) + 이동 연출
   // 답과 같은 처리에서 이벤트 알림 2장(3.2초 × 2)을 남긴다 → 두 기기 모두 해설 카드 위에 6.4초 동안 알림
   srv.do(() => {
     srv.room.act({ type: 'answer', seat: 0, choice: 0, ms: 1000 });
@@ -578,11 +578,18 @@ test('해설 카드가 알림에 덮인 시간은 본 시간으로 안 센다: �
   });
   expect(srv.g.turn.step).toBe('explanation');
   const key = srv.room.rec!.stepKey;
+  const t0 = Date.now();
   for (const p of ps) { await expect(p.page.locator('.ex')).toBeVisible(); await expect(p.page.locator('.evc')).toBeVisible(); }
-  // 7초 + 기다림 2초 안에 '보인 7초'를 못 채운다
-  await expect.poll(() => srv.g.turn.step, { timeout: 12_000 }).not.toBe('explanation');
-  expect(lastLog(srv, 'explanation')!.shownTo).toEqual([false, false, true, true]);
-  for (const p of ps) expect(srv.sent(p.tag, new RegExp(`"stepKey":"${key.replace(/\|/g, '\\|')}"`)), p.tag).toBe(0);
+  // U10(PRD §4.3): 서버가 알림 2장 6.4초를 해설 마감에 더한다(7 + 6.4초, shown 이 늦으면 + 기다림 2초)
+  await expect.poll(() => srv.g.turn.step, { timeout: 20_000 }).not.toBe('explanation');
+  // 덮인 6.4초는 본 시간이 아니다: shown 은 알림이 걷힌 뒤 7초를 다 본 다음(≥ 13.4초)에야 온다 → 그래도 마감 안에 와서 true
+  expect(lastLog(srv, 'explanation')!.shownTo).toEqual([true, true, true, true]);
+  const re = new RegExp(`"stepKey":"${key.replace(/\|/g, '\\|')}"`);
+  for (const p of ps) {
+    const m = srv.got.find((x) => x.tag === p.tag && re.test(x.msg));
+    expect(m, p.tag).toBeTruthy();
+    expect(m!.at - t0, p.tag).toBeGreaterThanOrEqual(2 * 3200 + 7000 - 500);
+  }
   await close(srv, ps);
 });
 
@@ -693,8 +700,8 @@ test('미션 실패 해설 6초 창(QA4-reveal): 혼자 + 봇 3명, m-01 전부 
   });
   await tap(a.page, '.mp-submit');
   await expect(a.page.locator('.mp-explain-text')).toHaveText(m.explain);
-  // 봇 3명이 마감 전에 다 답했는데도 단계는 그대로 tf(응답만 저장)
-  await expect.poll(() => srv.g.turn.tf?.answers.length ?? -1, { timeout: 5_000 }).toBe(3);
+  // 봇 3명이 마감 전에 다 답했는데도 단계는 그대로 tf(응답만 저장). U10-c: 봇 참/거짓 지연 3~5초(창 6초 안)
+  await expect.poll(() => srv.g.turn.tf?.answers.length ?? -1, { timeout: 5_800 }).toBe(3);
   expect(srv.g.turn.step).toBe('tf');
   await expect(a.page.locator('.mp-explain-text')).toHaveCount(1);
   await expect(a.page.locator('.mp-explain-text')).toHaveCount(0, { timeout: 10_000 });

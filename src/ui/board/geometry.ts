@@ -212,6 +212,26 @@ export const HUD = {
   rope: 42,
 } as const;
 
+// ── U10 보드에서 칸 고르기(DESIGN §18.2·§18.3) ──
+/** 고르기 간판: 주사위 자리 (533,290)~(833,400), 축제는 단추 줄로 높이 150(y 290~440). 윗변 290 고정, 밧줄 33(남은 시간 간판 아랫변 257 에서) */
+export const PICK_SIGN = { x: 683, top: 290, w: px('pick-sign-w'), h: px('pick-sign-h'), hFestival: px('pick-sign-h-festival'), rope: px('pick-sign-rope') } as const;
+export function pickSignBox(festival: boolean): Box {
+  const h = festival ? PICK_SIGN.hFestival : PICK_SIGN.h;
+  return { x: PICK_SIGN.x - PICK_SIGN.w / 2, y: PICK_SIGN.top, w: PICK_SIGN.w, h };
+}
+/** 말풍선: 폭 180(이름이 길면 최대 220) × 80, 꼬리 10. 칸 상자와 틈 6, 스테이지 안 여백 8 */
+export const PICK_BUBBLE = { w: px('pick-bubble-w'), wMax: 220, h: px('pick-bubble-h'), tail: px('pick-bubble-tail'), gap: 6, margin: 8 } as const;
+/** 말풍선 자리: 보통은 칸 위(꼬리 아래로), 윗줄(r0)은 칸 아래(꼬리 위로). 좌우는 스테이지 8~1358 안으로 밀고 꼬리만 칸 중심.
+ *  box = 몸(꼬리 제외). 몸 아랫변(윗줄은 윗변)이 칸 상자에서 gap 6, 꼬리 10 은 칸 상자 위 하늘·아래 절벽 끝에 걸친다 */
+export function bubbleGeo(tile: number, w: number = PICK_BUBBLE.w): { box: Box; below: boolean; tailX: number } {
+  const g = TILES[tile];
+  const below = g.row === 0;
+  const { h, tail, gap, margin } = PICK_BUBBLE;
+  const x = Math.min(STAGE.w - margin - w, Math.max(margin, g.center.x - w / 2));
+  const y = below ? g.img.y + g.img.h + gap : g.img.y - gap - h;
+  return { box: { x, y, w, h }, below, tailX: g.center.x - x };
+}
+
 /** 칸 그림 속 이름표(볼트 판) 상자 — 가림 검사용. 상자 비율: 가로 17~83%(5자 판 66%), 세로 66~86%(1줄 18% + 여유), 2줄(사우디·콩고) 66~93% */
 export function plateBox(g: TileGeo): Box {
   const two = g.index === 5 || g.index === 19;
