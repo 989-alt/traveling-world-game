@@ -18,7 +18,13 @@ const RULES = [
   [/^plaza$/, { min: Math.ceil(1080 * ZOOM), max: 1944 }], // 광장 긴 변 1944
   [/^plaza\.mask\./, { max: 1944 }], // 대륙 마스크 5(광장과 같은 크기)
   [/^ui\.signpost$/, { exact: [256, 171], min: Math.ceil(109 * ZOOM) }], // 판+짧은 기둥(키잉 때 기둥을 잘라 붙임)
-  [/^ui\.flag\./, { max: 128, min: Math.ceil(16 * ZOOM) }],
+  // U8 §17.1.3 주사위 B(HUD — 줌 없음): 컵 512(높이 110 × 2 = 220) · 쟁반 폭 800 · 눈 6장 256(60 × 2) · 버스트 256(128)
+  [/^dice\.cup\./, { exact: [512, 512] }],
+  [/^dice\.tray$/, { max: 800, min: 400 }],
+  [/^dice\.(face\.[1-6]|burst)$/, { exact: [256, 256] }],
+  // U8 §17.2.1 땅 표시 C2(판 — 줌 1.8): 세로 깃발 256(길이 44 × 1.8 = 80) · 삼각기 128 · 발코니 128(24 × 1.8 = 44)
+  [/^own\.flag\.[1-4]$/, { exact: [256, 256], min: Math.ceil(44 * ZOOM) }],
+  [/^own\.(pennant|balcony)\.[1-4]$/, { exact: [128, 128], min: Math.ceil(24 * ZOOM) }],
   [/^(culture|event|card)\./, { exact: [1440, 576] }],
   [/^mission\./, { exact: [512, 512] }], // 묶음 2 미션 사진 1:1
   [/^mc\./, { exact: [512, 512] }], // U1 미션 그림 카드 1:1
@@ -53,6 +59,32 @@ const RULES = [
   [/^result\.btn-blue$/, { max: 440 }],
   [/^result\.souv-stand$/, { max: 168 }],
   [/^(ui|item|badge)\./, { max: 128 }],
+];
+
+// U9 고해상 단계 하한(긴 변): 1920×1080·장치 배율 2 에서 잰 장치 px(U9-hires-shots/measure-before.json), 2048 넘으면 2048.
+// 판(world)은 줌 1.8 포함. 이 목록의 키는 hi 가 있어야 한다(없으면 실패).
+const HI_CAP = 2048;
+// U9 후속 판정(2026-10-30 사용자): 광장(+ 대륙 마스크)만 긴 변 2880 — 1920 PC 줌 광장 2833 장치 px(배율비 ≥ 1). PC 만 쓴다(manifest.ts)
+const HI_CAP_OF = (key) => (/^plaza(\.mask\.\w+)?$/.test(key ?? '') ? 2880 : HI_CAP);
+const HI_MIN = [
+  [/^tile\.\d+$/, 627], // 칸 줌 627
+  [/^plaza(\.mask\.\w+)?$/, 2833], // 광장 줌 2833@dpr1(1920 PC) — 상한 2880(dpr2 5666 은 예외)
+  [/^dice\.burst$/, 360], // U8 합 버스트 128 → 1920 dpr2 360
+  [/^ui\.signpost$/, 551],
+  [/^ui\.sign$/, 545], // 간판 9-slice 가운데(184 px)가 장치 439 px 로 → 256 × 2.13
+  [/^char\.\d+\.p19$/, 611], // 문화 카드 빼꼼
+  [/^char\.\d+\.p1[023]\.big$/, 2048], // 문항 옆 고민 포즈 2530 → 상한
+  [/^char\.\d+\.p\d\d$/, 498], // 보드 캐릭터 줌
+  [/^landmark\.\d+\.big$/, 1253], // 컷씬 랜드마크
+  [/^(cutscene|ui\.boardBg)/, 2048], // 화면 가득 3840 → 상한
+  [/^(culture|event|card)\./, 2048], // 2319 → 상한
+  [/^(mission|mc)\./, 582],
+  [/^ui\.stage$/, 2048],
+  [/^logo\.v2$/, 1687],
+  [/^result\.scroll$/, 1822],
+  [/^result\.banner$/, 2048],
+  [/^result\.isle\.\d$/, 787],
+  [/^(ui|item)\.(dice|missionEmblem|chest)$/, 281],
 ];
 
 /** WebP 헤더에서 [w, h] 를 읽는다. WebP 가 아니면 null. */
@@ -114,6 +146,32 @@ function check(root = ROOT) {
     if (rule.exact && (w !== rule.exact[0] || h !== rule.exact[1])) errors.push(`치수 ${w}x${h} (필요 ${rule.exact.join('x')}): ${key}`);
     if (rule.max && Math.max(w, h) > rule.max) errors.push(`치수 ${w}x${h} (상한 ${rule.max}): ${key}`);
     if (rule.min && Math.max(w, h) < rule.min) errors.push(`치수 ${w}x${h} (줌 하한 ${rule.min}): ${key}`);
+  }
+  // U9 고해상 단계(hi): manifest.hi 의 파일마다 webp/hi/<같은 이름> — WebP·600KB 이하·긴 변 ≤ 2048·기본보다 큼·비율 같음(±1.5%),
+  // 그리고 HI_MIN(1920×1080·dpr 2·줌 1.8 실측 장치 px, 상한 2048)을 넘는다
+  const hiRaw = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8')).hi; // hi 목록이 없는 매니페스트(옛 형식)는 hi 검사 생략
+  const hi = hiRaw ?? [];
+  const keyOf = new Map(Object.entries(entries).map(([k, v]) => [typeof v === 'string' ? v : v.file, k]));
+  for (const f of hi) {
+    if (!used.has(f)) { errors.push(`hi 인데 매니페스트 항목 없음: ${f}`); continue; }
+    const hp = join(root, f.replace(/^webp\//, 'webp/hi/'));
+    if (!existsSync(hp)) { errors.push(`hi 누락: ${f}`); continue; }
+    const hb = readFileSync(hp), hs = webpSize(hb), bs = existsSync(join(root, f)) ? webpSize(readFileSync(join(root, f))) : null;
+    if (!hs) { errors.push(`hi WebP 아님: ${f}`); continue; }
+    if (hb.length > MAX_BYTES) errors.push(`hi 600KB 초과: ${f} ${(hb.length / 1024).toFixed(0)}KB`);
+    const L = Math.max(...hs), cap = HI_CAP_OF(keyOf.get(f));
+    if (L > cap) errors.push(`hi 치수 ${hs.join('x')} (상한 ${cap}): ${f}`);
+    if (bs) {
+      if (L <= Math.max(...bs)) errors.push(`hi 가 기본보다 크지 않음 ${hs.join('x')} ≤ ${bs.join('x')}: ${f}`);
+      if (Math.abs(hs[0] / hs[1] - bs[0] / bs[1]) > 0.015 * (bs[0] / bs[1])) errors.push(`hi 비율 다름 ${hs.join('x')} vs ${bs.join('x')}: ${f}`);
+    }
+    const key = keyOf.get(f), need = HI_MIN.find(([re]) => re.test(key))?.[1];
+    if (need && L < need) errors.push(`hi 치수 ${hs.join('x')} (고해상 하한 ${need}): ${key} -> ${f}`);
+  }
+  const hiSet = new Set(hi);
+  for (const [key, v] of Object.entries(entries)) {
+    const f = typeof v === 'string' ? v : v.file;
+    if (hiRaw && f.endsWith('.webp') && existsSync(join(root, f)) && HI_MIN.some(([re]) => re.test(key)) && !hiSet.has(f)) errors.push(`고해상(hi) 없음: ${key} -> ${f}`);
   }
   // 매니페스트에 안 걸린 webp: 정보만(실패 아님)
   const orphans = readdirSync(join(root, 'webp')).filter(f => f.endsWith('.webp') && !used.has(`webp/${f}`));

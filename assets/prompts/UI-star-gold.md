@@ -1,0 +1,7 @@
+# UI-star-gold chunky glossy gold five-pointed star, sprite source on magenta
+Scene: one game prop alone: a chunky five-pointed star with softly rounded points, one point straight up, a flat gold fill with a lighter gold highlight across the upper left half, a deeper gold shade on the lower right half, one small white glint near the upper left point, a bold dark outline, the face plain and smooth. The star is centered and fills about 78 percent of the frame, readable at 10 pixels. Behind and around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on flat view with an orthographic feel, centered, the star facing the viewer.
+Lighting: bright midday sun from the upper left, a glossy highlight on the upper left of the star, a cool blue tint in the lower right shade, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #FFC93A star, #E09A00 star shade, #FFFFFF glint, #142038 outlines, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

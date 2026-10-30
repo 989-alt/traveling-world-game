@@ -77,7 +77,7 @@
   border-style: solid;
   border-width: 0;
   border-image-source: var(--wide);
-  border-image-slice: 250 220 250 220 fill;
+  border-image-slice: 31.9693% 14.3229% 31.9693% 14.3229% fill; /* 250 220 px @1536×782 — 백분율(U9 hi 변형도 같은 자리) */
   border-image-width: 155px 136px 155px 136px;
   filter: drop-shadow(0 14px 16px rgb(0 0 0 / 0.3));
 }

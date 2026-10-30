@@ -22,7 +22,7 @@
   border-color: #8A5A2B;
   border-width: 136px 96px 49px 96px;
   border-image-source: var(--plank);
-  border-image-slice: 183 130 66 130 fill;
+  border-image-slice: 32.0490% 12.6953% 11.5587% 12.6953% fill; /* 183 130 66 130 px @1024×571 — 백분율(U9 hi 변형도 같은 자리) */
   border-image-width: 136px 96px 49px 96px;
   border-image-repeat: stretch;
   /* 그림이 안 오면 나무색 판(§14.3) */

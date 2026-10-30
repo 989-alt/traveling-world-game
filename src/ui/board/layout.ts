@@ -1,4 +1,5 @@
-// 한 칸 위 캐릭터·건물·깃발 배치 (PRD §12.1, tokens board.character-anchor, DESIGN §16.1 R5d).
+// 한 칸 위 캐릭터 배치 (PRD §12.1, tokens board.character-anchor, DESIGN §16.1 R5d). U8 C2(§17.2): 깃발·건물은 윗면 밖(own-geo.ts) — 보드는 건물 없이 배치한다.
+// buildingBox·건물 규칙은 옛 윗면 건물 검사(board.test 전수)용으로 남긴다.
 // 규칙을 violations() 로 적고, place() 는 그 규칙을 통과하는 가장 큰 캐릭터 키(≤ 44px 토큰 상한)를 찾는다.
 import { CHAR, insetOf, type Box, type Pt, type TileGeo } from './geometry';
 
@@ -76,13 +77,6 @@ export const maxH = (g: TileGeo) => CHAR.h * g.scale;
 export function buildingBox(g: TileGeo): Box {
   const left = g.anchor.x + spriteW(maxH(g)) / 2 + BUILDING.gap;
   return { x: left, y: g.anchor.y - BUILDING.back - BUILDING.h, w: BUILDING.w, h: BUILDING.h };
-}
-
-/** 소유 깃발 발(깃대 밑) — 윗면 왼쪽 위 안쪽 6px(§7). 깃발 그림은 이 점 위로 선다 */
-export const FLAG = 24;
-export function flagFoot(g: TileGeo): Pt {
-  const xs = g.top.map((p) => p.x), ys = g.top.map((p) => p.y);
-  return { x: Math.min(...xs) + 6, y: Math.min(...ys) + 6 + FLAG };
 }
 
 const cache = new Map<string, Placement>();

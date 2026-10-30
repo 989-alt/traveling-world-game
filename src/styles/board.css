@@ -254,72 +254,62 @@
     0 2px 0 var(--foreground);
 }
 
-/* ── 소유 깃발·건물 ── */
-/* 칸 그림 경관과 같은 화풍이라 그대로 두면 풍경에 묻힌다(U5 사용자 피드백 4·5) →
-   흰 스티커 테(정적 drop-shadow 4방향) + 남색 그림자 + 자리색 받침. 새로 꽂힘·지어짐은 한 번 튀어 오른다 */
+/* ── 땅 주인·건물 C2(§17.2): 뒤 기둥 + 삼각기 7 · 바깥 세로 깃발(길이 = 단계) · 앞오른쪽 발코니 미니어처 ── */
+/* 미니어처·깃발은 칸 그림 경관과 같은 화풍이라 흰 스티커 테(정적 drop-shadow 4방향)로 떼어 보인다(U5 피드백 4·5) */
 .board-world { --sticker-rim: var(--accent-foreground); }
-.tile-flag,
-.tile-bld {
-  transform-origin: 50% 100%;
-  animation: tile-pop 420ms var(--ease-standard) both;
+.own {
+  position: absolute;
+  pointer-events: none;
 }
+.own > *, .own-flagset > * { position: absolute; }
+.own-flagset { inset: 0; transform-origin: 90% 0; animation: tile-pop 420ms var(--ease-standard) both; }
+.own-rig { left: 0; top: 0; overflow: visible; }
+.own-post {
+  stroke: #9A7148;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.own-post--edge { stroke: var(--foreground); stroke-width: 4.6; }
+.own-knob { fill: var(--gold-rim); stroke: var(--foreground); stroke-width: 0.9; }
+.own-rope {
+  fill: none;
+  stroke: #7A5230;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.own-rope--edge { stroke: var(--foreground); stroke-width: 2.8; }
+/* 삼각기·세로 깃발: 남색 외곽선(4방향 정적 drop-shadow)으로 하늘·풍경에서 떼어 보인다 */
+.own-pennants { display: block; filter: drop-shadow(0.7px 0 0 var(--foreground)) drop-shadow(-0.7px 0 0 var(--foreground)) drop-shadow(0 0.8px 0 var(--foreground)) saturate(1.15); } /* 요소 1개라 필터도 칸당 1번 */
+.own-pennant--css { clip-path: polygon(0 0, 100% 0, 50% 100%); background: var(--seat); }
+/* 세로 깃발: 천 폭 16 로 맞춘 그림을 clip-path 로 단계 길이만큼(V 꼬리) — 바깥 상자가 자르고 안쪽 그림에 외곽선 */
+.own-flag { display: block; }
+.own-flag-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  filter: drop-shadow(0.9px 0 0 var(--foreground)) drop-shadow(-0.9px 0 0 var(--foreground)) drop-shadow(0 1px 0 var(--foreground)) saturate(1.15);
+}
+.own-flag--css { background: linear-gradient(90deg, var(--seat) 0 36%, #FFF 36% 64%, var(--seat) 64%); clip-path: inset(4% 36% 0 36%); }
+.own-star { display: block; filter: drop-shadow(0 0 2px var(--gold-shine)); }
+.own-star--css { background: var(--gold-rim); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.own-bld { transform-origin: 50% 100%; animation: tile-pop 420ms var(--ease-standard) both; }
+.own-bld > * { position: absolute; display: block; }
+.own-balcony { object-fit: cover; filter: drop-shadow(0 2px 1.5px color-mix(in srgb, var(--foreground) 50%, transparent)); }
+.own-balcony--css { border-radius: 0 0 50% 50%; border: 2px solid var(--seat); background: #8A6A4C; box-sizing: border-box; }
+.own-mini {
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter:
+    drop-shadow(1px 0 0 var(--sticker-rim)) drop-shadow(-1px 0 0 var(--sticker-rim))
+    drop-shadow(0 1px 0 var(--sticker-rim)) drop-shadow(0 -1px 0 var(--sticker-rim))
+    drop-shadow(0 1.5px 1px color-mix(in srgb, var(--foreground) 55%, transparent));
+}
+.own-mini--css { border-radius: 3px 3px 0 0; background: var(--landmark); }
 @keyframes tile-pop {
   0% { transform: scale(0); }
   60% { transform: scale(1.18); }
   100% { transform: scale(1); }
-}
-.tile-flag {
-  position: absolute;
-  pointer-events: none;
-}
-.tile-flag-img,
-.tile-bld-img {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: 50% 100%;
-  filter:
-    drop-shadow(1.2px 0 0 var(--sticker-rim)) drop-shadow(-1.2px 0 0 var(--sticker-rim))
-    drop-shadow(0 1.2px 0 var(--sticker-rim)) drop-shadow(0 -1.2px 0 var(--sticker-rim))
-    drop-shadow(0 2px 1.5px color-mix(in srgb, var(--foreground) 55%, transparent));
-}
-/* 자리색 받침: 깃대 밑·건물 밑에 깔린 납작한 원(흰 테) */
-.tile-flag-base,
-.tile-bld-shadow {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--seat);
-  border: 1.5px solid var(--sticker-rim);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 45%, transparent);
-}
-.tile-flag-base {
-  left: -10%;
-  bottom: -4px;
-  width: 120%;
-  height: 8px;
-}
-.tile-flag-fallback {
-  display: block;
-  width: 100%;
-  height: 100%;
-  clip-path: polygon(10% 0, 100% 25%, 10% 50%, 10% 100%, 0 100%, 0 0);
-  background: var(--seat);
-}
-.tile-bld {
-  position: absolute;
-  pointer-events: none;
-}
-.tile-bld-shadow {
-  left: 2%;
-  bottom: -4px;
-  width: 96%;
-  height: 9px;
-}
-.tile-bld-fallback {
-  border-radius: var(--radius-sm);
-  background: var(--landmark);
 }
 
 /* ── 남은 시간 간판: 광장 뒤 가운데 매달린 간판(hang-sign.css, §16.4·§15.5) — 모래시계 16 + mm:ss 22px ── */
@@ -496,10 +486,9 @@
   transition: opacity var(--duration-fast) linear;
 }
 
-/* ── 주사위: 금색 받침 위 빛나는 유리 구슬 + 게이지 ── */
+/* ── 주사위 B: 나무 컵 + 금테 쟁반(§17.1). HUD 상자 (583,282) 200×166 — 자리는 dice-show.ts CUP 에서 ── */
 .dice-wrap {
   position: absolute;
-  transform: translate(-50%, -50%);
   transition: opacity var(--duration-fast) linear;
 }
 /* 줌 동안 숨김(§16.6): 화면 정중앙이라 줌된 캐릭터를 가린다 */
@@ -507,122 +496,283 @@
   opacity: 0;
   pointer-events: none;
 }
-.dice-pedestal {
-  /* 구슬 밑 금 받침(원통): 윗면 타원 + 아래 옆면(::after). 구슬 뒤에 깔린다 */
-  position: absolute;
-  left: 50%;
-  top: calc(100% - 40px);
-  z-index: 0;
-  width: 156px;
-  height: 44px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background:
-    radial-gradient(ellipse 30% 26% at 50% 44%, color-mix(in srgb, var(--gold-shine) 90%, var(--background-cloud)), transparent),
-    radial-gradient(ellipse at 50% 40%, var(--gold-shine) 0 28%, var(--gold-rim) 66%, var(--gold-rim-dark) 100%);
-  box-shadow: 0 0 0 2px var(--foreground), inset 0 -3px 0 color-mix(in srgb, var(--gold-rim-dark) 60%, transparent), inset 0 2px 0 color-mix(in srgb, var(--background-cloud) 70%, transparent);
-}
-.dice-pedestal::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 16px;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: linear-gradient(90deg, var(--gold-rim-dark), var(--gold-rim) 35%, var(--gold-rim-dark));
-  box-shadow: 0 0 0 2px var(--foreground), 0 10px 14px color-mix(in srgb, var(--foreground) 35%, transparent);
-}
 .dice {
   position: relative;
-  z-index: 1;
-  width: calc(var(--dice-button-d) + var(--dice-button-gauge-w) * 2);
-  height: calc(var(--dice-button-d) + var(--dice-button-gauge-w) * 2);
+  transition: opacity var(--duration-fast) linear;
 }
-.dice-halo {
-  position: absolute;
-  inset: -40px;
+.dice > * { position: absolute; }
+/* 남의 차례·관전 대기: 컵 정지 · 옅게. §17.1.2 는 opacity .6 이지만 지도가 컵을 비쳐 유령처럼 보여(U8-impl 실측 캡처) 채도·밝기를 낮추고 opacity 는 .85 */
+.dice.is-dim { opacity: 0.85; filter: saturate(0.55) brightness(0.92); }
+.dice-tray-shadow {
   border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--gold-shine) 70%, transparent) 55%, color-mix(in srgb, var(--gold-shine) 22%, transparent) 75%, transparent);
-  opacity: 0.8;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--foreground) 45%, transparent), transparent);
+  opacity: 0.55;
+}
+.dice-tray {
+  left: 0;
+  top: 70px;
+  width: 200px;
+  height: 96px;
+  object-fit: fill;
   pointer-events: none;
 }
-.dice.is-ready .dice-halo {
-  opacity: 1;
-  animation: dice-halo 1.6s var(--ease-standard) infinite alternate;
+.dice-tray--css {
+  border: 6px solid var(--gold-rim);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, #B07A45, #7A4A22);
+  box-shadow: 0 0 0 2px var(--foreground);
+  box-sizing: border-box;
 }
-@keyframes dice-halo {
-  from { transform: scale(0.94); opacity: 0.8; }
-  to { transform: scale(1.06); opacity: 1; }
-}
+/* 게이지 = 쟁반 테 위 호(12px, 노랑→주황). 누르는 동안 0→100→0, 뗀 값에서 멈춤, 합 팝 때 300ms 페이드 */
 .dice-gauge {
+  opacity: 0;
+  overflow: visible;
+  pointer-events: none;
+  transition: opacity 300ms linear;
+}
+.dice-gauge.is-on { opacity: 1; transition: none; }
+.dice-gauge.is-on.is-fade { opacity: 0; transition: opacity 300ms linear; }
+.dice-gauge-arc, .dice-gauge-edge {
+  fill: none;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+}
+/* 남색 테두리 띠(금 테 위에서도 게이지가 읽히게) 위에 노랑→주황 호 */
+.dice-gauge-edge {
+  stroke: var(--foreground);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dice-gauge-arc {
+  stroke: url(#dice-gauge-grad);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+}
+/* 컵: 바닥 중앙 앵커(서 있음·기울임), 쏟음은 입구 끝 자리. 셋을 겹쳐 opacity 로 바꾼다(60ms 크로스페이드) */
+.dice-cup-box { width: 0; height: 0; }
+.dice-cup {
+  position: absolute;
+  display: block;
+  object-fit: contain;
+  object-position: 50% 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 60ms linear;
+  filter: drop-shadow(0 3px 2px color-mix(in srgb, var(--foreground) 35%, transparent));
+}
+.dice-cup--stand { left: -55px; bottom: 0; width: 110px; height: 110px; transform-origin: 50% 100%; }
+.dice-cup--tilt { left: -60px; bottom: 0; width: 120px; height: 120px; }
+.dice-pour-box { pointer-events: none; }
+.dice-cup--pour { inset: 0; width: 100%; height: 100%; }
+.dice[data-phase='idle'] .dice-cup--stand,
+.dice[data-phase='press'] .dice-cup--stand,
+.dice[data-phase='shake'] .dice-cup--stand { opacity: 1; }
+.dice[data-phase='tilt'] .dice-cup--tilt { opacity: 1; }
+.dice[data-phase='pour'] .dice-cup--pour,
+.dice[data-phase='stop'] .dice-cup--pour,
+.dice[data-phase='pop'] .dice-cup--pour { opacity: 1; }
+/* 끝(이동 시작): pour → stand 200ms */
+.dice[data-phase='done'] .dice-cup--stand { opacity: 1; transition-duration: 200ms; }
+.dice[data-phase='done'] .dice-cup--pour { transition-duration: 200ms; }
+.dice-cup--css {
+  width: 80px;
+  height: 104px;
+  left: -40px;
+  border-radius: 10px 10px 18px 18px;
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+  background: linear-gradient(90deg, #6B3E1C, #A8672F 45%, #6B3E1C);
+}
+/* 대기 — 내 턴: 달그락(±2° + 1px, 1.6s) · 누름·봇: 흔들림(±8°, 80ms 왕복) — transform 만 */
+.dice.is-ready[data-phase='idle'] .dice-cup--stand { animation: cup-rattle 1.6s var(--ease-standard) infinite; }
+.dice[data-phase='press'] .dice-cup--stand,
+.dice[data-phase='shake'] .dice-cup--stand { animation: cup-shake 80ms linear infinite alternate; }
+@keyframes cup-rattle {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  20% { transform: rotate(-2deg) translateY(1px); }
+  40% { transform: rotate(2deg) translateY(0); }
+  60% { transform: rotate(-1.5deg) translateY(1px); }
+  80% { transform: rotate(0) translateY(0); }
+}
+@keyframes cup-shake {
+  from { transform: rotate(-8deg); }
+  to { transform: rotate(8deg); }
+}
+/* 주사위 2(60): 면 6장 겹침, data-face 만 보임. 쟁반 위에 나와 있을 때(data-out)만 */
+.dice-die {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms linear;
+}
+.dice-die[data-out] { opacity: 1; transition: none; }
+.dice[data-phase='done'] .dice-die[data-out] { opacity: 0; transition: opacity 150ms linear; }
+.dice-die-shadow {
+  position: absolute;
+  left: 10%;
+  bottom: -4px;
+  width: 80%;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--foreground) 60%, transparent), transparent);
+  opacity: 0.35;
+}
+.dice-face {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  filter: drop-shadow(0 2px 1px color-mix(in srgb, var(--foreground) 30%, transparent));
 }
-.dice-knob {
-  position: absolute;
-  inset: 0;
+.dice-die[data-face='1'] .dice-face--1, .dice-die:not([data-face]) .dice-face--1,
+.dice-die[data-face='2'] .dice-face--2, .dice-die[data-face='3'] .dice-face--3,
+.dice-die[data-face='4'] .dice-face--4, .dice-die[data-face='5'] .dice-face--5,
+.dice-die[data-face='6'] .dice-face--6 { opacity: 1; }
+.dice-die.is-land .dice-face { animation: die-land 60ms ease-out; }
+@keyframes die-land {
+  from { transform: scale(1.15); }
+  to { transform: scale(1); }
 }
-.dice-knob::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -2px;
-  width: calc(var(--dice-button-gauge-w) + 6px);
-  height: calc(var(--dice-button-gauge-w) + 6px);
-  transform: translateX(-50%);
-  border: 3px solid var(--foreground);
-  border-radius: var(--radius-full);
+/* 그림 없을 때: 흰 둥근 네모 + 남색 점 */
+.dice-face--css {
+  box-sizing: border-box;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 8px;
+  border: 2px solid var(--foreground);
+  border-radius: 12px;
   background: var(--background-cloud);
 }
-.dice-gauge::before {
-  content: '';
+.dice-face--css i { width: 9px; height: 9px; margin: auto; border-radius: 50%; background: var(--foreground); }
+.dice-face--css[data-n='1'] i { grid-area: 2 / 2; }
+.dice-face--css[data-n='2'] i:nth-child(1), .dice-face--css[data-n='3'] i:nth-child(1) { grid-area: 1 / 1; }
+.dice-face--css[data-n='2'] i:nth-child(2), .dice-face--css[data-n='3'] i:nth-child(3) { grid-area: 3 / 3; }
+.dice-face--css[data-n='3'] i:nth-child(2), .dice-face--css[data-n='5'] i:nth-child(5) { grid-area: 2 / 2; }
+.dice-face--css[data-n='4'] i:nth-child(1), .dice-face--css[data-n='5'] i:nth-child(1), .dice-face--css[data-n='6'] i:nth-child(1) { grid-area: 1 / 1; }
+.dice-face--css[data-n='4'] i:nth-child(2), .dice-face--css[data-n='5'] i:nth-child(2), .dice-face--css[data-n='6'] i:nth-child(2) { grid-area: 1 / 3; }
+.dice-face--css[data-n='4'] i:nth-child(3), .dice-face--css[data-n='5'] i:nth-child(3), .dice-face--css[data-n='6'] i:nth-child(3) { grid-area: 3 / 1; }
+.dice-face--css[data-n='4'] i:nth-child(4), .dice-face--css[data-n='5'] i:nth-child(4), .dice-face--css[data-n='6'] i:nth-child(4) { grid-area: 3 / 3; }
+.dice-face--css[data-n='6'] i:nth-child(5) { grid-area: 2 / 1; }
+.dice-face--css[data-n='6'] i:nth-child(6) { grid-area: 2 / 3; }
+/* 멈춤 반짝 별 3 · 더블 금 반짝 6: CSS 정적 별, opacity 만 */
+.dice-spark i, .dice-double-spark i {
   position: absolute;
-  inset: 0;
-  border-radius: var(--radius-full);
-  background: conic-gradient(from -150deg, var(--dice-gauge-start), var(--dice-gauge-end) 300deg, var(--timer-track) 300deg);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--dice-button-gauge-w)), var(--foreground) calc(100% - var(--dice-button-gauge-w) + 1px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - var(--dice-button-gauge-w)), var(--foreground) calc(100% - var(--dice-button-gauge-w) + 1px));
+  width: 12px;
+  height: 12px;
+  background: var(--gold-shine);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  opacity: 0;
+  animation: dice-spark 300ms linear both;
 }
-.dice-btn {
+.dice-spark i:nth-child(1) { left: -6px; top: -4px; }
+.dice-spark i:nth-child(2) { right: -8px; top: 6px; animation-delay: 60ms; }
+.dice-spark i:nth-child(3) { left: 40%; top: -12px; animation-delay: 120ms; }
+@keyframes dice-spark {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+/* 합 숫자: Jua 64 금빛 + 남색 외곽선 3 + 흰 그림자, 뒤 버스트 128. 숫자 0→1.2→1(back.out) 300ms · 버스트 0→1 200ms */
+.dice-sum {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.dice-burst {
   position: absolute;
-  inset: var(--dice-button-gauge-w);
+  left: -64px;
+  top: -64px;
+  width: 128px;
+  height: 128px;
+  animation: dice-burst 200ms var(--ease-standard) both;
+}
+.dice-sum-n {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -54%);
+  color: var(--gold-shine);
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: var(--weight-regular);
+  line-height: 1;
+  /* 남색 외곽선 3(8방향 그림자 — 글꼴·브라우저와 무관) + 아래 흰 그림자 */
+  text-shadow:
+    -3px 0 0 var(--foreground), 3px 0 0 var(--foreground), 0 -3px 0 var(--foreground), 0 3px 0 var(--foreground),
+    -2px -2px 0 var(--foreground), 2px -2px 0 var(--foreground), -2px 2px 0 var(--foreground), 2px 2px 0 var(--foreground),
+    0 6px 0 var(--background-cloud), 0 7px 6px color-mix(in srgb, var(--foreground) 45%, transparent);
+  animation: dice-sum-pop 300ms var(--ease-bounce) both;
+}
+@keyframes dice-burst {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+@keyframes dice-sum-pop {
+  0% { transform: translate(-50%, -54%) scale(0); }
+  70% { transform: translate(-50%, -54%) scale(1.2); }
+  100% { transform: translate(-50%, -54%) scale(1); }
+}
+.dice[data-phase='done'] .dice-sum,
+.dice[data-phase='done'] .dice-double { opacity: 0; }
+.dice.is-reduced[data-phase='done'] .dice-sum { opacity: 1; }
+/* 같은 눈 칩: 크림 알약 72×24 + 금테 2, "더블!" 16 bold 남색 — 합 팝 +170 에 scale 0→1 200ms */
+.dice-double {
   display: grid;
   place-items: center;
-  padding: 0;
-  border: 4px solid var(--gold-rim);
+  box-sizing: border-box;
+  border: 2px solid var(--gold-rim);
   border-radius: var(--radius-full);
-  background:
-    radial-gradient(circle at 38% 26%, color-mix(in srgb, var(--background-cloud) 95%, transparent) 0 9%, transparent 10%),
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--background-cloud) 92%, transparent) 0 28%, color-mix(in srgb, color-mix(in srgb, var(--gold-shine) 30%, var(--background-cloud)) 70%, transparent) 50%, color-mix(in srgb, var(--gold-shine) 75%, transparent) 74%, var(--gold-rim) 100%);
-  box-shadow:
-    0 0 0 2px var(--foreground),
-    0 0 26px 6px var(--gold-shine),
-    inset 0 -10px 16px color-mix(in srgb, var(--gold-rim) 55%, transparent),
-    inset 0 6px 10px color-mix(in srgb, var(--background-cloud) 80%, transparent);
+  background: var(--popover);
+  box-shadow: 0 0 0 1.5px var(--foreground), 0 3px 0 color-mix(in srgb, var(--foreground) 30%, transparent);
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  pointer-events: none;
+  animation: dice-burst 200ms var(--ease-bounce) 170ms both;
+}
+.dice-double-spark i:nth-child(1) { left: -10px; top: -8px; animation-delay: 200ms; }
+.dice-double-spark i:nth-child(2) { right: -10px; top: -8px; animation-delay: 260ms; }
+.dice-double-spark i:nth-child(3) { left: -14px; bottom: -6px; animation-delay: 320ms; }
+.dice-double-spark i:nth-child(4) { right: -14px; bottom: -6px; animation-delay: 380ms; }
+.dice-double-spark i:nth-child(5) { left: 30%; top: -14px; animation-delay: 440ms; }
+.dice-double-spark i:nth-child(6) { right: 30%; bottom: -14px; animation-delay: 500ms; }
+/* 누르는 자리 = HUD 상자 전체(투명 버튼) */
+.dice-btn {
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 40% 40% 50% 50%;
+  background: transparent;
   cursor: pointer;
   touch-action: none;
-  transition: transform var(--duration-fast) var(--ease-standard);
 }
-.dice-btn:active:not(:disabled) {
-  transform: translateY(3px) scale(0.97);
-}
+.dice-btn:disabled { cursor: default; }
 .dice-btn:focus-visible {
   outline: 3px solid var(--ring);
   outline-offset: 2px;
 }
-.dice-btn:disabled {
-  cursor: default;
-}
-.dice:not(.is-ready) .dice-btn {
-  filter: saturate(0.55) brightness(0.96);
-}
-.dice-icon {
-  width: 70px;
-  height: 70px;
+/* 이동 중 말 머리 위 합 칩(판 레이어): 크림 알약 + Jua 28 금 + 남색 외곽선, 착지 +300 에 사라짐 */
+.hop-chip {
+  position: absolute;
+  z-index: 9000;
+  padding: 0 10px;
+  transform: translate(-50%, -100%);
+  border: 2px solid var(--gold-rim);
+  border-radius: var(--radius-full);
+  background: var(--popover);
+  box-shadow: 0 0 0 1.5px var(--foreground);
+  color: var(--gold-shine);
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.15;
+  text-shadow:
+    -2px 0 0 var(--foreground), 2px 0 0 var(--foreground), 0 -2px 0 var(--foreground), 0 2px 0 var(--foreground),
+    -1.5px -1.5px 0 var(--foreground), 1.5px -1.5px 0 var(--foreground), -1.5px 1.5px 0 var(--foreground), 1.5px 1.5px 0 var(--foreground);
   pointer-events: none;
-  filter: drop-shadow(0 3px 2px color-mix(in srgb, var(--foreground) 35%, transparent));
+  transition: left 320ms linear, top 320ms linear;
 }
 
 /* ── 독점 띠 + 색종이(§16.5) ── */
@@ -892,10 +1042,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dice-btn { transition: none; }
-  .dice.is-ready .dice-halo { animation: none; }
+  .dice.is-ready[data-phase='idle'] .dice-cup--stand, .dice-cup--stand { animation: none !important; }
+  .dice-sum-n, .dice-burst, .dice-double, .dice-spark i, .dice-double-spark i, .dice-die.is-land .dice-face { animation: none !important; }
+  .dice-spark, .dice-double-spark { display: none; }
   .plaza-mask { transition: none; }
-  .tile-flag, .tile-bld { animation: none; }
+  .own-flagset, .own-bld { animation: none; }
   .mono-band { animation: none; }
   .board-rotate-device { animation: none; transform: rotate(-90deg); }
   .board-rotate-card { animation: none !important; will-change: auto; }

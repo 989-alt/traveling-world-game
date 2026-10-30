@@ -81,10 +81,12 @@ test('DOM 상자(1366×768·1024×768): 귀퉁이 캐릭터 키 96·발이 돌 �
       };
     });
     expect(m.corners.map((c) => c.seat)).toEqual([0, 1, 2, 3]);
-    const pads = [{ x: 270, y: 234, w: 80, h: 48 }, { x: 1101, y: 234, w: 80, h: 48 }, { x: 213, y: 457, w: 95, h: 47 }, { x: 1153, y: 457, w: 95, h: 47 }];
+    // U8-impl: 원판 윗면 중심 재실측(옛 값은 3~6px 남쪽), 발 = 중심. 위 단(뒤) 키 75 · 아래 단 96(원판 중심에 서면 96 은 윗줄 이름표를 덮는다)
+    const pads = [{ x: 270, y: 229, w: 80, h: 34 }, { x: 1099, y: 229, w: 80, h: 34 }, { x: 210, y: 451, w: 89, h: 40 }, { x: 1151, y: 451, w: 87, h: 38 }];
+    const H = [75, 75, 96, 96];
     const bad: string[] = [];
     for (const c of m.corners) {
-      expect(Math.abs(c.box.h - 96), `귀퉁이 ${c.seat} 키`).toBeLessThan(0.6);
+      expect(Math.abs(c.box.h - H[c.seat]), `귀퉁이 ${c.seat} 키`).toBeLessThan(0.6);
       const foot = { x: c.box.x + c.box.w / 2, y: c.box.y + c.box.h }, p = pads[c.seat];
       if (Math.abs(foot.x - p.x) > p.w / 4 || Math.abs(foot.y - p.y) > p.h / 2) bad.push(`귀퉁이 ${c.seat} 발 ${JSON.stringify(foot)} 이 돌 단 밖`);
       for (const pl of m.panels) if (hit(c.box, pl.box)) bad.push(`귀퉁이 ${c.seat}·패널 ${pl.seat}`);

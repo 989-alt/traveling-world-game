@@ -89,7 +89,7 @@ function Actor({ c, pose, x, y, bot }: { c: number; pose: string; x: number; y: 
     <div class={`in-ch${bot ? ' in-ch--bot' : ''}`} data-ch={c} style={{ left: `${x}px`, top: `${y}px` }}>
       <span class="in-shadow" />
       <div class="in-ch-body">
-        <Pic k={`char.${c}.${pose}.big`} class="in-ch-img" eager fallback={<Pic k={`char.${c}.${pose}`} class="in-ch-img" />} />
+        <Pic k={`char.${c}.${pose}.big`} class="in-ch-img" eager base fallback={<Pic k={`char.${c}.${pose}`} class="in-ch-img" base />} />
       </div>
     </div>
   );

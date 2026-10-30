@@ -9,7 +9,8 @@ import { FIXTURE, advance, advanceTo, asWS, connect, game, join, newRoom, runUnt
 import { SHOWN_SLACK_MS, SHOWN_WAIT_MS } from '../room';
 import { CUT_RESUME_MS, CUTSCENE_MS } from '../../src/shared/protocol';
 import { STEP_MS } from '../../src/shared/economy';
-import { moveShowMs } from '../../src/shared/timing';
+import { DICE_SHOW_MS, moveShowMs } from '../../src/shared/timing';
+import { BOARD } from '../../src/shared/board';
 
 afterEach(() => { vi.useRealTimers(); });
 
@@ -54,7 +55,7 @@ describe('턴 타이머 — 가짜 시계, 전 단계', () => {
     const { ctx, room, ws } = started();
     room.game = withDice(game(room), 1, 1); // 0 → 2 타이(첫 방문), 더블
     say(room, ws[0], { t: 'act', a: { type: 'roll' } });
-    await expires(room, ctx, 'culture', 3_000 + moveShowMs(0, 2)); // 문화 카드 마감 = 3초 + 이동 연출(2홉)
+    await expires(room, ctx, 'culture', 3_000 + DICE_SHOW_MS + moveShowMs(0, 2)); // 문화 카드 마감 = 3초 + 주사위 연출(U8 §17.1) + 이동 연출(2홉)
     const q = await expires(room, ctx, 'question', 20_000);
     expect(q[0]).toMatchObject({ ev: 'answer', seat: 0, choice: null, correct: false, ms: 20_000 });
     expect(room.rec!.deadlineAt! - Date.now()).toBe(7_000);
@@ -175,13 +176,18 @@ describe('컷씬 뒤 문항 마감', () => {
     });
     const builtAt = Date.now();
     expect(room.rec!.cutscene).toMatchObject({ at: builtAt, seat: 0, next: 1 });
-    room.game = withDice(edit(game(room), (d) => { d.players[1].pos = 0; }), 1, 1); // 0 → 2 타이 (2홉: 연출이 짧아 컷씬이 남는다)
+    // 0 → 2 타이, 다시 온 나라(탭으로 문화 카드를 바로 넘김). U8 주사위 연출 1.83초가 붙어 첫 방문(3초 고정)이면 문항 전에 컷씬(4.8초)이 끝난다
+    room.game = withDice(edit(game(room), (d) => {
+      d.players[1].pos = 0;
+      d.seenCountries.push(BOARD[2].country!);
+    }), 1, 1);
     say(room, ws[1], { t: 'act', a: { type: 'roll' } });
     expect(game(room).turn.step).toBe('culture');
-    await advance(room, ctx, untilDeadline(room)); // 문화 카드 3초 + 이동 연출(shared/timing)
+    await advance(room, ctx, 1_000);
+    say(room, ws[1], { t: 'act', a: { type: 'ack' } });
     expect(game(room).turn.step).toBe('question');
-    const grace = builtAt + CUTSCENE_MS - Date.now(); // 문화 카드 3초 + 이동 연출 1.58초가 지났으니 0.22초
-    expect(grace).toBe(CUTSCENE_MS - STEP_MS.culture - moveShowMs(0, 2));
+    const grace = builtAt + CUTSCENE_MS - Date.now(); // 1초 지났으니 3.8초
+    expect(grace).toBe(CUTSCENE_MS - 1_000);
     expect(room.rec!.deadlineAt! - Date.now()).toBe(STEP_MS.question + grace);
     expect(room.rec!.cutscene).toBeNull(); // 한 번 쓰면 끝
     const st = ws[2].last('state')!;
@@ -367,7 +373,7 @@ describe('이동 연출 늦춤(R4 T-E 수정 1, shared/timing)', () => {
     room.game = withDice(game(room), 2, 4); // 0 → 6 미션 칸
     say(room, ws[0], { t: 'act', a: { type: 'roll' } });
     expect(game(room).turn.step).toBe('mission');
-    expect(untilDeadline(room)).toBe(STEP_MS.mission + moveShowMs(0, 6));
+    expect(untilDeadline(room)).toBe(STEP_MS.mission + DICE_SHOW_MS + moveShowMs(0, 6));
     await advance(room, ctx, untilDeadline(room));
     // 미션 시간 초과 → 참/거짓(고정 시드). 단계를 못 박아 기본 마감 검사가 늘 돈다(R4-TE 리뷰 Minor 2)
     expect(game(room).turn.step).toBe('tf');
@@ -384,10 +390,10 @@ describe('이동 연출 늦춤(R4 T-E 수정 1, shared/timing)', () => {
     for (let i = 0; i < 400 && !game(room).log.slice(len).some((e) => e.ev === 'move'); i++) await advance(room, ctx, 50);
     const mv = game(room).log.slice(len).find((e) => e.ev === 'move')!;
     expect(mv).toMatchObject({ seat: 1 });
-    expect(room.rec!.showUntil! - Date.now()).toBeGreaterThan(moveShowMs(0, 2) - 60);
+    expect(room.rec!.showUntil! - Date.now()).toBeGreaterThan(DICE_SHOW_MS + moveShowMs(0, 2) - 60);
     expect(room.rec!.botAt).toBeGreaterThanOrEqual(room.rec!.showUntil!);
     const at = game(room).log.length;
-    await advance(room, ctx, moveShowMs(0, 2) - 100);
+    await advance(room, ctx, DICE_SHOW_MS + moveShowMs(0, 2) - 100);
     expect(game(room).log.length).toBe(at); // 연출 중엔 봇이 아무것도 안 함
   });
 });

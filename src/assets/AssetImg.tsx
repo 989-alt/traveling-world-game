@@ -14,10 +14,10 @@ export function AssetImg({ k, class: cls, alt = '' }: { k: string; class?: strin
 }
 
 /** 화면 장식 그림: 못 불러오면 대체 노드(없으면 아무것도 안 그림) — 첫 화면·결과처럼 색 블록이 어색한 곳(DESIGN §14.3) */
-export function Pic({ k, class: cls, alt = '', fallback = null, eager }: { k: string; class?: string; alt?: string; fallback?: ComponentChildren; eager?: boolean }) {
+export function Pic({ k, class: cls, alt = '', fallback = null, eager, base, style }: { k: string; class?: string; alt?: string; fallback?: ComponentChildren; eager?: boolean; base?: boolean; style?: Record<string, string | number> }) {
   const [bad, setBad] = useState(false);
-  const url = assetUrl(k);
+  const url = assetUrl(k, base);
   if (bad || !url) return <>{fallback}</>;
-  return <img src={url} class={cls} alt={alt} decoding="async" draggable={false} loading={eager ? 'eager' : undefined}
+  return <img src={url} class={cls} alt={alt} decoding="async" draggable={false} loading={eager ? 'eager' : undefined} style={style}
     onError={() => { warnOnce(k, `로드 실패 ${url}`); setBad(true); }} />;
 }

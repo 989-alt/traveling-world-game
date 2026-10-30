@@ -37,7 +37,7 @@ const stageOf = (page: Page) => page.locator('.board-stage').evaluate((el) => {
   return { k: r.width / 1366, x: r.x, y: r.y };
 });
 
-test('피드백 4·5: 남이 산 땅 깃발·지은 건물이 실제 방 상태 방송으로 보이고, 풍경과 갈리는 스티커 테·자리색 받침이 있다', async ({ browser }) => {
+test('피드백 4·5 → U8 C2: 남이 산 땅·지은 건물이 실제 방 상태 방송으로 보이고(삼각기·세로 깃발·발코니 미니어처), 미니어처는 흰 스티커 테', async ({ browser }) => {
   test.setTimeout(120_000);
   const { srv, ctx, page } = await startGame(browser, test.info().project.name);
   // 서버 상태: 봇(자리 2) 이 2번(타이)을 사고, 자리 1(나) 이 3번(중국)에 2단계, 봇(자리 3) 이 12번(프랑스)에 랜드마크
@@ -46,41 +46,34 @@ test('피드백 4·5: 남이 산 땅 깃발·지은 건물이 실제 방 상태 
     g.tiles[3] = { owner: 0, level: 2, festivalTarget: false };
     g.tiles[12] = { owner: 2, level: 4, festivalTarget: false };
   });
-  await expect(page.locator('.tile-flag')).toHaveCount(3);
-  await expect(page.locator('.tile-bld')).toHaveCount(2);
+  await expect(page.locator('.own')).toHaveCount(3);
+  await expect(page.locator('.own-bld')).toHaveCount(2);
   await page.waitForTimeout(600); // 꽂힘 튀어 오름 420ms
   await shot(page, 'owned');
   await page.screenshot({ path: `${SHOTS}${LABEL}-owned-crop-${test.info().project.name}.png`, clip: await clipOf(page, [2, 3]) });
   await page.screenshot({ path: `${SHOTS}${LABEL}-owned-crop-right-${test.info().project.name}.png`, clip: await clipOf(page, [12, 13]) });
-  const seatColor = (s: number) => page.evaluate((s) => {
-    const p = document.createElement('i'); p.style.color = `var(--seat-${s})`; document.body.append(p);
-    const c = getComputedStyle(p).color; p.remove(); return c;
-  }, s);
-  for (const [tile, owner] of [[2, 1], [3, 0], [12, 2]] as const) {
-    const f = page.locator(`.tile-flag[data-tile="${tile}"]`);
-    await expect(f.locator('img')).toHaveAttribute('src', new RegExp(`UI-flag-${owner + 1}`));
-    const m = await f.evaluate((el) => {
-      const img = el.querySelector('img')!, base = el.querySelector('.tile-flag-base');
-      const r = el.getBoundingClientRect();
-      return { filter: getComputedStyle(img).filter, base: base ? getComputedStyle(base).backgroundColor : null, w: r.width, h: r.height, op: getComputedStyle(el).opacity };
-    });
+  for (const [tile, owner, len] of [[2, 1, 24], [3, 0, 32], [12, 2, 48]] as const) {
+    const o = page.locator(`.own[data-tile="${tile}"]`);
+    await expect(o.locator('.own-flag img')).toHaveAttribute('src', new RegExp(`FLAG-tall-${owner + 1}`));
+    await expect(o.locator('.own-pennants')).toHaveAttribute('data-n', '7');
+    await expect(o.locator('.own-pennants')).toHaveAttribute('style', new RegExp(`PENNANT-${owner + 1}`));
+    await expect(o.locator('.own-flag')).toHaveAttribute('data-len', String(len));
     const { k } = await stageOf(page);
-    expect(m.op).toBe('1');
-    expect(m.h / k, `칸 ${tile} 깃발 크기(스테이지 px)`).toBeGreaterThanOrEqual(23.5);
-    expect(m.filter, `칸 ${tile} 깃발 흰 테`).toMatch(/drop-shadow/);
-    expect(m.base, `칸 ${tile} 깃발 자리색 받침`).toBe(await seatColor(owner + 1));
+    const h = await o.locator('.own-flag').evaluate((el) => el.getBoundingClientRect().height);
+    expect(h / k, `칸 ${tile} 깃발 그림 상자(스테이지 px)`).toBeGreaterThanOrEqual(48);
+    expect(await o.locator('.own-star').count()).toBe(tile === 12 ? 1 : 0);
   }
   for (const [tile, owner, re] of [[3, 0, /BLD-06-2/], [12, 2, /LM-12/]] as const) {
-    const b = page.locator(`.tile-bld[data-tile="${tile}"]`);
-    await expect(b.locator('img')).toHaveAttribute('src', re);
-    const m = await b.evaluate((el) => ({ filter: getComputedStyle(el.querySelector('img')!).filter, plate: getComputedStyle(el.querySelector('.tile-bld-shadow')!).backgroundColor }));
-    expect(m.filter, `칸 ${tile} 건물 흰 테`).toMatch(/drop-shadow/);
-    expect(m.plate, `칸 ${tile} 건물 자리색 받침`).toBe(await seatColor(owner + 1));
+    const b = page.locator(`.own[data-tile="${tile}"] .own-bld`);
+    await expect(b.locator('.own-mini')).toHaveAttribute('src', re);
+    await expect(b.locator('.own-balcony')).toHaveAttribute('src', new RegExp(`BALCONY-${owner + 1}`));
+    const m = await b.evaluate((el) => getComputedStyle(el.querySelector('.own-mini')!).filter);
+    expect(m, `칸 ${tile} 건물 흰 테`).toMatch(/drop-shadow/);
   }
   // 단계가 오르면 건물이 새로 마운트돼 다시 튀어 오른다(지어짐이 눈에 띄게)
-  const before = await page.locator('.tile-bld[data-tile="3"]').elementHandle();
+  const before = await page.locator('.own[data-tile="3"] .own-bld').elementHandle();
   srv.do((g) => { g.tiles[3].level = 3; });
-  await expect(page.locator('.tile-bld[data-tile="3"]')).toHaveAttribute('data-level', '3');
+  await expect(page.locator('.own[data-tile="3"] .own-bld')).toHaveAttribute('data-level', '3');
   expect(await before!.evaluate((el) => el.isConnected)).toBe(false);
   await ctx.close(); srv.stop();
 });

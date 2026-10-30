@@ -1,7 +1,7 @@
 // T07 흐름 e2e. 빌드한 번들(dist)을 vite preview 로 띄우고, 서버는 진짜 worker/room.ts(Room)를 이 프로세스 안에서 돌린다.
 // 브라우저 WebSocket 은 Playwright routeWebSocket 으로 Room 에 이어 준다 — 프로토콜·판정·마감은 배포 서버와 같은 코드다.
 // 장면(도착 칸·주사위·마감)은 Room 상태를 직접 고쳐 만든다(srv.do).
-import { moveShowMs } from '../src/shared/timing';
+import { DICE_SHOW_MS, moveShowMs } from '../src/shared/timing';
 import { expect, test, type Browser, type BrowserContext, type Page, type WebSocketRoute } from '@playwright/test';
 import { mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -313,7 +313,7 @@ test('도착 흐름 4명: 문화 카드(첫 방문 3초·뱃지) → 문항(잠�
   await a.page.screenshot({ path: `${SHOTS}culture-card-${test.info().project.name}.png` }); // 3초 안이라 기다리지 않고
 
   // 3초 뒤 서버가 넘김 → 문항
-  for (const p of ps) await expect(p.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  for (const p of ps) await expect(p.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await expect(a.page.locator('.qs')).toHaveAttribute('data-role', 'player');
   for (const p of others) {
     await expect(p.page.locator('.qs')).toHaveAttribute('data-role', 'spectator');
@@ -417,7 +417,7 @@ test('행동: 정답 할인·인수 가능 / 오답이면 인수 꺼짐 / 방패
   const [a, owner] = ps;
   // 통행료 아이템 → 통행료 패널 → 인수 패널: 앞 패널의 잠금이 다음 패널로 새지 않는다
   srv.arrive(0, 3, (g) => { g.tiles[3] = { owner: 1, level: 1, festivalTarget: false }; g.seenCountries.push('cn'); g.players[0].items = ['tollHalf']; });
-  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await solve(srv, a.page, true);
   await expect(a.page.locator('.ap[data-kind="toll"]')).toBeVisible({ timeout: 4000 });
   await tap(a.page, '.ap[data-kind="toll"] [data-act="pay"]');
@@ -428,7 +428,7 @@ test('행동: 정답 할인·인수 가능 / 오답이면 인수 꺼짐 / 방패
   await expect.poll(() => srv.g.turn.seat).not.toBe(0);
   // 정답 + 남의 땅(필리핀, 집) → 인수 단계
   srv.arrive(0, 1, (g) => { g.tiles[1] = { owner: 1, level: 1, festivalTarget: false }; g.seenCountries.push('ph'); g.players[1].items = ['shield']; g.players[0].items = []; });
-  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await solve(srv, a.page, true);
   await expect(a.page.locator('.ap[data-kind="takeover"]')).toBeVisible({ timeout: 4000 });
   const toll = lastLog(srv, 'toll')!;
@@ -445,7 +445,7 @@ test('행동: 정답 할인·인수 가능 / 오답이면 인수 꺼짐 / 방패
 
   // 오답 + 남의 땅 → 통행료만, 인수 버튼 꺼짐 + '인수는 정답일 때'
   srv.arrive(0, 4, (g) => { g.tiles[4] = { owner: 1, level: 0, festivalTarget: false }; g.seenCountries.push('np'); });
-  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await solve(srv, a.page, false);
   const notice = owner.page.locator('.ap[data-kind="toll-notice"]');
   await expect(notice).toBeVisible({ timeout: 4000 });
@@ -456,7 +456,7 @@ test('행동: 정답 할인·인수 가능 / 오답이면 인수 꺼짐 / 방패
 
   // 정답 + 빈 땅 → '땅값 {IT_FULL} → 정답 할인 {IT_HALF}'
   srv.arrive(0, 11, (g) => { g.seenCountries.push('it'); });
-  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await solve(srv, a.page, true);
   await expect(a.page.locator('.ap[data-kind="buy"]')).toContainText(`땅값 ${IT_FULL} → 정답 할인 ${IT_HALF}`, { timeout: 4000 });
   await shot(a.page, 'action-buy-correct');
@@ -466,7 +466,7 @@ test('행동: 정답 할인·인수 가능 / 오답이면 인수 꺼짐 / 방패
 test('4단계 해설은 자료 2개 나란히', async ({ browser }) => {
   const { srv, ps } = await room(browser, 1);
   srv.arrive(0, 18, (g) => { g.tiles[18] = { owner: 0, level: 3, festivalTarget: false }; g.seenCountries.push('tz'); }); // 탄자니아 4단계: 그래프 2개(한국은 이제 출발 칸)
-  await expect(ps[0].page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(ps[0].page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await tap(ps[0].page, `.qs .ov-ans[data-choice="${answerOf(srv)}"]`);
   const ex = ps[0].page.locator('.ex');
   await expect(ex).toHaveAttribute('data-two', '1');
@@ -477,7 +477,7 @@ test('4단계 해설은 자료 2개 나란히', async ({ browser }) => {
   await shot(ps[0].page, 'explain-level4');
   // 그래프가 아닌 둘째 자료는 card.<id>.b 그림
   srv.arrive(0, 1, (g) => { g.tiles[1] = { owner: 0, level: 3, festivalTarget: false }; g.seenCountries.push('ph'); });
-  await expect(ps[0].page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(ps[0].page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await tap(ps[0].page, `.qs .ov-ans[data-choice="${answerOf(srv)}"]`);
   await expect(ex).toHaveAttribute('data-card', 'ph-4');
   await expect(ex.locator('.ex-fig').nth(1).locator('img')).toHaveAttribute('src', /ph_compare_plain\.webp$/);
@@ -490,7 +490,7 @@ test('컷씬: 랜드마크 건설 → 전원 재생·탭 스킵 / 그림 404 면
   const { srv, ps } = await room(browser, 2);
   const [a, b] = ps;
   srv.arrive(0, 16, (g) => { g.tiles[16] = { owner: 0, level: 3, festivalTarget: false }; g.seenCountries.push('eg'); g.players[0].coin = 20000; });
-  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await solve(srv, a.page, true);
   await expect(a.page.locator('.ap[data-kind="build"]')).toBeVisible({ timeout: 4000 });
   await tap(a.page, '[data-act="build"]');
@@ -510,7 +510,7 @@ test('컷씬: 랜드마크 건설 → 전원 재생·탭 스킵 / 그림 404 면
   // 그림 404 → 배너만 2초
   await a.page.route(/\/webp\/(CUT|LM)-.*\.webp$/, (r) => r.fulfill({ status: 404 }));
   srv.arrive(0, 24, (g) => { g.tiles[24] = { owner: 0, level: 3, festivalTarget: false }; g.seenCountries.push('mx'); g.players[0].coin = 20000; });
-  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 6000 });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 }) // U8: 주사위 연출 1.83초가 이동 앞에 붙는다;
   await solve(srv, a.page, true);
   await tap(a.page, '[data-act="build"]');
   await expect(a.page.locator('.cut')).toHaveAttribute('data-mode', 'banner', { timeout: 3000 });
@@ -555,7 +555,7 @@ test('알림 줄: 같은 칸 컷씬 연달아·전체 다시 받기면 비움·�
   await a.page.waitForTimeout(150);
   await expect(a.page.locator('.cc')).toHaveCount(0);
   // 줌 카메라(R4 T-E): 이동 연출(shared/timing — 서버도 문화 카드 마감을 그만큼 늦춘다)이 끝난 뒤 알림 1초 → 카드
-  await expect(a.page.locator('.cc')).toBeVisible({ timeout: moveShowMs(10, 13) + 1000 + 1500 });
+  await expect(a.page.locator('.cc')).toBeVisible({ timeout: DICE_SHOW_MS + moveShowMs(10, 13) + 1000 + 1500 }); // U8: 주사위 연출이 이동 앞에
   await expect(a.page.locator('.ap[data-kind="toll-notice"]')).toHaveCount(0);
   // 모르는 메시지·깨진 JSON 은 무시
   const b = srv.ctx.getWebSockets().find((x) => x.tag === 'p0')!;
@@ -570,7 +570,7 @@ test('알림 줄: 같은 칸 컷씬 연달아·전체 다시 받기면 비움·�
 test('해설 카드가 알림에 덮인 시간은 본 시간으로 안 센다: 덮인 채 7초가 지나면 shown 없음 → false', async ({ browser }) => {
   const { srv, ps } = await room(browser, 2); // 자리 2·3 = 봇
   srv.arrive(0, 2);
-  await expect.poll(() => srv.g.turn.step, { timeout: 6000 }).toBe('question');
+  await expect.poll(() => srv.g.turn.step, { timeout: 9000 }).toBe('question'); // 문화 3초 + 주사위 1.83초(U8) + 이동 연출
   // 답과 같은 처리에서 이벤트 알림 2장(3.2초 × 2)을 남긴다 → 두 기기 모두 해설 카드 위에 6.4초 동안 알림
   srv.do(() => {
     srv.room.act({ type: 'answer', seat: 0, choice: 0, ms: 1000 });
@@ -604,7 +604,7 @@ test('글꼴 서버가 막혀도(끊김·무응답) 첫 화면이 1초 안에 �
 test('해설 중 새로고침(재접속)한 기기도 7초를 다 보면 shown 이 서버에 받아져 shownTo true', async ({ browser }) => {
   const { srv, ps } = await room(browser, 2); // 자리 2·3 = 봇
   srv.arrive(0, 2);
-  await expect.poll(() => srv.g.turn.step, { timeout: 6000 }).toBe('question');
+  await expect.poll(() => srv.g.turn.step, { timeout: 9000 }).toBe('question'); // 문화 3초 + 주사위 1.83초(U8) + 이동 연출
   srv.do(() => { srv.room.act({ type: 'answer', seat: 0, choice: 0, ms: 1000 }); });
   expect(srv.g.turn.step).toBe('explanation');
   const key = srv.room.rec!.stepKey;

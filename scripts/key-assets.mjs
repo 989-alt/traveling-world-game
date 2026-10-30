@@ -4,10 +4,12 @@
 //   node scripts/key-assets.mjs --dry                  대상 목록만 출력
 //   node scripts/key-assets.mjs --out <빈 폴더>        변환
 //   --only <정규식>    ID 필터 (묶음 2: '^(TB-|mp_|[a-z]{2}_)')
-//   --src <PNG 폴더>   기본 assets/img
+//   --src <PNG 폴더>   기본 assets/img2x(U9: AI 2배 원본, Real-ESRGAN 애니 모델). 파일이 없으면 assets/img 의 같은 이름으로 내려간다
+//   --tier hi          U9 고해상 단계: 그림마다 HI_K 배(긴 변 상한 2048)로 만든다. 출력은 assets/webp/hi(같은 파일 이름).
+//                      HI_K 에 없는 ID 는 만들지 않는다(기본 단계로 충분 — U9 실측 measure-before.json)
 //   --sharp <경로>     sharp 위치. 기본 $SHARP_PATH 또는 ~/Desktop/math-baseball/node_modules/sharp (의존성 추가 금지라 밖의 것을 쓴다)
 import { createRequire } from 'node:module';
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,13 +17,16 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const arg = n => { const i = process.argv.indexOf(n); return i > 0 ? process.argv[i + 1] : undefined; };
 const dry = process.argv.includes('--dry');
-const SRC = resolve(arg('--src') ?? join(here, '../assets/img'));
+const SRC = resolve(arg('--src') ?? join(here, '../assets/img2x'));
+const FALLBACK = resolve(join(here, '../assets/img')); // img2x 에 없는 파일(새로 생성된 그림 등)
+const HI = arg('--tier') === 'hi';
 const OUT = arg('--out') && resolve(arg('--out'));
 if (!dry && !OUT) { console.error('--out <폴더> 또는 --dry 필요'); process.exit(2); }
 if (OUT && OUT === resolve(here, '../assets/webp')) { console.error('승인된 assets/webp 는 다시 만들지 않는다. 다른 폴더로.'); process.exit(2); }
 
 const latest = {};
-for (const f of readdirSync(SRC)) {
+const srcFiles = new Set(existsSync(SRC) ? readdirSync(SRC) : []);
+for (const f of new Set([...srcFiles, ...readdirSync(FALLBACK)])) {
   if (!f.endsWith('.png') || f.startsWith('CS-')) continue;
   const m = f.slice(0, -4).match(/^(.*?)(?:-v(\d+))?$/);
   const v = +(m[2] || 1);
@@ -29,12 +34,39 @@ for (const f of readdirSync(SRC)) {
 }
 const SKIP = /^(PLAZA-[LR]|TILE-(\d\d|M)[bc]?)$/; // 반쪽 광장·옛 칸 그림(R5·R5b·R5c)은 보드에 안 쓴다
 const only = arg('--only') && new RegExp(arg('--only')); // 예: --only '^(TB-|mp_|[a-z]{2}_)' 묶음 2 만
+// U9 고해상 단계 배수(기본 크기 n 에 곱함, 긴 변 상한 2048). 근거 = 1920×1080·장치 배율 2(판 배율 1.406, 줌 1.8)에서 잰 화면 장치 px
+// (reports/U9-hires-shots/measure-before.json 의 그림별 최댓값) ÷ 기본 크기 → 그 위로 반올림. 0 = hi 안 만듦.
+const CAP = 2048;
+// U9 후속 판정(2026-10-30 사용자): 광장만 긴 변 2880 — 1920 PC 줌 광장이 2833 장치 px 를 그린다(배율비 ≥ 1). 휴대·태블릿은 manifest.ts 가 기본을 쓴다
+const PLAZA_CAP = 2880;
+const capOf = id => (isPlaza(id) ? PLAZA_CAP : CAP);
+function hiK(id, n) {
+  if (/^TILE-/.test(id)) return 1.25; // 512 → 640 (줌 칸 627)
+  if (isPlaza(id)) return PLAZA_CAP / 1944; // 1944 → 2880 (줌 2833@dpr1 ✓ · 5666@dpr2 — 상한, 예외)
+  if (id === 'DICE-sum-burst') return 1.5; // U8 합 버스트 128 → 장치 360(1920 dpr2) → 256 × 1.5 = 384
+  if (/^(DICE|FLAG-tall|PENNANT|BALCONY)-/.test(id)) return 0; // U8: 기본으로 충분(컵 309/512 · 주사위 169/256 · 쟁반 562/800 · 깃발 줌 222/256 · 발코니 줌 121/128)
+  if (id === 'UI-signpost') return 2.25; // 256 → 576 (줌 551)
+  if (/^CH\d-P19$/.test(id)) return 1.25; // 512 → 640 (문화 카드 빼꼼 611)
+  if (/^CH\d-P\d\d$/.test(id)) return 2; // 보드 256 → 512(줌 498) · @1024 → 2048(문항 옆 고민 포즈 2530, 상한)
+  if (/^LM-/.test(id)) return n >= 1024 ? 1.25 : 2; // 컷씬 @1024 → 1280(1253) · 판 256 → 512
+  if (/^(BG|CUT)-/.test(id)) return CAP / 1536; // 1536×864 → 2048×1152 (화면 가득 3840 — 상한, 예외)
+  if (/^(CC|EV)-/.test(id) || /^[a-z]{2}_/.test(id)) return CAP / 1440; // 1440×576 → 2048×819 (문화·해설 2319 — 상한)
+  if (/^(mp_|MC-)/.test(id)) return 1.25; // 512 → 640 (미션 사진 582)
+  if (id === 'UI-stage') return CAP / 1536; // 1536 → 2048 (인트로 바닥 3092 — 상한)
+  if (id === 'LOGO') return 1.6875; // 1024 → 1728 (1687)
+  if (id === 'UI-sign-small') return 2.25; // 256 → 576 (매달린 간판 9-slice 가운데가 판 타이머 폭으로 늘어남: 1/0.47 = 2.13 배)
+  if (id === 'UI-plank-panel') return 2; // 1024 → 2048 (첫 팝업 판 820 css × 2.81)
+  if (/^RS-/.test(id)) return id === 'RS-confetti' ? 0 : 2; // 결과 화면: 최대 1/0.53 = 1.9 배(두루마리) — 2 배(상한 2048)
+  if (/^(UI|IT|TB)/.test(id) && n <= 128) return 2.25; // 아이콘 128 → 288 (미션 문장 281·주사위 197)
+  return 0;
+}
 const ids = Object.keys(latest).sort().filter(id => (!only || only.test(id)) && !SKIP.test(id));
 
 const PHOTO_UI = new Set(['UI-rotate', 'UI-rotate-wide']); // U1·U4: 하늘까지 꽉 찬 일러스트(키잉 없음)
-const keyed = id => !PHOTO_UI.has(id) && /^(CH\d|ISL|BLD|LM|UI|IT|TB|LOGO|TILE|PLAZA|RS)/.test(id);
-const tight = id => /^(CH4|CH6)-/.test(id) || id === 'UI-flag-4' || isPlaza(id); // PLAZA: 남아메리카 보라 // 임계 70/110 (보라·분홍이 마젠타에 가까움)
-const icon = id => (/^(UI|IT|TB)/.test(id) && !FREE[id] && id !== 'UI-signpost') || /^RS-(medal|stamp|dot|tab-ring)/.test(id);
+const keyed = id => !PHOTO_UI.has(id) && /^(CH\d|ISL|BLD|LM|UI|IT|TB|LOGO|TILE|PLAZA|RS|DICE|FLAG-tall|PENNANT|BALCONY)/.test(id);
+const tight = id => /^(CH4|CH6)-/.test(id) || id === 'UI-flag-4' || /^(FLAG-tall|PENNANT|BALCONY)-4$/.test(id) || isPlaza(id); // U8 자리 4 분홍 // PLAZA: 남아메리카 보라 // 임계 70/110 (보라·분홍이 마젠타에 가까움)
+const icon = id => (/^(UI|IT|TB)/.test(id) && !FREE[id] && id !== 'UI-signpost') || /^RS-(medal|stamp|dot|tab-ring)/.test(id)
+  || /^(DICE-(top|sum)|FLAG-tall|PENNANT|BALCONY)/.test(id); // U8: 가운데 패딩. 컵 3장(DICE-cup-*)만 바닥 중앙 앵커(§17.1.1)
 // U6(DESIGN §16.7.3): 결과 화면 그림 RS-*. [모양, 크기, quality] — sq = 정사각 패딩(섬·트로피·핀은 바닥 중앙, 메달·도장·점·탭 고리는 가운데),
 // w = 트림 뒤 폭 N(배너·이름표·칩·버튼·지도판·받침), box = 트림 뒤 정확히 W×H 로 늘림(두루마리 3:4), frame = 트림 없이 프레임 그대로(색종이 4×2 격자)
 const RS = {
@@ -50,7 +82,7 @@ const rsSpec = id => RS[id] ?? (/^RS-isle-/.test(id) ? ['sq', 512, 85] : /^RS-pl
 const isPlaza = id => id === 'PLAZA' || id === 'PLAZA-U5';
 const isTile = id => /^TILE-(\d\d|M)[de]$/.test(id); // e = 좌우 열 이름표 가운데판(2026-10-27, 11~14·26~29)
 // R2 T-A A3: 정사각이 아닌 UI 그림(트림 뒤 긴 변 N). [긴 변, quality]
-const FREE = { LOGO: [1024, 90], 'UI-stage': [1536, 85], 'UI-plank-panel': [1024, 90] };
+const FREE = { LOGO: [1024, 90], 'UI-stage': [1536, 85], 'UI-plank-panel': [1024, 90], 'DICE-tray': [800, 88] }; // U8 쟁반: 트림 뒤 폭 800
 // 버전이 이름에 남는 출력(옛 v1 WebP 와 나란히 둔다): ISL-center-v2 → result.podium, LOGO-v2 → logo.v2
 const outName = id => (/^(ISL-center|LOGO)$/.test(id) && latest[id].v > 1 ? `${id}-v${latest[id].v}` : id);
 
@@ -95,14 +127,14 @@ const webp = (img, q, out) => img.webp({ quality: q, alphaQuality: 100, effort: 
 
 // 이정표: 판(프레임 y 0~45%) + 기둥 끝·돌받침(78.3~100%)을 붙여 기둥을 26 비율로 줄인다(DESIGN §16.4 판 96×28·기둥 26)
 const SIGN_CUT = [0.45, 0.783];
-async function signpost(buf) {
+async function signpost(buf, W0 = 256) {
   const { width: W, height: H } = await sharp(buf).metadata();
   const a = Math.round(H * SIGN_CUT[0]), b = Math.round(H * SIGN_CUT[1]);
   const top = await sharp(buf).extract({ left: 0, top: 0, width: W, height: a }).png().toBuffer();
   const bot = await sharp(buf).extract({ left: 0, top: b, width: W, height: H - b }).png().toBuffer();
   const out = await sharp({ create: { width: W, height: a + H - b, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: top, left: 0, top: 0 }, { input: bot, left: 0, top: a }]).png().toBuffer();
-  return sharp(out).resize(256, null);
+  return sharp(out).resize(W0, null);
 }
 
 // 대륙 마스크 5(R4 A3): 광장 지도에서 대륙색(토큰 hue ±18°, 채도 > .35)인 픽셀 + 대륙 상자(광장 비율) → 닫힘(구멍 메움) → 2px 페더.
@@ -149,55 +181,69 @@ async function plazaMasks(buf, W, post = (img) => img, prefix = 'PLAZA') {
 // 표시 상자 PLAZA_ART 1120×402(광장 1080×390 + 번짐) × 1.7357 = 1944×698 로: 윗면 332 → 576 px, 절벽 70 → 122 px.
 // 윗면은 세로 0.86 배, 절벽은 0.73 배로 따로 줄인다(통째로 줄이면 윗면이 모자라고 절벽이 남는다). 마스크도 같은 변환
 const U5 = { w: 1944, h: 698, topH: 576, split: 0.7995 };
-async function plazaU5(img) {
+async function plazaU5(img, k = 1) {
+  const u = { w: R(U5.w, k), h: R(U5.h, k), topH: R(U5.topH, k) };
   const png = await img.png().toBuffer();
   const { width: W, height: H } = await sharp(png).metadata();
   const cut = Math.round(H * U5.split);
-  const top = await sharp(png).extract({ left: 0, top: 0, width: W, height: cut }).resize(U5.w, U5.topH, { fit: 'fill' }).png().toBuffer();
-  const bot = await sharp(png).extract({ left: 0, top: cut, width: W, height: H - cut }).resize(U5.w, U5.h - U5.topH, { fit: 'fill' }).png().toBuffer();
-  return sharp({ create: { width: U5.w, height: U5.h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-    .composite([{ input: top, left: 0, top: 0 }, { input: bot, left: 0, top: U5.topH }]);
+  const top = await sharp(png).extract({ left: 0, top: 0, width: W, height: cut }).resize(u.w, u.topH, { fit: 'fill' }).png().toBuffer();
+  const bot = await sharp(png).extract({ left: 0, top: cut, width: W, height: H - cut }).resize(u.w, u.h - u.topH, { fit: 'fill' }).png().toBuffer();
+  return sharp({ create: { width: u.w, height: u.h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: top, left: 0, top: 0 }, { input: bot, left: 0, top: u.topH }]);
 }
+
+/** 이 ID·기본 긴 변(long)의 배수. 기본 단계 = 1, hi 단계 = hiK(긴 변 상한 2048 반영), 0 = 만들지 않음 */
+const kOf = (id, long) => { if (!HI) return 1; const k = hiK(id, long); return k ? Math.min(k, capOf(id) / long) : 0; };
+const R = (n, k) => Math.round(n * k);
 
 async function run(id, file) {
   if (keyed(id)) {
     const buf = await key(file, id);
-    const sq = s => sharp(buf).resize(s, s);
-    if (FREE[id]) { const [n, q] = FREE[id]; return webp(sharp(buf).resize(n, n, { fit: 'inside' }), q, outName(id) + '.webp'); }
+    const sq = (s, k) => sharp(buf).resize(R(s, k), R(s, k));
+    if (FREE[id]) { const [n, q] = FREE[id], k = kOf(id, n); if (!k) return false; return webp(sharp(buf).resize(R(n, k), R(n, k), { fit: 'inside' }), q, outName(id) + '.webp'); }
     const rs = /^RS-/.test(id) && rsSpec(id);
     if (/^RS-/.test(id)) {
       if (!rs) throw new Error(`RS 규격 없음: ${id}`);
       const [kind, n, q] = rs;
-      const img = kind === 'w' ? sharp(buf).resize(n, null) : kind === 'box' ? sharp(buf).resize(n[0], n[1], { fit: 'fill' }) : sq(n);
+      const k = kOf(id, kind === 'box' ? Math.max(...n) : n);
+      if (!k) return false;
+      const img = kind === 'w' ? sharp(buf).resize(R(n, k), null) : kind === 'box' ? sharp(buf).resize(R(n[0], k), R(n[1], k), { fit: 'fill' }) : sq(n, k);
       return webp(img, q, id + '.webp');
     }
-    if (isTile(id)) return webp(sq(512), 85, id + '.webp'); // R5d 칸: 512(줌 1.8 × 128 = 230)
-    if (id === 'PLAZA') { await plazaMasks(buf, 1944); return webp(sharp(buf).resize(1944, null), 85, 'PLAZA.webp'); } // 원본 1877 → 1944(×1.036)
-    if (id === 'PLAZA-U5') { await plazaMasks(buf, null, plazaU5, 'PLAZA-U5'); return webp(await plazaU5(sharp(buf)), 85, 'PLAZA-U5.webp'); }
-    if (id === 'UI-signpost') return webp(await signpost(buf), 90, id + '.webp');
+    if (isTile(id)) { const k = kOf(id, 512); return k ? webp(sq(512, k), 85, id + '.webp') : false; } // R5d 칸: 512(줌 1.8 × 128 = 230)
+    if (id === 'PLAZA') { if (HI) return false; await plazaMasks(buf, 1944); return webp(sharp(buf).resize(1944, null), 85, 'PLAZA.webp'); } // 원본 1877 → 1944(×1.036). 옛 광장(매니페스트 밖) — hi 없음
+    if (id === 'PLAZA-U5') { const k = kOf(id, U5.w); await plazaMasks(buf, null, img => plazaU5(img, k), 'PLAZA-U5'); return webp(await plazaU5(sharp(buf), k), HI ? 76 : 85, 'PLAZA-U5.webp'); } // hi 2880 은 q76(600KB 상한 — q85 는 740KB)
+    if (id === 'UI-signpost') { const k = kOf(id, 256); return k ? webp(await signpost(buf, R(256, k)), 90, id + '.webp') : false; }
     // P01 1024: 인트로 200px·로비 슬롯 330px (R2 A4). P13 1024: 문항 옆 고민 포즈(R2 D6, P10 과 교대)
-    if (/^CH\d-P(01|10|11|12|13|18)$/.test(id) || /^LM-/.test(id)) await webp(sq(1024), 85, id + '@1024.webp');
-    if (/^CH\d-P19$/.test(id)) return webp(sq(512), 88, id + '.webp'); // 빼꼼 반신(R2 A2): 하단 중앙 = 허리선 중앙
-    if (id === 'UI-sign-small') return webp(sq(256), 90, id + '.webp');
-    if (id === 'UI-logo') return webp(sq(512), 90, id + '.webp');
-    if (/^ISL/.test(id)) return webp(sq(512), 85, outName(id) + '.webp'); // R2 A1: 섬 전부 512
-    if (icon(id)) return webp(sq(128), 90, id + '.webp');
-    return webp(sq(256), /^CH/.test(id) ? 88 : 85, id + '.webp');
+    if (/^CH\d-P(01|10|11|12|13|18)$/.test(id) || /^LM-/.test(id)) { const k = kOf(id, 1024); if (k) await webp(sq(1024, k), 85, id + '@1024.webp'); }
+    if (/^CH\d-P19$/.test(id)) { const k = kOf(id, 512); return k ? webp(sq(512, k), 88, id + '.webp') : false; } // 빼꼼 반신(R2 A2): 하단 중앙 = 허리선 중앙
+    const one = (n, q, name = id) => { const k = kOf(id, n); return k ? webp(sq(n, k), q, name + '.webp') : false; };
+    if (id === 'UI-sign-small') return one(256, 90);
+    if (id === 'UI-logo') return one(512, 90);
+    if (/^ISL/.test(id)) return one(512, 85, outName(id)); // R2 A1: 섬 전부 512
+    // U8 §17.1.3·§17.2.1: 컵 512 · 주사위 눈·버스트·세로 깃발 256 · 삼각기·발코니 128(아이콘 규칙)
+    if (/^DICE-cup-/.test(id)) return one(512, 90);
+    if (/^(DICE-(top|sum)|FLAG-tall)/.test(id)) return one(256, 90);
+    if (icon(id)) return one(128, 90);
+    return one(256, /^CH/.test(id) ? 88 : 85);
   }
-  if (/^MC-/.test(id)) return webp(sharp(file).resize(512, 512, { fit: 'cover' }).removeAlpha(), 85, id + '.webp'); // U1 미션 그림 카드 1:1(mp_ 와 같은 처리)
-  if (id === 'UI-rotate') return webp(sharp(file).resize(768, null).removeAlpha(), 82, id + '.webp'); // U1 세로 안내 일러스트(폭 768)
-  if (id === 'UI-rotate-wide') return webp(sharp(file).resize(1024, 576, { fit: 'cover' }).removeAlpha(), 82, id + '.webp'); // U4 가로판 일러스트 16:9(폭 1024)
-  if (/^mp_/.test(id)) return webp(sharp(file).resize(512, 512, { fit: 'cover' }).removeAlpha(), 85, id + '.webp'); // 묶음 2 미션 사진 1:1
+  if (/^(MC-|mp_)/.test(id)) { const k = kOf(id, 512); return k ? webp(sharp(file).resize(R(512, k), R(512, k), { fit: 'cover' }).removeAlpha(), 85, id + '.webp') : false; } // U1 미션 그림 카드·묶음 2 미션 사진 1:1
+  if (id === 'UI-rotate') { const k = kOf(id, 768); return k ? webp(sharp(file).resize(R(768, k), null).removeAlpha(), 82, id + '.webp') : false; } // U1 세로 안내 일러스트(폭 768)
+  if (id === 'UI-rotate-wide') { const k = kOf(id, 1024); return k ? webp(sharp(file).resize(R(1024, k), R(576, k), { fit: 'cover' }).removeAlpha(), 82, id + '.webp') : false; } // U4 가로판 16:9(폭 1024)
   if (/^(CC|EV)-/.test(id) || /^[a-z]{2}_/.test(id)) { // CC·EV, 묶음 2 해설 카드 그림(<cc>_<이름>)
+    const k = kOf(id, 1440);
+    if (!k) return false;
     const m = await sharp(file).metadata(), h = Math.round(m.width / 2.5);
-    return webp(sharp(file).extract({ left: 0, top: Math.round((m.height - h) / 2), width: m.width, height: h }).resize(1440, 576), 82, id + '.webp');
+    return webp(sharp(file).extract({ left: 0, top: Math.round((m.height - h) / 2), width: m.width, height: h }).resize(R(1440, k), R(576, k)), 82, id + '.webp');
   }
   // CUT-nn·BG·구름·광선: 16:9 가운데 crop
-  return webp(sharp(file).resize(1536, 864, { fit: 'cover' }).removeAlpha(), 82, id + '.webp');
+  const k = kOf(id, 1536);
+  return k ? webp(sharp(file).resize(R(1536, k), R(864, k), { fit: 'cover' }).removeAlpha(), 82, id + '.webp') : false;
 }
 
+const srcOf = f => (srcFiles.has(f) ? join(SRC, f) : join(FALLBACK, f));
 let n = 0;
 for (let i = 0; i < ids.length; i += 8)
-  await Promise.all(ids.slice(i, i + 8).map(id => run(id, join(SRC, latest[id].file)).then(() => n++)));
+  await Promise.all(ids.slice(i, i + 8).map(id => run(id, srcOf(latest[id].file)).then(r => { if (r !== false) n++; })));
 writeFileSync(join(OUT, 'versions.json'), JSON.stringify(latest, null, 1));
-console.log('converted', n, 'of', ids.length);
+console.log(HI ? 'hi' : 'base', 'converted', n, 'of', ids.length, 'src', SRC);

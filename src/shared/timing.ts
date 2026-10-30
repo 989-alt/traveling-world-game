@@ -22,6 +22,16 @@ export function moveShowMs(from: number, to: number, boardSize = BOARD_SIZE): nu
   return travel + ZOOM_HOLD_MS + ZOOM_OUT_MS;
 }
 
-/** 새 로그 묶음의 이동 연출 합(서버가 다음 단계 마감에 더한다 — 카드·문항은 연출이 끝난 뒤 뜬다) */
+/** 주사위 B 나무 컵(DESIGN §17.1.2): 뗌(쏟기 시작) → 이동 시작. 쏟기 200 · 튕김 2회 660(+120 부터) · 멈춤 150 · 합 팝 900.
+ *  움직임을 줄인 기기는 멈춘 눈 + 합만 900ms. 봇 턴은 그 앞에 컵 흔들기 600ms(화면만 — 봇 다음 행동까지 1~2초 여유가 있다) */
+export const DICE = {
+  tilt: 80, pour: 120, bounce: [330, 330], settle: 150, popAt: 930, chipAt: 1100, total: 1830, reduced: 900, botShake: 600,
+} as const;
+export const DICE_SHOW_MS = DICE.total;
+export const DICE_SHOW_MS_REDUCED = DICE.reduced;
+/** 쏟은 뒤 눈이 멈추는 시각(+120 에 나와 튕김 2회) */
+export const DICE_STOP_MS = DICE.pour + DICE.bounce[0] + DICE.bounce[1];
+
+/** 새 로그 묶음의 화면 연출 합 — 주사위(굴림마다 DICE_SHOW_MS) + 이동. 서버가 다음 단계 마감·봇 행동에 더한다(카드·문항은 연출이 끝난 뒤 뜬다) */
 export const movesShowMs = (events: readonly LogEvent[]) =>
-  events.reduce((ms, e) => (e.ev === 'move' ? ms + moveShowMs(e.from, e.to) : ms), 0);
+  events.reduce((ms, e) => (e.ev === 'move' ? ms + moveShowMs(e.from, e.to) : e.ev === 'dice' ? ms + DICE_SHOW_MS : ms), 0);

@@ -16,16 +16,39 @@ describe('check-assets 스크립트', () => {
     b.writeUInt32LE(10, 16); b.writeUIntLE(w - 1, 24, 3); b.writeUIntLE(h - 1, 27, 3);
     return b;
   };
-  const run = (entries: object, files: Record<string, Buffer>) => {
+  const run = (entries: object, files: Record<string, Buffer>, hi?: string[]) => {
     const root = mkdtempSync(join(tmpdir(), 'ca-'));
-    mkdirSync(join(root, 'webp'));
-    writeFileSync(join(root, 'manifest.json'), JSON.stringify({ version: 1, entries }));
+    mkdirSync(join(root, 'webp/hi'), { recursive: true });
+    writeFileSync(join(root, 'manifest.json'), JSON.stringify({ version: 1, entries, ...(hi ? { hi } : {}) }));
     for (const [f, b] of Object.entries(files)) writeFileSync(join(root, f), b);
     return spawnSync('node', [script], { env: { ...process.env, ASSETS_ROOT: root }, encoding: 'utf8' });
   };
   it('정상 -> exit 0', () => {
     const r = run({ 'building.1.1': 'webp/a.webp', 'tile.1': 'webp/t.webp' }, { 'webp/a.webp': webp(256, 256), 'webp/t.webp': webp(512, 512) });
     expect(r.status).toBe(0);
+  });
+  it('U9 hi: 칸은 hi 필수·하한 627·기본보다 큼·비율 같음·상한 2048', () => {
+    const base = { 'webp/t.webp': webp(512, 512) };
+    expect(run({ 'tile.1': 'webp/t.webp' }, { ...base, 'webp/hi/t.webp': webp(640, 640) }, ['webp/t.webp']).status).toBe(0);
+    expect(run({ 'tile.1': 'webp/t.webp' }, base, []).stderr).toContain('고해상(hi) 없음: tile.1');
+    expect(run({ 'tile.1': 'webp/t.webp' }, base, ['webp/t.webp']).stderr).toContain('hi 누락');
+    expect(run({ 'tile.1': 'webp/t.webp' }, { ...base, 'webp/hi/t.webp': webp(600, 600) }, ['webp/t.webp']).stderr).toContain('고해상 하한 627');
+    expect(run({ 'tile.1': 'webp/t.webp' }, { ...base, 'webp/hi/t.webp': webp(640, 500) }, ['webp/t.webp']).stderr).toContain('hi 비율 다름');
+    expect(run({ 'building.1.1': 'webp/a.webp' }, { 'webp/a.webp': webp(256, 256), 'webp/hi/a.webp': webp(4096, 4096) }, ['webp/a.webp']).stderr).toContain('상한 2048');
+    expect(run({ 'building.1.1': 'webp/a.webp' }, { 'webp/a.webp': webp(256, 256), 'webp/hi/a.webp': webp(256, 256) }, ['webp/a.webp']).stderr).toContain('기본보다 크지 않음');
+  });
+  it('U9 후속: 광장 hi 만 긴 변 2880 까지(하한 2833), 다른 그림은 2048', () => {
+    const plaza = (w: number, h: number) => run({ plaza: 'webp/p.webp' }, { 'webp/p.webp': webp(1944, 698), 'webp/hi/p.webp': webp(w, h) }, ['webp/p.webp']);
+    expect(plaza(2880, 1034).status).toBe(0);
+    expect(plaza(2048, 735).stderr).toContain('고해상 하한 2833');
+    expect(plaza(3000, 1077).stderr).toContain('상한 2880');
+    expect(run({ 'tile.1': 'webp/t.webp' }, { 'webp/t.webp': webp(512, 512), 'webp/hi/t.webp': webp(2880, 2880) }, ['webp/t.webp']).stderr).toContain('상한 2048');
+  });
+  it('U8 주사위·땅 표시 규격: 컵 512 · 눈 256 · 깃발 256 · 삼각기/발코니 128', () => {
+    expect(run({ 'dice.cup.pour': 'webp/c.webp', 'dice.face.6': 'webp/d.webp', 'own.flag.2': 'webp/f.webp', 'own.balcony.4': 'webp/b.webp' },
+      { 'webp/c.webp': webp(512, 512), 'webp/d.webp': webp(256, 256), 'webp/f.webp': webp(256, 256), 'webp/b.webp': webp(128, 128) }).status).toBe(0);
+    expect(run({ 'dice.face.1': 'webp/d.webp' }, { 'webp/d.webp': webp(128, 128) }).stderr).toContain('필요 256x256');
+    expect(run({ 'own.pennant.1': 'webp/p.webp' }, { 'webp/p.webp': webp(64, 64) }).stderr).toContain('필요 128x128');
   });
   it('필수 누락 -> 목록 + exit 1', () => {
     const r = run({ 'tile.1': 'webp/a.webp' }, {});

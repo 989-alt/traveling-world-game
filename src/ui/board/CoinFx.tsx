@@ -7,7 +7,7 @@ import type { LogEvent, Seat } from '../../shared/types';
 import {
   coinChanges, coinCount, digitReels, DROP_MS, FLY_MS, plan, POP_MS, POP_REDUCED_MS, reelMs, type CoinFlow, type Reel,
 } from './coin-logic';
-import { CHAR, CORNER_FEET, CORNER_H, HUD } from './geometry';
+import { CHAR, CORNER_FEET, CORNER_HS, HUD } from './geometry';
 
 // ── 롤링 숫자 ─────────────────────────────────────────
 
@@ -74,7 +74,8 @@ export const coinIconAt = (seat: Seat) => ({ x: HUD.panels[seat].x - 8, y: HUD.p
 /** 귀퉁이 전신 캐릭터 손(받는 쪽, U5 §16.9.3): 발에서 키 45% 위, 광장 안쪽으로 몸 폭 1/4 */
 export const cornerHandAt = (seat: Seat) => {
   const f = CORNER_FEET[seat], inward = f.x < 683 ? 1 : -1;
-  return { x: f.x + inward * 0.25 * ((CORNER_H * CHAR.w) / CHAR.h), y: f.y - 0.45 * CORNER_H };
+  const h = CORNER_HS[seat];
+  return { x: f.x + inward * 0.25 * ((h * CHAR.w) / CHAR.h), y: f.y - 0.45 * h };
 };
 
 export interface Fly { id: number; flow: CoinFlow; n: number }

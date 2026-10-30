@@ -41,7 +41,7 @@ export function Lobby({ client, s }: { client: GameClient; s: ClientState }) {
             <div key={v.seat} class={`lb-slot${v.seat === s.seat ? ' is-me' : ''}`} data-seat={v.seat} style={{ '--seat': `var(--seat-${v.seat + 1})` }}>
               {/* v3 08: 위 70% = P01 1024 반신 크롭(빈자리는 로봇 CH7), 아래 = 자리색 띠 + 원 */}
               <div class="lb-slot-art">
-                <Pic k={`char.${v.charId}.p01.big`} class={`lb-slot-char${v.charId === 7 ? ' lb-slot-char--bot' : ''}`} fallback={<AssetImg k={`char.${v.charId}.f00`} class="lb-slot-face" alt="" />} />
+                <Pic base k={`char.${v.charId}.p01.big`} class={`lb-slot-char${v.charId === 7 ? ' lb-slot-char--bot' : ''}`} fallback={<AssetImg k={`char.${v.charId}.f00`} class="lb-slot-face" alt="" />} />
                 <span class="lb-slot-band">{v.seat + 1}번{v.seat === room.hostSeat && v.taken ? ' · 방장' : ''}</span>
               </div>
               <div class="lb-slot-foot">

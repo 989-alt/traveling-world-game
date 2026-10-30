@@ -10,11 +10,11 @@ vi.mock('../../styles/tokens.css?raw', async () => {
 import { BOARD } from '../../shared/board';
 import type { ClientAct } from '../../shared/protocol';
 import { hasAsset } from '../../assets/manifest';
-import { BODY_BOTTOM_AT_BRIDGE, boxesHit, BRIDGES, CHAR, CORNER_FEET, CORNER_H, CORNER_PADS, cornerBoxes, HUD, hudBoxes, ISLAND_TOP, TILE_BOX, insetOf, PLAZA, PLAZA_ART, plateBox, plateSide, RING_TOP, SIGNPOSTS, STAGE, TILES, V_OVERLAP_MAX, type Box } from './geometry';
+import { BODY_BOTTOM_AT_BRIDGE, boxesHit, BRIDGES, CHAR, CORNER_FEET, CORNER_H, CORNER_HS, CORNER_PADS, cornerBoxes, HUD, hudBoxes, ISLAND_TOP, TILE_BOX, insetOf, PLAZA, PLAZA_ART, plateBox, plateSide, RING_TOP, SIGNPOSTS, STAGE, TILES, V_OVERLAP_MAX, type Box } from './geometry';
 import { maxH, place, violations } from './layout';
 import manifest from '../../../assets/manifest.json';
 import { camShift, camTransform, worldCover, ZOOM } from './camera';
-import { gaugeAt } from './DiceButton';
+import { gaugeAt } from './DiceCup';
 import { CROWD_CAP, crowdFrames, cuesFor, IDLE_MOTIONS, isTokenMotion, MOTIONS, poseKey } from '../characters/motions';
 import { MotionScheduler } from '../characters/scheduler';
 
@@ -119,6 +119,7 @@ describe('광장·이정표·다리·HUD 자리 (DESIGN §16.4·§16.9.2)', () =
   });
   it('귀퉁이 전신 캐릭터 4(U5 §16.9.2): 키 96, 발이 그림 속 돌 단 안, 몸 상자가 칸 땅덩이·HUD·이정표·서로와 교차 0, 패널은 바로 옆(틈 ≤ 6)', () => {
     expect(CORNER_H).toBe(96);
+    expect(Math.max(...CORNER_HS)).toBe(CORNER_H);
     const bodies = cornerBoxes();
     expect(bodies).toHaveLength(4);
     CORNER_FEET.forEach((f, i) => {
@@ -453,5 +454,121 @@ describe('줌 카메라(PRD §12.4, DESIGN §16.6)', () => {
     expect(camShift(1, TILES[12].anchor)).toEqual({ tx: 0, ty: 0 });
     expect(camTransform(1.8, TILES[25].anchor)).toBe('translate(0px, 0px) scale(1.8)');
     expect(camTransform(1.8, TILES[27].anchor)).toMatch(/^translate\(0px, -?\d+px\) scale\(1\.8\)$/);
+  });
+});
+
+// ── U8(DESIGN §17): 주사위 B 타임라인 · 땅 표시 C2 ──
+import { DICE } from '../../shared/timing';
+import { bouncePath, CUP, CUP_BOX, rollTimes } from './dice-show';
+import { FLAG_CLOTH, flagClip, OWN, ownGeo, PLATE_TRUE, SCENERY_BOTTOM } from './own-geo';
+import { spriteBox } from './layout';
+
+describe('귀퉁이 캐릭터 = 원판 중심(U8-impl 사용자 피드백)', () => {
+  it('발 = 원판 윗면 중심(PLAZA-U5 실측) ±4px, 남쪽으로 내려가지 않는다 · 위 단 키 75 / 아래 단 96', () => {
+    const MEASURED = [[270, 229], [1099, 229], [210, 451], [1151, 451]]; // 돌판 윗면 타원 중심(스테이지 px)
+    CORNER_FEET.forEach((f, i) => {
+      expect(Math.abs(f.x - MEASURED[i][0]), `자리 ${i + 1} x`).toBeLessThanOrEqual(4);
+      expect(Math.abs(f.y - MEASURED[i][1]), `자리 ${i + 1} y`).toBeLessThanOrEqual(4);
+      expect(f.y, `자리 ${i + 1} 남쪽 아님`).toBeLessThanOrEqual(CORNER_PADS[i].c.y);
+    });
+    expect(CORNER_HS).toEqual([75, 75, 96, 96]);
+  });
+});
+
+describe('주사위 B 나무 컵(§17.1)', () => {
+  it('타임라인: 뗌 t0 → 멈춤 +780 · 합 팝 +930 · 더블 칩 +1100 · 이동 +1830, 서버 눈이 늦으면 그 순간 멈추고 나머지 같은 간격', () => {
+    expect(rollTimes({ t0: 1000, gotAt: undefined, reduced: false })).toBeNull(); // 눈 없이는 멈추지 않는다
+    expect(rollTimes({ t0: 1000, gotAt: 1040, reduced: false })).toEqual({ stop: 1780, pop: 1930, chip: 2100, end: 2830 });
+    expect(rollTimes({ t0: 1000, gotAt: 2000, reduced: false })).toEqual({ stop: 2000, pop: 2150, chip: 2320, end: 3050 });
+    expect(rollTimes({ t0: 1000, gotAt: 1040, reduced: true })!.end).toBe(1040 + DICE.reduced); // 움직임 줄임 900
+    expect(DICE.total - DICE.popAt).toBe(900);
+  });
+  it('HUD 상자 (583,282) 200×166 안: 쟁반 200×96 중심 (683,400) · 주사위 60 중심 (655,418)·(723,418) · 합 (689,352) · 칩 (745,322)', () => {
+    expect(CUP_BOX).toEqual({ x: 583, y: 282, w: 200, h: 166 });
+    const abs = (p: { x: number; y: number }) => [p.x + CUP_BOX.x, p.y + CUP_BOX.y];
+    expect(abs({ x: CUP.tray.x + CUP.tray.w / 2, y: CUP.tray.y + CUP.tray.h / 2 })).toEqual([683, 400]);
+    expect(CUP.dice.map(abs)).toEqual([[655, 418], [723, 418]]);
+    expect(abs(CUP.sum)).toEqual([689, 352]);
+    expect(abs(CUP.chip)).toEqual([745, 322]);
+    for (const d of CUP.dice) { expect(d.x - CUP.die / 2).toBeGreaterThanOrEqual(0); expect(d.y + CUP.die / 2).toBeLessThanOrEqual(CUP_BOX.h); }
+    expect(CUP.tray.y + CUP.tray.h).toBeLessThanOrEqual(CUP_BOX.h);
+    expect(CUP_BOX.y).toBeGreaterThan(HUD.timer.y + HUD.timer.h / 2 + 10); // 간판 아랫변 257 과 틈
+  });
+  it('튕김 경로: 컵 입 → 자리, 두 번 튕기고(정점 2) 끝은 바로 선 면(회전 360 배수)·제자리', () => {
+    const k = bouncePath(CUP.mouth, CUP.dice[0], 720);
+    expect(k.at(-1)!.transform).toBe('translate(0px, 0px) rotate(720deg) scale(1)');
+    expect(k[0].transform).toContain(`translate(${CUP.mouth.x - CUP.dice[0].x}px, ${CUP.mouth.y - CUP.dice[0].y}px)`);
+    expect(k.map((f) => f.offset)).toEqual([0, 0.22, 0.5, 0.75, 1]);
+  });
+});
+
+describe('땅 표시 C2 — 앞 모서리 발코니(§17.2·§17.2.1)', () => {
+  const all = (f: (g: (typeof TILES)[number], seat: number, level: number) => void) => {
+    for (const g of TILES) for (let seat = 0; seat < 4; seat++) for (let level = 0; level <= 4; level++) f(g, seat, level);
+  };
+  it('깃발 길이 = 단계(1~4: 24·32·40·48, 땅만 0 = 24 — 수정 1회차 시안 무게), 4단계만 금별, 0단계엔 발코니·건물 없음', () => {
+    expect([0, 1, 2, 3, 4].map((l) => ownGeo(TILES[1], 0, l).flagLen)).toEqual([24, 24, 32, 40, 48]);
+    expect(ownGeo(TILES[1], 0, 3).star).toBeNull();
+    expect(ownGeo(TILES[1], 0, 4).star).not.toBeNull();
+    expect(ownGeo(TILES[1], 0, 0).building).toBeNull();
+    expect(flagClip(48)).toBe('none');
+    expect(flagClip(24)).toBe('polygon(0 0, 100% 0, 100% 50.00%, 50% 42.00%, 0 50.00%)');
+  });
+  it('천 폭 16(자리마다 그림 비율 보정), 천의 절반은 칸 땅덩이 오른쪽 끝(상자 96%) 밖, 가로 틈(이웃 칸 땅덩이) 침범 0', () => {
+    all((g, seat) => {
+      const f = ownGeo(g, seat, 4).flag;
+      const cloth = f.w * FLAG_CLOTH[seat];
+      expect(cloth).toBeCloseTo(16, 6);
+      const mid = f.x + f.w / 2;
+      expect(mid + cloth / 2, `칸 ${g.index} 깃발이 스테이지 안`).toBeLessThanOrEqual(STAGE.w);
+      if (g.col === 10) { // 오른쪽 끝 열: 왼쪽(광장 쪽) 바깥으로 거울
+        expect(mid).toBeLessThanOrEqual(g.land.x + 0.5);
+        return;
+      }
+      const edge = g.land.x + g.land.w; // 천 가운데 ≈ 땅덩이 오른쪽 끝(천 절반은 칸 밖)
+      expect(mid).toBeGreaterThanOrEqual(edge - 0.5);
+      expect(mid).toBeLessThanOrEqual(edge + 3);
+      const right = TILES.find((o) => o.row === g.row && o.col === g.col + 1);
+      if (right) expect(mid + cloth / 2).toBeLessThan(right.land.x);
+    });
+  });
+  it('윗면 가운데 비움 · 위로 솟는 물체 0(위 칸 이름표 가림 0) · 건물 = 풍경 밖(y ≥ 79) · 아래 칸 상자 침범 0', () => {
+    all((g, seat, level) => {
+      const o = ownGeo(g, seat, level);
+      const boxes = [...o.pennants, o.flag, ...(o.star ? [o.star] : []), ...(o.balcony ? [o.balcony] : []), ...(o.building ? [o.building] : [])];
+      for (const b of boxes) expect(b.y, `칸 ${g.index}`).toBeGreaterThanOrEqual(g.img.y);
+      for (const p of o.posts) expect(p.y0).toBeGreaterThanOrEqual(g.img.y);
+      if (o.building) {
+        expect(o.building.y - g.img.y).toBeGreaterThanOrEqual(SCENERY_BOTTOM + 2); // 건물 풍경 가림 0(흰 스티커 테 1px + 여유)
+        expect(o.building.w).toBeLessThanOrEqual(22);
+        expect(o.balcony!.y + o.balcony!.h - g.img.y).toBeLessThanOrEqual(110); // 아래 칸 상자 윗변(열 피치 110)
+      }
+      // 공터(말 자리, 지름 29 가운데) 위에 아무것도 없다
+      const clear = { x: g.anchor.x - 15, y: g.anchor.y - 15, w: 30, h: 30 };
+      for (const b of boxes) expect(boxesHit(b, clear), `칸 ${g.index} 공터`).toBe(false);
+    });
+  });
+  it('이름표(실측 x 26~98 · y 83~105)·말(1~4명) 가림 0', () => {
+    all((g, seat, level) => {
+      const o = ownGeo(g, seat, level);
+      const plate = { x: g.img.x + PLATE_TRUE.x, y: g.img.y + PLATE_TRUE.y, w: PLATE_TRUE.w, h: PLATE_TRUE.h };
+      const front = [...(o.balcony ? [o.balcony] : []), ...(o.building ? [o.building] : [])];
+      for (const b of front) expect(boxesHit(b, plate), `칸 ${g.index} 이름표`).toBe(false);
+      for (let n = 1; n <= 4; n++) {
+        const p = place(g, n, false);
+        for (const f of p.feet) for (const b of [...front, o.flag]) {
+          const body = spriteBox(f, p.h);
+          // 깃발 그림 상자는 천보다 넓다(막대) — 천 기둥만 잰다
+          const bb = b === o.flag ? { x: b.x + b.w / 2 - 6, y: b.y, w: 12, h: o.flagLen } : b;
+          expect(boxesHit(body, bb), `칸 ${g.index} ${n}명`).toBe(false);
+        }
+      }
+    });
+  });
+  it('기둥·밧줄·삼각기 7: 뒤 두 모서리(x 9·115, y 1~28), 삼각기는 밧줄에 매달림', () => {
+    const g = TILES[3], o = ownGeo(g, 1, 2);
+    expect(o.posts.map((p) => p.x - g.img.x)).toEqual([9, 115]);
+    expect(o.pennants).toHaveLength(OWN.pennants);
+    for (const p of o.pennants) { expect(p.y - g.img.y).toBeGreaterThanOrEqual(2); expect(p.y + p.h - g.img.y).toBeLessThanOrEqual(23); }
   });
 });

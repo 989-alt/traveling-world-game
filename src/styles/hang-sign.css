@@ -17,7 +17,7 @@
   padding: 2px 6px 0;
   border: 0;
   border-image-source: var(--sign-img);
-  border-image-slice: 72 36 30 36 fill;
+  border-image-slice: 28.125% 14.0625% 11.71875% 14.0625% fill; /* 72 36 30 36 px @256 — 백분율이라 고해상(U9 hi 512)에도 같은 자리 */
   border-image-width: 18px 9px 7.5px 9px;
   border-image-outset: 12px 3px 2px 3px;
   border-image-repeat: stretch;

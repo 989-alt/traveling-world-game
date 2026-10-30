@@ -56,7 +56,8 @@ const SNAP = () => {
   return {
     tiles,
     chars: [...document.querySelectorAll<HTMLElement>('.bc')].map((el) => ({ seat: +el.dataset.seat!, tile: +el.dataset.tile!, box: st(el.querySelector('.bc-sprite')!.getBoundingClientRect()) })),
-    buildings: [...document.querySelectorAll<HTMLElement>('.tile-bld')].map((el) => ({ tile: +el.dataset.tile!, box: st(el.getBoundingClientRect()) })),
+    // U8 C2: 건물 = 앞오른쪽 절벽 발코니 미니어처(윗면 밖) — 얼굴 가림 규칙은 그대로 잰다
+    buildings: [...document.querySelectorAll<HTMLElement>('.own-bld')].map((el) => ({ tile: +el.closest<HTMLElement>('.own')!.dataset.tile!, box: st(el.getBoundingClientRect()) })),
   };
 };
 
@@ -528,7 +529,7 @@ test('독점 연출(§16.5): 0.2s 칸 글로우 → 0.5s 지도 마스크·이�
   expect(Date.now() - t0).toBeLessThan(1500);
   await expect(page.locator('.plaza-mask[data-continent="africa"]')).toHaveClass(/is-on/);
   await expect(page.locator('.sign[data-continent="africa"]')).toHaveAttribute('data-owner', '2');
-  for (const t of [16, 17, 18, 19]) await expect(page.locator(`.tile-flag[data-tile="${t}"] img`)).toHaveAttribute('src', /UI-flag-3/);
+  for (const t of [16, 17, 18, 19]) await expect(page.locator(`.own[data-tile="${t}"] .own-flag img`)).toHaveAttribute('src', /FLAG-tall-3/); // U8 C2 세로 깃발
   await expect(page.locator('.mono-band')).toContainText('독점했어요!');
   await expect(page.locator('.mono-confetti')).toHaveCount(1);
   await page.waitForTimeout(450); // 띠 slide-in 300ms 뒤
@@ -650,7 +651,7 @@ test('줌 선명도: 1.8배에서 칸 이름표·캐릭터 가장자리가 DPR 1
   // 기준: 줌 없이 장치 배율 1.8 로 같은 장면
   const rc = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1.8, reducedMotion: 'reduce' });
   const rp = await rc.newPage();
-  await openZ(rp, 1366, 768);
+  await openZ(rp, 1366, 768, '?hires=0'); // U9: 장치 배율 1.8 은 hi 단계(큰 그림)를 고르므로 줌 쪽(1366·dpr1 = 기본 단계)과 같은 그림으로 맞춘다
   await rp.emulateMedia({ reducedMotion: 'reduce' });
   await rp.evaluate(() => (window as unknown as { __board: Z }).__board.scene(27, 1, 0));
   await ready(rp);
@@ -660,7 +661,7 @@ test('줌 선명도: 1.8배에서 칸 이름표·캐릭터 가장자리가 DPR 1
   // 줌: 1배 화면에서 칸 25 → 27 이동, 착지 뒤 붙잡기
   const zc = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
   const zp = await zc.newPage();
-  await openZ(zp, 1366, 768, '?hold=600000');
+  await openZ(zp, 1366, 768, '?hold=600000&hires=0');
   const one = { name: await shot(zp, R.name, 'crisp-1x-name'), char: await shot(zp, R.char, 'crisp-1x-char') }; // 1배(줌 전) — 비교용
   await zp.evaluate(() => (window as unknown as { __board: Z }).__board.scene(25, 1, 0));
   await zp.evaluate(() => (window as unknown as { __board: Z }).__board.move(0, 27));

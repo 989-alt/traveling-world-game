@@ -15,12 +15,14 @@ import { Character, type Ambient } from '../characters/Character';
 import { cuesFor, isTokenMotion, type MotionId } from '../characters/motions';
 import { MotionScheduler } from '../characters/scheduler';
 import { playConfetti } from '../cutscene/confetti';
-import { HOP_GAP_MS, MAX_HOP } from '../../shared/timing';
+import { DICE, HOP_GAP_MS, MAX_HOP } from '../../shared/timing';
 import { camShift, useCamera, ZOOM } from './camera';
-import { DiceButton } from './DiceButton';
+import { DiceCup } from './DiceCup';
+import { ROLL_GIVE_UP_MS, rollTimes, type RollShow } from './dice-show';
 import { HangSign } from './HangSign';
-import { boxesHit, BRIDGES, CHAR, CORNER_FEET, CORNER_H, HUD, hudBoxes, PLAZA_ART, SIGNPOSTS, STAGE, TILES, type SignGeo, type TileGeo } from './geometry';
-import { buildingBox, FLAG, flagFoot, place } from './layout';
+import { boxesHit, BRIDGES, CHAR, CORNER_FEET, CORNER_HS, HUD, hudBoxes, PLAZA_ART, SIGNPOSTS, STAGE, TILES, type SignGeo, type TileGeo } from './geometry';
+import { place } from './layout';
+import { flagClip, ownGeo } from './own-geo';
 import { CoinFlyLayer, useCoinFx } from './CoinFx';
 import { PlayerPanel } from './PlayerPanel';
 import { usePortrait } from './RotateGuard';
@@ -54,7 +56,6 @@ export interface BoardProps {
 export const MONO = { glow: 200, hop2: 540, paint: 500, band: 600, end: 3000, reducedBanner: 2000 } as const;
 
 const id = (s: Seat) => String(s);
-const isBuilt = (g: BoardGame, t: number) => g.tiles[t].owner !== null && g.tiles[t].level > 0;
 const buildingKey = (t: number, level: number) => (level >= 4 ? `landmark.${t}` : `building.${t}.${level}`);
 /** 대륙 → 토큰 이름(continent-*) */
 export const CONT_VAR: Record<Continent, string> = {
@@ -120,6 +121,19 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     return () => document.removeEventListener('visibilitychange', f);
   }, []);
   const [zoomed, setZoomed] = useState(false);
+  /** 주사위 연출 중(§17.1.2): 줌처럼 카드·문항을 늦춘다(Game 의 onCamera). 이동이 시작돼 줌이 걸리면 그쪽이 이어받는다 */
+  const [, setDiceHoldS] = useState(false);
+  // 줌 걸림 || 주사위 연출 중 → onCamera. 바뀐 그 자리에서 바로 알린다(한 렌더 늦으면 줌이 풀린 직후 카드가 늦게 뜬다)
+  const camRef = useRef({ zoomed: false, hold: false, sent: false as boolean | null });
+  const camCb = useRef(onCamera);
+  camCb.current = onCamera;
+  const reportCam = () => {
+    const c = camRef.current, on = c.zoomed || c.hold;
+    if (c.sent === on) return;
+    c.sent = on;
+    camCb.current?.(on);
+  };
+  const setDiceHold = (v: boolean) => { camRef.current.hold = v; setDiceHoldS(v); reportCam(); };
   useEffect(() => sched.setPaused(!!covered || hidden || zoomed || portrait), [covered, hidden, zoomed, portrait]); // 대기 모션 A 는 줌 동안 정지(§16.6), 세로 안내 동안 정지(QA6)
   useEffect(() => sched.markTurn(id(game.turn.seat)), [game.turn.seat]);
 
@@ -162,6 +176,40 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     at(MONO.end, () => { setGlow((g) => (g === m ? null : g)); setBand((b) => (b?.key === key ? null : b)); pending.current.delete(m.continent); });
   };
 
+  // ── 주사위 B(§17.1): 굴림 한 번 = RollShow. 내가 떼면 바로(눈은 서버가), 남·봇은 서버 눈이 온 순간(봇은 흔들기 600 뒤). 이동은 그 연출 뒤에 ──
+  const [roll, setRoll] = useState<RollShow | null>(null);
+  const rollRef = useRef<RollShow | null>(null);
+  const rollSeq = useRef(0);
+  /** 이 시각(performance.now) 전에는 이동(홉·줌)을 시작하지 않는다 = 굴림 연출 끝(+1830 / reduced 900) */
+  const moveGate = useRef(0);
+  const diceTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => diceTimers.current.forEach(clearTimeout), []);
+  const showRoll = (r: RollShow | null) => {
+    rollRef.current = r;
+    setRoll(r);
+    diceTimers.current.forEach(clearTimeout);
+    diceTimers.current = [];
+    if (!r) { setDiceHold(false); return; }
+    setDiceHold(true);
+    const now = performance.now();
+    const t = rollTimes(r);
+    if (t) {
+      moveGate.current = t.end;
+      // 이동이 시작되면 줌(onActive)이 이어받는다. 줌이 안 걸리는 이동(움직임 줄임·제자리)도 조금 뒤 푼다
+      diceTimers.current.push(setTimeout(() => setDiceHold(false), t.end - now + 250));
+    } else if (r.mine) { // 서버 눈이 안 오면(거부·끊김) 컵을 대기로
+      diceTimers.current.push(setTimeout(() => { if (rollRef.current?.id === r.id && rollRef.current.d1 === undefined) showRoll(null); }, ROLL_GIVE_UP_MS));
+    }
+  };
+  /** 서버 주사위 이벤트 → 연출. 내가 뗀 굴림이면 그 연출에 눈만 채운다 */
+  const onDice = (e: Extract<LogEvent, { ev: 'dice' }>) => {
+    const now = performance.now();
+    const cur = rollRef.current;
+    if (cur && cur.mine && cur.d1 === undefined && cur.seat === e.seat) return showRoll({ ...cur, d1: e.d1, d2: e.d2, gotAt: now });
+    const bot = !reduced && !!players.find((p) => p.seat === e.seat)?.isBot;
+    showRoll({ id: ++rollSeq.current, seat: e.seat, t0: now + (bot ? DICE.botShake : 0), shakeFrom: bot ? now : undefined, d1: e.d1, d2: e.d2, gotAt: now, mine: false, reduced });
+  };
+
   // 새 로그 → 반응·내 턴 모션, 독점 연출
   const seen = useRef(log?.length ?? 0);
   const owners = useRef(game.tiles.map((t) => t.owner));
@@ -172,6 +220,8 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     for (const ev of log.slice(seen.current)) {
       for (const c of cuesFor(ev, seats, owners.current)) cue(id(c.seat), c.motion);
       if (ev.ev === 'event' && ev.kind === 'monopoly') playMonopoly({ continent: ev.payload.continent as Continent, seat: ev.seat });
+      // 재접속 다시 받기·탭 숨김은 연출 없이 바로(이동도 바로)
+      if (ev.ev === 'dice') { if (noZoom || document.hidden) { moveGate.current = 0; showRoll(null); } else onDice(ev); }
     }
     seen.current = log.length;
     owners.current = game.tiles.map((t) => t.owner);
@@ -204,6 +254,10 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
   const noZoomRef = useRef(noZoom);
   noZoomRef.current = noZoom;
   const [zoomOff, setZoomOff] = useState(false); // 이번 이동은 줌 없이(재접속 다시 받기)
+  /** 굴림 연출이 끝나길 기다리는 이동(자리) — 기다리는 동안도 '이동 중'(data-hopping) */
+  const [waitMove, setWaitMove] = useState<number[]>([]);
+  /** 이동 중 말 머리 위 합 칩(판 레이어): 홉마다 따라가고 착지 +300 에 사라진다 */
+  const [hopChip, setHopChip] = useState<{ seat: Seat; n: number; key: number } | null>(null);
   useEffect(() => () => hopTimers.current.forEach(clearTimeout), []);
   useEffect(() => {
     const set = (s: number, patch: { pos?: number; hop?: boolean; busy?: boolean }) =>
@@ -218,27 +272,45 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
       if (targets.current[s] === p.pos) return; // 목표가 그대로인 자리는 건드리지 않는다
       targets.current[s] = p.pos;
       clearTimeout(hopTimers.current.get(s));
+      setWaitMove((w) => (w.includes(s) ? w.filter((x) => x !== s) : w));
       // 서버 이동 로그(from → to)가 있으면 그 출발 칸에서 센다: 화면과 서버(도착 단계 마감 늦춤 = 이동 연출 시간)의 홉 수가 같게
       let mv: Extract<LogEvent, { ev: 'move' }> | undefined;
       for (let i = (log?.length ?? 0) - 1; i >= 0 && !mv; i--) { const e = log![i]; if (e.ev === 'move' && e.seat === s) mv = e; }
       const from = mv && mv.to === p.pos ? mv.from : shownRef.current.pos[s];
       const d = (p.pos - from + BOARD_SIZE) % BOARD_SIZE;
       if (d === 0) return set(s, { busy: false });
-      setMover(s as Seat);
-      setZoomOff(!!noZoomRef.current);
-      if (d > MAX_HOP) { // 순간 이동(세계여행·무인도 등): 도착 칸으로 카메라가 날아간다
-        set(s, { pos: p.pos, hop: false, busy: true });
-        hopTimers.current.set(s, setTimeout(() => set(s, { busy: false }), HOP_GAP_MS));
-        return;
-      }
-      let i = 0;
-      const step = () => {
-        i++;
-        set(s, { pos: (from + i) % BOARD_SIZE, hop: true, busy: true });
-        token.trigger(id(s as Seat), 'hop');
-        hopTimers.current.set(s, setTimeout(i < d ? step : () => set(s, { busy: false }), HOP_GAP_MS));
+      const to = p.pos;
+      // 주사위 B(§17.1.2): 이 자리의 굴림 연출이 끝난 뒤(뗌 +1830)에 홉·줌을 시작하고, 합 숫자는 말 머리 위 칩으로 옮겨 탄다
+      const r = rollRef.current;
+      const wait = r && r.seat === s ? Math.max(0, moveGate.current - performance.now()) : 0;
+      const chip = r && r.seat === s && !r.reduced && r.d1 !== undefined && mv?.via === 'dice' ? r.d1 + r.d2! : null;
+      const go = () => {
+        setWaitMove((w) => w.filter((x) => x !== s));
+        setMover(s as Seat);
+        setZoomOff(!!noZoomRef.current);
+        if (chip !== null) setHopChip({ seat: s as Seat, n: chip, key: r!.id });
+        const land = () => {
+          set(s, { busy: false });
+          if (chip !== null) hopTimers.current.set(s + 100, setTimeout(() => setHopChip((c) => (c?.key === r!.id ? null : c)), 300));
+        };
+        if (d > MAX_HOP) { // 순간 이동(세계여행·무인도 등): 도착 칸으로 카메라가 날아간다
+          set(s, { pos: to, hop: false, busy: true });
+          hopTimers.current.set(s, setTimeout(land, HOP_GAP_MS));
+          return;
+        }
+        let i = 0;
+        const step = () => {
+          i++;
+          set(s, { pos: (from + i) % BOARD_SIZE, hop: true, busy: true });
+          token.trigger(id(s as Seat), 'hop');
+          hopTimers.current.set(s, setTimeout(i < d ? step : land, HOP_GAP_MS));
+        };
+        step();
       };
-      step();
+      if (wait > 0) {
+        setWaitMove((w) => (w.includes(s) ? w : [...w, s]));
+        hopTimers.current.set(s, setTimeout(go, wait));
+      } else go();
     });
   }, [game.players.map((p) => p.pos).join()]);
 
@@ -248,7 +320,7 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
   const feet = new Map<Seat, { x: number; y: number; h: number }>();
   occupants.forEach((occ, t) => {
     if (!occ.length) return;
-    const pl = place(TILES[t], occ.length, isBuilt(game, t));
+    const pl = place(TILES[t], occ.length, false); // 건물은 윗면 밖(앞 모서리 발코니, §17.2) — 말 배치에 안 걸린다
     occ.forEach((s, i) => feet.set(s, { ...pl.feet[i], h: pl.h }));
   });
 
@@ -257,9 +329,10 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     focus: mover !== null ? feet.get(mover) ?? null : null,
     moving: mover !== null && shown.busy[mover],
     enabled: !reduced && !hidden && !zoomOff,
-    onActive: (on) => { setZoomed(on); onCamera?.(on); },
+    onActive: (on) => { camRef.current.zoomed = on; setZoomed(on); reportCam(); },
     holdMs: zoomHoldMs,
   });
+
 
   // 줌된 이동자가 HUD 패널 뒤로 들어가면 그 패널만 옅게(위치·크기 불변 — 얼굴을 가리지 않게)
   const moverFeet = mover !== null ? feet.get(mover) : undefined;
@@ -271,13 +344,15 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     for (const b of hudBoxes()) if (b.id.startsWith('panel') && boxesHit(b.box, body)) veiled.add(b.id);
   }
 
+  /** 이동 중(홉·굴림 연출 기다림): 컵은 쏟기 ~ 이동 끝까지 못 누른다 */
+  const moving = shown.busy.some(Boolean) || waitMove.length > 0;
   const myTurn = mySeat !== null && game.phase === 'playing' && game.turn.seat === mySeat && game.turn.step === 'roll' && !game.players[mySeat].bankrupt;
   const glowTiles = glow ? continentTiles(glow.continent) : [];
   const ownerOf = (c: Continent) => painted.find((m) => m.continent === c)?.seat ?? null;
   const nameOf = (s: Seat) => players.find((p) => p.seat === s)?.name ?? `${s + 1}번`;
 
   return (
-    <div class="board-root" data-hopping={shown.busy.some(Boolean) ? '1' : '0'} data-art={art ? '1' : '0'}>
+    <div class="board-root" data-hopping={shown.busy.some(Boolean) || waitMove.length > 0 ? '1' : '0'} data-art={art ? '1' : '0'}>
       <Pic k="ui.boardBg" class="board-bg" fallback={<span class="board-bg board-bg--fallback" />} eager />
       <div class="board-stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} data-scale={scale}>
         {/* ── 판 레이어(줌 대상) ── */}
@@ -295,27 +370,11 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
           <Bridges />
           {SIGNPOSTS.map((s) => <Signpost key={s.continent} s={s} seat={ownerOf(s.continent)} />)}
 
+          {/* 땅 주인·건물 C2(§17.2): 뒤 기둥 + 삼각기 7 · 뒤오른쪽 바깥 세로 깃발(길이 = 단계, 4단계 금별) · 앞오른쪽 절벽 발코니 위 건물 미니어처.
+              윗면 가운데(공터 = 말 자리)엔 아무것도 없다 — 건물이 칸 풍경을 가리지 않는다(사용자 2026-10-30) */}
           {TILES.map((g) => {
             const ts = game.tiles[g.index];
-            if (ts.owner === null) return null;
-            const f = flagFoot(g);
-            const b = isBuilt(game, g.index) ? buildingBox(g) : null;
-            return [
-              // 깃발·건물은 칸 그림의 빽빽한 경관과 같은 화풍이라 그대로 두면 풍경에 묻힌다(사용자 피드백 4·5): 흰 스티커 테 + 자리색 받침,
-              // 새로 꽂히거나 지어질 때 한 번 튀어 오른다(주인·단계가 key → 바뀔 때만 다시 마운트)
-              <div key={`f${g.index}:${ts.owner}`} class="tile-flag" data-tile={g.index} data-owner={ts.owner}
-                style={{ left: `${f.x}px`, top: `${f.y - FLAG}px`, width: `${FLAG}px`, height: `${FLAG}px`, zIndex: Math.round(f.y * 10), '--seat': `var(--seat-${ts.owner + 1})` }}>
-                <span class="tile-flag-base" aria-hidden="true" />
-                <Pic k={`ui.flag.${ts.owner + 1}`} class="tile-flag-img" fallback={<span class="tile-flag-fallback" />} />
-              </div>,
-              b && (
-                <div key={`b${g.index}:${ts.level}`} class="tile-bld" data-tile={g.index} data-level={ts.level} data-owner={ts.owner}
-                  style={{ ...box(b), zIndex: Math.round((b.y + b.h) * 10), '--seat': `var(--seat-${ts.owner + 1})` }}>
-                  <span class="tile-bld-shadow" aria-hidden="true" />
-                  <Pic k={buildingKey(g.index, ts.level)} class="tile-bld-img" alt={`${ts.level}단계 건물`} fallback={<span class="tile-bld-img tile-bld-fallback" />} />
-                </div>
-              ),
-            ];
+            return ts.owner === null ? null : <Ownership key={g.index} g={g} seat={ts.owner} level={ts.level} />;
           })}
 
           {players.map((p) => {
@@ -327,11 +386,15 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
                 hop={shown.hop[p.seat]} crowded={occupants[t].length > 1} playing={token.get(id(p.seat))} grey={token.isGrey(id(p.seat))} reduced={reduced} />
             );
           })}
+          {hopChip && feet.get(hopChip.seat) && (() => {
+            const f = feet.get(hopChip.seat)!;
+            return <b key={hopChip.key} class="hop-chip" data-seat={hopChip.seat} style={{ left: `${f.x}px`, top: `${f.y - f.h - 4}px` }}>{hopChip.n}</b>;
+          })()}
           {/* 광장 네 귀 돌 단 위 전신 캐릭터(U5 §16.9.2): 자리 1·2 위, 3·4 아래. 이모션·반응은 여기서만 */}
           {players.map((p) => {
             const f = CORNER_FEET[p.seat];
             return (
-              <Character key={`c${p.seat}`} corner seat={p.seat} tile={-1} charId={p.charId} name={p.name} x={f.x} y={f.y} h={CORNER_H}
+              <Character key={`c${p.seat}`} corner seat={p.seat} tile={-1} charId={p.charId} name={p.name} x={f.x} y={f.y} h={CORNER_HS[p.seat]}
                 hop={false} crowded={false} playing={sched.get(id(p.seat))} grey={sched.isGrey(id(p.seat))} reduced={reduced} />
             );
           })}
@@ -350,13 +413,17 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
           ))}
 
           <div class={`dice-wrap${cam.active ? ' is-cam' : ''}`} style={{ left: `${HUD.dice.x}px`, top: `${HUD.dice.y}px` }}>
-            <span class="dice-pedestal" aria-hidden="true" />
-            <DiceButton
-              enabled={myTurn}
+            <DiceCup
+              enabled={myTurn && !moving}
+              dim={!myTurn && !roll}
+              show={roll}
+              holdSum={moving}
               onPressStart={() => mySeat !== null && sched.trigger(id(mySeat), 'expect')}
               onCancel={() => mySeat !== null && sched.stop(id(mySeat), 'expect')}
+              onDone={(rid) => { if (rollRef.current?.id === rid) { rollRef.current = null; setRoll(null); } }}
               onRelease={(g) => {
                 if (mySeat !== null) sched.stop(id(mySeat), 'expect');
+                if (mySeat !== null) showRoll({ id: ++rollSeq.current, seat: mySeat, t0: performance.now(), mine: true, reduced });
                 onRoll?.(g);
               }}
             />
@@ -376,6 +443,60 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
 }
 
 const box = (b: { x: number; y: number; w: number; h: number }) => ({ left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px` });
+
+/** 땅 주인·건물 C2(§17.2·§17.2.1) 한 칸. 기둥·밧줄 = 코드 SVG(다리 밧줄과 같은 선), 삼각기 1장 × 7, 세로 깃발 1장을 clip-path 로 4단,
+ *  4단계 금별, 발코니(자리색 테) + 건물 미니어처(BLD 1~3 · LM). 새로 꽂힘(주인)·지어짐(단계)은 key 가 바뀔 때 한 번 튀어 오른다(§13 C) */
+const Ownership = memo(function Ownership({ g, seat, level }: { g: TileGeo; seat: Seat; level: number }) {
+  const o = ownGeo(g, seat, level);
+  const at = (b: { x: number; y: number; w: number; h: number }) => box({ x: b.x - g.img.x, y: b.y - g.img.y, w: b.w, h: b.h });
+  const n = seat + 1;
+  const L = (p: { x: number; y: number }) => `${(p.x - g.img.x).toFixed(1)} ${(p.y - g.img.y).toFixed(1)}`;
+  return (
+    <div class="own" data-tile={g.index} data-owner={seat} data-level={level}
+      style={{ ...box(g.img), zIndex: g.z + 1, '--seat': `var(--seat-${n})` }} aria-hidden="true">
+      <div key={`f${seat}`} class="own-flagset">
+        <svg class="own-rig" viewBox={`0 0 ${g.img.w} ${g.img.h}`} width={g.img.w} height={g.img.h}>
+          {/* 외곽선(남색) 먼저, 위에 나무 — 하늘·풍경 어느 쪽에서도 선이 읽힌다 */}
+          <path class="own-rope own-rope--edge" d={`M${L(o.rope.a)} Q${L(o.rope.c)} ${L(o.rope.b)}`} />
+          {o.posts.map((p, i) => <line key={`e${i}`} class="own-post own-post--edge" x1={p.x - g.img.x} y1={p.y0 - g.img.y} x2={p.x - g.img.x} y2={p.y1 - g.img.y} />)}
+          {o.posts.map((p, i) => <line key={i} class="own-post" x1={p.x - g.img.x} y1={p.y0 - g.img.y} x2={p.x - g.img.x} y2={p.y1 - g.img.y} />)}
+          <path class="own-rope" d={`M${L(o.rope.a)} Q${L(o.rope.c)} ${L(o.rope.b)}`} />
+          {o.posts.map((p, i) => <circle key={`k${i}`} class="own-knob" cx={p.x - g.img.x} cy={p.y0 - g.img.y + 1.6} r="2.1" />)}
+        </svg>
+        <Pennants g={g} boxes={o.pennants} n={n} />
+        <span class="own-flag" data-len={o.flagLen} style={{ ...at(o.flag), clipPath: flagClip(o.flagLen) }}>
+          <Pic k={`own.flag.${n}`} class="own-flag-img" fallback={<span class="own-flag-img own-flag--css" />} />
+        </span>
+        {o.star && <Pic k="ui.star-gold" class="own-star" style={at(o.star)} fallback={<span class="own-star own-star--css" style={at(o.star)} />} />}
+      </div>
+      {o.balcony && o.building && (
+        <div key={`b${level}`} class="own-bld" data-level={level} style={at({ x: o.balcony.x, y: o.building.y, w: o.balcony.w, h: o.balcony.y + o.balcony.h - o.building.y })}>
+          <Pic k={`own.balcony.${n}`} class="own-balcony" style={box({ x: 0, y: o.balcony.y - o.building.y, w: o.balcony.w, h: o.balcony.h })}
+            fallback={<span class="own-balcony own-balcony--css" style={box({ x: 0, y: o.balcony.y - o.building.y + 6, w: o.balcony.w, h: o.balcony.h - 12 })} />} />
+          <Pic k={buildingKey(g.index, level)} class="own-mini" alt={`${level}단계 건물`} style={box({ x: o.building.x - o.balcony.x, y: 0, w: o.building.w, h: o.building.h })}
+            fallback={<span class="own-mini own-mini--css" style={box({ x: o.building.x - o.balcony.x + 4, y: 6, w: o.building.w - 8, h: o.building.h - 6 })} />} />
+        </div>
+      )}
+    </div>
+  );
+});
+
+/** 삼각기 7 = 요소 1개에 배경 7겹(같은 그림): 소유 칸마다 그림 요소 7개를 두면 판 전체 수십 개가 되어 부하 때 칸 래스터가 늦었다(U8-impl 실측 흔들림) */
+function Pennants({ g, boxes, n }: { g: TileGeo; boxes: { x: number; y: number; w: number; h: number }[]; n: number }) {
+  const url = assetUrl(`own.pennant.${n}`);
+  const x0 = Math.min(...boxes.map((b) => b.x)), y0 = Math.min(...boxes.map((b) => b.y));
+  const x1 = Math.max(...boxes.map((b) => b.x + b.w)), y1 = Math.max(...boxes.map((b) => b.y + b.h));
+  if (!url) return <>{boxes.map((b, i) => <span key={i} class="own-pennant own-pennant--css" style={box({ x: b.x - g.img.x, y: b.y - g.img.y, w: b.w, h: b.h })} />)}</>;
+  return (
+    <span class="own-pennants" data-n={boxes.length} style={{
+      ...box({ x: x0 - g.img.x, y: y0 - g.img.y, w: x1 - x0, h: y1 - y0 }),
+      backgroundImage: boxes.map(() => `url("${url}")`).join(','),
+      backgroundPosition: boxes.map((b) => `${(b.x - x0).toFixed(2)}px ${(b.y - y0).toFixed(2)}px`).join(','),
+      backgroundSize: boxes.map((b) => `${b.w}px ${b.h}px`).join(','),
+      backgroundRepeat: 'no-repeat',
+    }} />
+  );
+}
 
 /** 칸 그림 한 장. 이름표는 그림 속 볼트 판 — 그림을 못 불러올 때만 코드 이름표(폴백) */
 const Island = memo(function Island({ g, tile, current, glow }: { g: TileGeo; tile: Tile; current: boolean; glow: boolean }) {
@@ -470,7 +591,7 @@ function MonopolyBand({ name, continent, seat, reduced }: { name: string; contin
       <div class="mono-band">
         <div class="ribbon mono-ribbon">
           <p class="ribbon-title mono-title">
-            <Pic k={`ui.flag.${seat + 1}`} class="mono-flag" fallback={<span class="mono-flag mono-flag--css" />} />
+            <Pic k={`own.flag.${seat + 1}`} class="mono-flag" fallback={<span class="mono-flag mono-flag--css" />} />
             <b><span class="mono-who">{josa(name, '이', '가')}</span> {josa(CONT_NAME[continent], '을', '를')} 독점했어요!</b>
           </p>
         </div>

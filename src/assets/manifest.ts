@@ -18,11 +18,56 @@ export const hasAsset = (key: string) => key in entries;
 const CARD_BY_FILE = new Map(Object.entries(entries).filter(([k]) => k.startsWith('card.')).map(([k, e]) => [file(e).replace(/^webp\/|\.webp$/g, ''), k]));
 export const cardAssetOf = (image: string) => CARD_BY_FILE.get(image.replace(/\.png$/, ''));
 
-/** 키의 URL. 모르는 키면 경고 1회 뒤 null. */
-export function assetUrl(key: string): string | null {
+// U9 고해상 단계(hi): manifest.json 의 hi 목록에 든 파일은 webp/hi/<같은 이름> 에 큰 변형이 있다(AI 2배 원본 assets/img2x 에서 만든 것).
+// 기기가 판 1px 을 장치 px 몇 개로 그리는지(need = 장치 배율 × 화면에 맞춘 판 배율 최대치)가 HI_NEED 를 넘으면 hi 를 쓴다.
+// 페이지마다 한 번만 정한다(같은 키가 두 주소로 받아지지 않게 — preload 캐시와 화면이 같은 파일을 본다).
+// 화면 크기는 창이 아니라 screen 기준(창을 나중에 키워도 맞게). 짧은 변 < HI_MIN_SHORT CSS px(휴대폰)은 메모리 때문에 hi 를 쓰지 않는다.
+// ?hires=1|0 으로 강제(시험·비교용).
+const HI = new Set<string>((raw as { hi?: string[] }).hi ?? []);
+export const HI_NEED = 1.2;
+export const HI_MIN_SHORT = 600;
+export const hiFile = (f: string) => f.replace(/^webp\//, 'webp/hi/');
+/** 기기 필요 배율: 장치 배율 × min(긴 변 / 1366, 짧은 변 / 768). 휴대폰(짧은 변 < 600)은 0 */
+export function deviceNeed(w: number, h: number, dpr: number): number {
+  const long = Math.max(w, h), short = Math.min(w, h);
+  if (short < HI_MIN_SHORT) return 0;
+  return dpr * Math.min(long / 1366, short / 768);
+}
+let hiOn: boolean | null = null;
+export function hiTier(): boolean {
+  if (hiOn !== null) return hiOn;
+  if (typeof window === 'undefined') return (hiOn = false);
+  const force = new URLSearchParams(location.search).get('hires');
+  if (force === '1' || force === '0') return (hiOn = force === '1');
+  const w = Math.max(screen?.width ?? 0, innerWidth), h = Math.max(screen?.height ?? 0, innerHeight);
+  return (hiOn = deviceNeed(w, h, devicePixelRatio || 1) > HI_NEED);
+}
+export const _setHiTier = (on: boolean | null) => { hiOn = on; pcOn = null; }; // 테스트용
+
+// U9 후속(2026-10-30 사용자): 광장 hi 는 긴 변 2880(1920 PC 줌 배율비 ≥ 1) — PC(주 포인터가 마우스)만. 태블릿은 기본 1944 로 충분하고(줌 전 배율비 ≥ 1) 메모리를 아낀다
+const PC_ONLY = /^webp\/PLAZA-U5(-mask-\w+)?\.webp$/;
+let pcOn: boolean | null = null;
+export function pcTier(): boolean {
+  if (pcOn !== null) return pcOn;
+  if (typeof window === 'undefined') return (pcOn = false);
+  if (new URLSearchParams(location.search).get('hires') === '1') return (pcOn = true);
+  return (pcOn = typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches);
+}
+export const _setPcTier = (on: boolean | null) => { pcOn = on; }; // 테스트용
+
+/** 키가 가리키는 파일(hi 단계면 큰 변형) — assets/ 기준 상대 경로 */
+export function assetFile(key: string, base = false): string | null {
   const e = entries[key];
-  if (!e) { warnOnce(key, '매니페스트에 없는 키'); return null; }
-  return import.meta.env.BASE_URL + file(e);
+  if (!e) return null;
+  const f = file(e);
+  return !base && HI.has(f) && hiTier() && (!PC_ONLY.test(f) || pcTier()) ? hiFile(f) : f;
+}
+
+/** 키의 URL. 모르는 키면 경고 1회 뒤 null. base = hi 단계여도 기본 크기(작게 그리는 자리 — 인트로 캐릭터 @1024 는 422 장치 px 라 기본으로 충분, 첫 로드 예산) */
+export function assetUrl(key: string, base = false): string | null {
+  const f = assetFile(key, base);
+  if (!f) { warnOnce(key, '매니페스트에 없는 키'); return null; }
+  return import.meta.env.BASE_URL + f;
 }
 
 /** optional 항목의 대체 키(없거나 'none' 이면 undefined). 호출 쪽이 색 블록으로 내려간다. */

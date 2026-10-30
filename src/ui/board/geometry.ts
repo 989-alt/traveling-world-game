@@ -112,18 +112,21 @@ export const PLAZA_ART: Box = { x: PLAZA.x - 20, y: PLAZA.y - 6, w: PLAZA.w + 40
 /** 광장 네 귀 돌 단(PLAZA-U5 그림 실측, 스테이지 px): 중심·크기. 자리 1·2 위, 3·4 아래(패널과 같은 순서).
  *  §16.9.2 표의 (240,300)·(1126,300)·(240,490)·(1126,490) 는 생성 전 추정 — 생성본(PLAZA 와 같은 구도)의 단은 테에 붙어
  *  위 단 (270,234)·(1101,234) 80×48, 아래 단 (213,457)·(1153,457) 95×47 이다. 캐릭터는 그림 속 단 위에 선다 */
+// U8-impl(2026-10-30 사용자 "캐릭터가 네 모퉁이 원판 중앙이 아니야, 남쪽으로 내려와 있어"): 원판 윗면 타원 중심을 다시 쟀다
+// (PLAZA-U5 hi 2880 을 스테이지 ×4 로 그려 돌판 윗면 가장자리·안쪽 동심원 중심을 읽음 — 옛 값은 3~6px 남쪽)
 export const CORNER_PADS: readonly { c: Pt; w: number; h: number }[] = [
-  { c: { x: 270, y: 234 }, w: 80, h: 48 },
-  { c: { x: 1101, y: 234 }, w: 80, h: 48 },
-  { c: { x: 213, y: 457 }, w: 95, h: 47 },
-  { c: { x: 1153, y: 457 }, w: 95, h: 47 },
+  { c: { x: 270, y: 229 }, w: 80, h: 34 },
+  { c: { x: 1099, y: 229 }, w: 80, h: 34 },
+  { c: { x: 210, y: 451 }, w: 89, h: 40 },
+  { c: { x: 1151, y: 451 }, w: 87, h: 38 },
 ];
-/** 귀퉁이 전신 캐릭터 키(§16.9.2, 말과 같은 포즈 파일) */
+/** 귀퉁이 전신 캐릭터 키(§16.9.2, 말과 같은 포즈 파일) — 아래 단 */
 export const CORNER_H = px('character-corner-h');
-/** 귀퉁이 캐릭터 발(스프라이트 바닥 중앙): 단 앞쪽 절반. 위 단은 윗줄 칸 이름표(상자 67~85% = y 130~152) 아래로 머리를 두려고 단 중심 +16 */
-export const CORNER_FEET: readonly Pt[] = [
-  { x: 270, y: 250 }, { x: 1101, y: 250 }, { x: 213, y: 472 }, { x: 1153, y: 472 },
-];
+/** 귀퉁이 캐릭터 발(스프라이트 바닥 중앙) = 원판 윗면 중심(U8-impl 사용자 피드백). 옛 값은 위 단 +16 · 아래 단 +15 남쪽이었다 */
+export const CORNER_FEET: readonly Pt[] = CORNER_PADS.map((p) => p.c);
+/** 자리별 키: 위 단(뒤쪽)은 75 — 발을 원판 중심에 두면 96 은 머리가 윗줄 칸 이름표(y ≤ 153.6)·절벽을 덮는다(229 − 153.6 = 75.4).
+ *  시안(MOCK v3)도 뒤 단 캐릭터가 앞 단보다 작다(≈ 86 : 102). 아래 단(앞)은 96 그대로 */
+export const CORNER_HS: readonly number[] = [75, 75, CORNER_H, CORNER_H];
 
 /** 이정표 그림(UI-signpost: 판 + 짧은 기둥, 256×171) 안 비율. 판 바깥 테·안쪽 면·볼트·발(돌받침 밑) */
 export const SIGN_ART = {
@@ -160,10 +163,10 @@ function signGeo(continent: Continent, name: string, foot: Pt): SignGeo {
 export const SIGNPOSTS: readonly SignGeo[] = [
   // U5 §16.9.2: 아시아 판 y 471 · 유럽 판 y 329 · 위 테 판 y 195. 남아메리카는 아래 귀퉁이 캐릭터(x 178~248 · y 376~472)를 비켜 판 y 320(구간 26~29 안)
   signGeo('asia', '아시아', { x: 560, y: 511 }),
-  signGeo('europe', '유럽', { x: 1191, y: 369 }),
+  signGeo('europe', '유럽', { x: 1191, y: 347 }), // U8-impl: 아래 오른쪽 귀퉁이 캐릭터가 원판 중심으로 올라가 22 위로
   signGeo('africa', '아프리카', { x: 993, y: 235 }),
   signGeo('namerica', '북아메리카', { x: 373, y: 235 }),
-  signGeo('samerica', '남아메리카', { x: 175, y: 360 }),
+  signGeo('samerica', '남아메리카', { x: 175, y: 347 }), // U8-impl: 아래 귀퉁이 캐릭터가 원판 중심(머리 y 355)으로 올라가 13 위로
 ];
 
 export interface BridgeGeo { from: number; to: number; dir: 'h' | 'v'; box: Box; /** 위(앞이 아닌) 행 칸 바로 위 */ z: number }
@@ -196,10 +199,11 @@ export const BRIDGES: readonly BridgeGeo[] = TILES.map((_, i) => bridgeGeo(i));
 // U5 §16.9.2: 패널 200×48(초상 없음)은 귀퉁이 전신 캐릭터 바로 옆(광장 안쪽), 위 = 발 + 12(북아메리카·아프리카 이정표 기둥 y ≤ 235 아래), 아래 = 발 + 12.
 // 캐릭터 몸 상자(폭 70)와 틈 4. 표의 (380,272)·(986,272)·(380,472)·(986,472) 는 추정 단 자리 기준이라 실측 단(CORNER_FEET)에 맞춰 옮겼다
 export const HUD = {
-  panels: [{ x: 409, y: 262 }, { x: 962, y: 262 }, { x: 352, y: 484 }, { x: 1014, y: 484 }],
+  // U8-impl: 귀퉁이 캐릭터가 원판 중심으로 옮겨 패널을 몸 옆 틈 4 로 다시 맞춤(옛 409·962·352·1014)
+  panels: [{ x: 401, y: 262 }, { x: 968, y: 262 }, { x: 349, y: 484 }, { x: 1012, y: 484 }],
   panel: { w: px('panel-w'), h: px('panel-h') },
-  dice: { x: 683, y: 384 },
-  diceD: px('dice-button-d') + 2 * px('dice-button-gauge-w'),
+  /** 주사위 B 나무 컵 + 쟁반 HUD 상자(§17.1.1): (583,282)~(783,448). 옛 유리 구 d 120 (683,384) 폐기 */
+  dice: { x: 583, y: 282, w: 200, h: 166 },
   timer: { x: 683, y: 235, w: 150, h: 44 },
   /** 매달린 간판(UI-sign-small) 규칙 · 멈춤 — 광장 뒤쪽 가운데, 타이머 양옆 (U5: 광장 윗변 189 + 46) */
   rules: { x: 573, y: 235, w: 44, h: 44 },
@@ -216,17 +220,19 @@ export function plateBox(g: TileGeo): Box {
 
 /** 귀퉁이 전신 캐릭터 몸 상자(스프라이트 상자 = 키 96 × 폭 96·32/44) */
 export function cornerBoxes(): { id: string; box: Box }[] {
-  const w = (CORNER_H * CHAR.w) / CHAR.h;
-  return CORNER_FEET.map((f, i) => ({ id: `corner${i + 1}`, box: { x: f.x - w / 2, y: f.y - CORNER_H, w, h: CORNER_H } }));
+  return CORNER_FEET.map((f, i) => {
+    const h = CORNER_HS[i], w = (h * CHAR.w) / CHAR.h;
+    return { id: `corner${i + 1}`, box: { x: f.x - w / 2, y: f.y - h, w, h } };
+  });
 }
 
 /** HUD·이정표 상자(교차 검사·e2e 공용) */
 export function hudBoxes(): { id: string; box: Box }[] {
-  const { panel, diceD, timer, rules, save } = HUD;
+  const { panel, dice, timer, rules, save } = HUD;
   const at = (c: { x: number; y: number; w: number; h: number }): Box => ({ x: c.x - c.w / 2, y: c.y - c.h / 2, w: c.w, h: c.h });
   return [
     ...HUD.panels.map((c, i) => ({ id: `panel${i + 1}`, box: { x: c.x - panel.w / 2, y: c.y - panel.h / 2, w: panel.w, h: panel.h } })),
-    { id: 'dice', box: { x: HUD.dice.x - diceD / 2, y: HUD.dice.y - diceD / 2, w: diceD, h: diceD } },
+    { id: 'dice', box: { ...dice } },
     { id: 'timer', box: at(timer) },
     { id: 'rules', box: at(rules) },
     { id: 'save', box: at(save) },

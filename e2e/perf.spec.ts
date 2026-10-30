@@ -54,7 +54,9 @@ async function segment(page: Page, cdp: CDPSession, opt: Parameters<typeof frame
   const dts = await f;
   const task = (await metric(cdp, 'TaskDuration')) - task0;
   const t1 = await page.evaluate(() => performance.now());
-  const loaf = await page.evaluate(([a, b]) => (window as unknown as { __loaf: { s: number; d: number; b: number }[] }).__loaf.filter((x) => x.s >= a && x.s <= b), [t0, t1]);
+  // 구간과 겹치는 LoAF(시작이 구간 앞이어도): 메인 스레드 그리기가 없는 대기(합성 애니메이션만)에선 긴 프레임의 시작이 그 앞 작업(구간 시작 evaluate)으로 잡혀
+  // 시작 ≥ t0 거르기에서 빠졌다(U8-impl 실측: 양성 대조 LoAF 0건 흔들림 — 기준 커밋 1/10, 주사위 B 5/13)
+  const loaf = await page.evaluate(([a, b]) => (window as unknown as { __loaf: { s: number; d: number; b: number }[] }).__loaf.filter((x) => x.s + x.d >= a && x.s <= b), [t0, t1]);
   const st = stat(dts);
   const loafRatio = Math.round((loaf.length / Math.max(1, st.frames)) * 10000) / 10000;
   return {

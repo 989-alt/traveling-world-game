@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { _resetWarned, assetUrl, boardKeys, bootKeys, fallbackOf, gameStartKeys, hasAsset, isLazy, tileLazyKeys, warnOnce } from './manifest';
+import { _resetWarned, _setHiTier, _setPcTier, assetUrl, boardKeys, deviceNeed, HI_NEED, hiFile, bootKeys, fallbackOf, gameStartKeys, hasAsset, isLazy, tileLazyKeys, warnOnce } from './manifest';
 import { preload } from './preload';
 import manifest from '../../assets/manifest.json';
 
@@ -139,5 +139,39 @@ describe('콘텐츠 그림 참조 <-> 매니페스트 키', () => {
     for (const m of missions.matchAll(/"(mp_\w+)\.png"/g)) if (!hasAsset(`mission.${m[1]}`)) missing.push(`mission.${m[1]}`);
     expect(missing).toEqual([]);
     expect(isLazy('mission.mp_alps') && isLazy('card.th-2.b') && isLazy('badge.it')).toBe(true);
+  });
+});
+
+describe('U9 고해상 단계(hi)', () => {
+  it('기기 필요 배율: 1366×768·dpr1 = 1(기본), 1920×1080 = 1.406(hi), 4K@2 = 2.81, 휴대폰은 0', () => {
+    expect(deviceNeed(1366, 768, 1)).toBe(1);
+    expect(deviceNeed(1920, 1080, 1)).toBeCloseTo(1.406, 3);
+    expect(deviceNeed(1920, 1080, 2)).toBeCloseTo(2.811, 3);
+    expect(deviceNeed(768, 1366, 1)).toBe(1); // 세로로 들어도 같음
+    expect(deviceNeed(844, 390, 3)).toBe(0);
+    expect(deviceNeed(1366, 768, 1) > HI_NEED).toBe(false);
+    expect(deviceNeed(1920, 1080, 1) > HI_NEED).toBe(true);
+  });
+  it('hi 켜면 hi 목록 파일만 webp/hi/ 로, base 는 늘 기본, 끄면 그대로', () => {
+    _setHiTier(true);
+    _setPcTier(true);
+    try {
+      expect(assetUrl('tile.1')).toMatch(/webp\/hi\/TILE-01d\.webp$/);
+      expect(assetUrl('plaza')).toMatch(/webp\/hi\/PLAZA-U5\.webp$/);
+      expect(assetUrl('dice.burst')).toMatch(/webp\/hi\/DICE-sum-burst\.webp$/); // U8
+      expect(assetUrl('dice.face.3')).toMatch(/webp\/DICE-top-3\.webp$/); // 기본으로 충분(169/256)
+      _setPcTier(false); // 광장 2880 은 PC 만(U9 후속) — 태블릿 hi 는 광장·마스크만 기본
+      expect(assetUrl('plaza')).toMatch(/webp\/PLAZA-U5\.webp$/);
+      expect(assetUrl('plaza.mask.asia')).toMatch(/webp\/PLAZA-U5-mask-asia\.webp$/);
+      expect(assetUrl('tile.1')).toMatch(/webp\/hi\/TILE-01d\.webp$/);
+      expect(assetUrl('char.1.p12.big', true)).toMatch(/webp\/CH1-P12@1024\.webp$/);
+      expect(assetUrl('char.1.f00')).toMatch(/webp\/CH1-F00\.webp$/); // hi 없음 → 기본
+    } finally { _setHiTier(false); _setPcTier(null); }
+    expect(assetUrl('tile.1')).toMatch(/webp\/TILE-01d\.webp$/);
+    expect(hiFile('webp/X.webp')).toBe('webp/hi/X.webp');
+  });
+  it('hi 목록은 매니페스트 항목 파일만', () => {
+    const files = new Set(Object.values(manifest.entries).map((e) => (typeof e === 'string' ? e : e.file)));
+    expect((manifest as { hi: string[] }).hi.filter((f) => !files.has(f))).toEqual([]);
   });
 });
