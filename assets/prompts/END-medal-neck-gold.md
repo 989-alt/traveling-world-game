@@ -1,0 +1,7 @@
+# END-medal-neck-gold neck medal, short red V ribbon with a glossy gold disc and a plain face, sprite source on magenta
+Scene: one neck medal alone, seen straight on: a short V-shaped ribbon whose two red bands rise from the medal and end cut flat near the top of the frame as if disappearing behind a collar, a thick glossy gold disc hanging at the bottom point of the V, the disc with a raised plain rim and a plain flat center face kept clear, a tiny gold ring joining the disc to the ribbon, the whole piece centered and filling about 80 percent of the frame height, readable at 48 pixels. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered.
+Lighting: soft top light with a glossy highlight on the upper left of the disc and a darker band along its bottom edge, flat matte ribbon, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #FFC93A gold, #FFE27A highlight, #B8860B dark gold, #D93232 red ribbon, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

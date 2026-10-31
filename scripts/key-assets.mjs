@@ -57,16 +57,18 @@ function hiK(id, n) {
   if (id === 'UI-sign-small') return 2.25; // 256 → 576 (매달린 간판 9-slice 가운데가 판 타이머 폭으로 늘어남: 1/0.47 = 2.13 배)
   if (id === 'UI-plank-panel') return 2; // 1024 → 2048 (첫 팝업 판 820 css × 2.81)
   if (/^RS-/.test(id)) return id === 'RS-confetti' ? 0 : 2; // 결과 화면: 최대 1/0.53 = 1.9 배(두루마리) — 2 배(상한 2048)
+  if (END_BIG.test(id)) return CAP / n; // U12 §19.4: 큰 면 4종(사진 배경·틀·펼친 여권·와이드)은 hi 긴 변 2048 고정(사용자 "최소 2K")
+  if (/^END-/.test(id)) return 2; // U12 작은 그림(닫힌 여권·목 메달·테이프·하트·도장 테): 표시 ×4
   if (/^(UI|IT|TB)/.test(id) && n <= 128) return 2.25; // 아이콘 128 → 288 (미션 문장 281·주사위 197)
   return 0;
 }
 const ids = Object.keys(latest).sort().filter(id => (!only || only.test(id)) && !SKIP.test(id));
 
 const PHOTO_UI = new Set(['UI-rotate', 'UI-rotate-wide']); // U1·U4: 하늘까지 꽉 찬 일러스트(키잉 없음)
-const keyed = id => !PHOTO_UI.has(id) && /^(CH\d|ISL|BLD|LM|UI|IT|TB|LOGO|TILE|PLAZA|RS|DICE|FLAG-tall|PENNANT|BALCONY)/.test(id);
-const tight = id => /^(CH4|CH6)-/.test(id) || id === 'UI-flag-4' || /^(FLAG-tall|PENNANT|BALCONY)-4$/.test(id) || isPlaza(id); // U8 자리 4 분홍 // PLAZA: 남아메리카 보라 // 임계 70/110 (보라·분홍이 마젠타에 가까움)
+const keyed = id => !PHOTO_UI.has(id) && id !== 'END-photo-bg' && /^(CH\d|ISL|BLD|LM|UI|IT|TB|LOGO|TILE|PLAZA|RS|DICE|FLAG-tall|PENNANT|BALCONY|END)/.test(id);
+const tight = id => /^(CH4|CH6)-/.test(id) || id === 'UI-flag-4' || /^(FLAG-tall|PENNANT|BALCONY)-4$/.test(id) || isPlaza(id) || /^END-.+-4$/.test(id); // U8 자리 4 분홍 // U12 END 자리 4(분홍 표지·테이프·하트) // PLAZA: 남아메리카 보라 // 임계 70/110 (보라·분홍이 마젠타에 가까움)
 const icon = id => (/^(UI|IT|TB)/.test(id) && !FREE[id] && id !== 'UI-signpost') || /^RS-(medal|stamp|dot|tab-ring)/.test(id)
-  || /^(DICE-(top|sum)|FLAG-tall|PENNANT|BALCONY)/.test(id); // U8: 가운데 패딩. 컵 3장(DICE-cup-*)만 바닥 중앙 앵커(§17.1.1)
+  || /^(DICE-(top|sum)|FLAG-tall|PENNANT|BALCONY)/.test(id) || /^END-(heart|stamp)-ring-/.test(id); // U8: 가운데 패딩. 컵 3장(DICE-cup-*)만 바닥 중앙 앵커(§17.1.1)
 // U6(DESIGN §16.7.3): 결과 화면 그림 RS-*. [모양, 크기, quality] — sq = 정사각 패딩(섬·트로피·핀은 바닥 중앙, 메달·도장·점·탭 고리는 가운데),
 // w = 트림 뒤 폭 N(배너·이름표·칩·버튼·지도판·받침), box = 트림 뒤 정확히 W×H 로 늘림(두루마리 3:4), frame = 트림 없이 프레임 그대로(색종이 4×2 격자)
 const RS = {
@@ -76,6 +78,37 @@ const RS = {
 };
 const rsSpec = id => RS[id] ?? (/^RS-isle-/.test(id) ? ['sq', 512, 85] : /^RS-plate-/.test(id) ? ['w', 600, 88] : /^RS-(medal|stamp)-/.test(id) ? ['sq', 128, 90]
   : /^RS-dot-/.test(id) ? ['sq', 64, 90] : /^RS-tab-ring-/.test(id) ? ['sq', 96, 90] : null);
+// U12(DESIGN §19.4): 엔딩 그림 END-*. 키잉은 마젠타 전부(틀 창·여권 초상/스티커 틀·하트 가운데·도장 테 안·닫힌 여권 창이 뚫린다 — RS-tab-ring 전례).
+// [모양, 기본 크기, quality] — bg = 키잉 0·cover 리사이즈(사진 배경 3:2), frame9 = 틀을 9 조각으로 나눠 창·테를 §19.2 비율(옆·위 20, 아래 150 / 820×690)로 맞춤,
+// long = 트림 뒤 긴 변 N(비율 유지), fill = 트림 뒤 W×H 로 늘림(테이프), sq = 정사각 가운데 패딩
+const END = {
+  'END-photo-bg': ['bg', [1560, 1040], 85], 'END-photo-frame': ['frame9', [1640, 1380], 88], 'END-passport-wide': ['long', 1536, 85],
+};
+const endSpec = id => END[id] ?? (/^END-passport-open-/.test(id) ? ['long', 1000, 85] : /^END-passport-closed-/.test(id) ? ['long', 320, 88]
+  : /^END-medal-neck-/.test(id) ? ['long', 192, 90] : /^END-tape-/.test(id) ? ['fill', [600, 136], 88]
+  : /^END-heart-ring-/.test(id) ? ['sq', 336, 90] : /^END-stamp-ring-/.test(id) ? ['sq', 192, 90] : null);
+const END_BIG = /^END-(photo-(bg|frame)|passport-(open-\d|wide))$/;
+// 틀 창(트림 상자 기준, 생성본 실측 END-photo-frame: 창 x 3.67~96.28%·y 5.09~76.67%) → 820×690 에서 창 (20,20,780,520)
+const FRAME_WIN = { l: 0.0367, t: 0.0509, r: 1 - 0.0367 - 0.9261, b: 1 - 0.0509 - 0.7158 };
+const FRAME_OUT = { w: 820, h: 690, l: 20, t: 20, r: 20, b: 150 };
+async function frame9(buf, W, H) {
+  const { width: sw, height: sh } = await sharp(buf).metadata();
+  const sx = [0, Math.round(sw * FRAME_WIN.l), Math.round(sw * (1 - FRAME_WIN.r)), sw];
+  const sy = [0, Math.round(sh * FRAME_WIN.t), Math.round(sh * (1 - FRAME_WIN.b)), sh];
+  const k = W / FRAME_OUT.w;
+  const dx = [0, Math.round(FRAME_OUT.l * k), W - Math.round(FRAME_OUT.r * k), W];
+  const dy = [0, Math.round(FRAME_OUT.t * k), H - Math.round(FRAME_OUT.b * k), H];
+  const parts = [];
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+    const input = await sharp(buf).extract({ left: sx[j], top: sy[i], width: sx[j + 1] - sx[j], height: sy[i + 1] - sy[i] })
+      .resize(dx[j + 1] - dx[j], dy[i + 1] - dy[i], { fit: 'fill' }).png().toBuffer();
+    parts.push({ input, left: dx[j], top: dy[i] });
+  }
+  return sharp({ create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite(parts);
+}
+/** U12 포즈 P20·P21 실측(정사각 패딩 뒤): 트림 높이 ÷ 한 변 · 트림 폭 ÷ 한 변. key() 가 채운다 → OUT/poses.json */
+const POSES = {};
+
 // R4 T-A(DESIGN §16.8·§16.4): 판 그림. 칸 TILE-<n>d·TILE-Md 는 프레임 그대로(트림 없음 — 땅덩이 4~96%·윗면 8~62% 가 프레임 비율이라)
 // 512, 광장 PLAZA 는 트림 뒤 긴 변 1944(줌 1.8 × 1080), 이정표는 기둥 가운데를 잘라 붙인 판+짧은 기둥(판 96 × 기둥 26 비율) 256 폭.
 // U5(DESIGN §16.9.1): PLAZA-U5 = 낮은 광장(1080×390). 생성본이 PLAZA 와 같은 비율(1877×838)로 와서 윗면·절벽을 따로 세로로 줄여 맞춘다(아래 plazaU5)
@@ -113,14 +146,35 @@ async function key(file, id) {
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
   }
+  if (/^(END-|CH\d-P2[01]$)/.test(id)) unfringe(data, info.width, info.height);
   if (isTile(id) || id === 'UI-signpost' || rsSpec(id)?.[0] === 'frame') return sharp(data, { raw: info }).png().toBuffer(); // 프레임 유지
   const w = x1 - x0 + 1, h = y1 - y0 + 1, side = Math.round(Math.max(w, h) * 1.04);
   const crop = await sharp(data, { raw: info }).extract({ left: x0, top: y0, width: w, height: h }).png().toBuffer();
-  if (FREE[id] || isPlaza(id) || ['w', 'box'].includes(rsSpec(id)?.[0])) return crop; // 트림만(정사각 패딩 없음)
+  if (FREE[id] || isPlaza(id) || ['w', 'box'].includes(rsSpec(id)?.[0]) || ['frame9', 'long', 'fill'].includes(endSpec(id)?.[0])) return crop; // 트림만(정사각 패딩 없음)
+  if (/^CH\d-P2[01]$/.test(id)) POSES[id] = { h: +(h / side).toFixed(4), w: +(w / side).toFixed(4) };
   // 발 앵커: 바닥 중앙에 붙임. 아이콘은 가운데.
   const top = icon(id) ? Math.round((side - h) / 2) : side - h;
   return sharp({ create: { width: side, height: side, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: crop, left: Math.round((side - w) / 2), top }]).png().toBuffer();
+}
+
+/** U12: 크게 그리는 엔딩 그림(포즈 250px·여권)은 가장자리 1~2px 에 남는 보라 띠(마젠타가 섞인 불투명 픽셀)가 보인다.
+ *  투명 픽셀 2px 안쪽이면서 마젠타 색조(R·B 가 G 보다 크고 R≈B)인 픽셀만 알파를 줄인다 — 보라 옷(B ≫ R)·분홍(R ≫ B)은 건드리지 않는다 */
+function unfringe(d, W, H) {
+  const a0 = new Uint8Array(W * H);
+  for (let p = 0; p < W * H; p++) a0[p] = d[p * 4 + 3];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const p = y * W + x, i = p * 4;
+    if (!a0[p]) continue;
+    const R = d[i], G = d[i + 1], B = d[i + 2];
+    if (R - G < 30 || B - G < 30 || Math.abs(R - B) > 60) continue;
+    let near = false;
+    for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) {
+      const xx = x + dx, yy = y + dy;
+      if (xx >= 0 && yy >= 0 && xx < W && yy < H && a0[yy * W + xx] < 128) { near = true; break; }
+    }
+    if (near) d[i + 3] = Math.round(a0[p] * 0.25);
+  }
 }
 
 const webp = (img, q, out) => img.webp({ quality: q, alphaQuality: 100, effort: 6 }).toFile(join(OUT, out));
@@ -210,12 +264,22 @@ async function run(id, file) {
       const img = kind === 'w' ? sharp(buf).resize(R(n, k), null) : kind === 'box' ? sharp(buf).resize(R(n[0], k), R(n[1], k), { fit: 'fill' }) : sq(n, k);
       return webp(img, q, id + '.webp');
     }
+    const es = /^END-/.test(id) && endSpec(id);
+    if (/^END-/.test(id)) {
+      if (!es) throw new Error(`END 규격 없음: ${id}`);
+      const [kind, n, q] = es;
+      const k = kOf(id, Array.isArray(n) ? Math.max(...n) : n);
+      if (!k) return false;
+      const img = kind === 'frame9' ? await frame9(buf, R(n[0], k), R(n[1], k)) : kind === 'long' ? sharp(buf).resize(R(n, k), R(n, k), { fit: 'inside' })
+        : kind === 'fill' ? sharp(buf).resize(R(n[0], k), R(n[1], k), { fit: 'fill' }) : sq(n, k);
+      return webp(img, q, id + '.webp');
+    }
     if (isTile(id)) { const k = kOf(id, 512); return k ? webp(sq(512, k), 85, id + '.webp') : false; } // R5d 칸: 512(줌 1.8 × 128 = 230)
     if (id === 'PLAZA') { if (HI) return false; await plazaMasks(buf, 1944); return webp(sharp(buf).resize(1944, null), 85, 'PLAZA.webp'); } // 원본 1877 → 1944(×1.036). 옛 광장(매니페스트 밖) — hi 없음
     if (id === 'PLAZA-U5') { const k = kOf(id, U5.w); await plazaMasks(buf, null, img => plazaU5(img, k), 'PLAZA-U5'); return webp(await plazaU5(sharp(buf), k), HI ? 76 : 85, 'PLAZA-U5.webp'); } // hi 2880 은 q76(600KB 상한 — q85 는 740KB)
     if (id === 'UI-signpost') { const k = kOf(id, 256); return k ? webp(await signpost(buf, R(256, k)), 90, id + '.webp') : false; }
     // P01 1024: 인트로 200px·로비 슬롯 330px (R2 A4). P13 1024: 문항 옆 고민 포즈(R2 D6, P10 과 교대)
-    if (/^CH\d-P(01|10|11|12|13|18)$/.test(id) || /^LM-/.test(id)) { const k = kOf(id, 1024); if (k) await webp(sq(1024, k), 85, id + '@1024.webp'); }
+    if (/^CH\d-P(01|10|11|12|13|18|20|21)$/.test(id) || /^LM-/.test(id)) { const k = kOf(id, 1024); if (k) await webp(sq(1024, k), 85, id + '@1024.webp'); }
     if (/^CH\d-P19$/.test(id)) { const k = kOf(id, 512); return k ? webp(sq(512, k), 88, id + '.webp') : false; } // 빼꼼 반신(R2 A2): 하단 중앙 = 허리선 중앙
     const one = (n, q, name = id) => { const k = kOf(id, n); return k ? webp(sq(n, k), q, name + '.webp') : false; };
     if (id === 'UI-sign-small') return one(256, 90);
@@ -227,6 +291,7 @@ async function run(id, file) {
     if (icon(id)) return one(128, 90);
     return one(256, /^CH/.test(id) ? 88 : 85);
   }
+  if (id === 'END-photo-bg') { const [n, q] = [END[id][1], END[id][2]], k = kOf(id, n[0]); return k ? webp(sharp(file).resize(R(n[0], k), R(n[1], k), { fit: 'cover' }).removeAlpha(), q, id + '.webp') : false; } // U12 사진 배경: 키잉 0, 3:2 cover
   if (/^(MC-|mp_)/.test(id)) { const k = kOf(id, 512); return k ? webp(sharp(file).resize(R(512, k), R(512, k), { fit: 'cover' }).removeAlpha(), 85, id + '.webp') : false; } // U1 미션 그림 카드·묶음 2 미션 사진 1:1
   if (id === 'UI-rotate') { const k = kOf(id, 768); return k ? webp(sharp(file).resize(R(768, k), null).removeAlpha(), 82, id + '.webp') : false; } // U1 세로 안내 일러스트(폭 768)
   if (id === 'UI-rotate-wide') { const k = kOf(id, 1024); return k ? webp(sharp(file).resize(R(1024, k), R(576, k), { fit: 'cover' }).removeAlpha(), 82, id + '.webp') : false; } // U4 가로판 16:9(폭 1024)
@@ -246,4 +311,5 @@ let n = 0;
 for (let i = 0; i < ids.length; i += 8)
   await Promise.all(ids.slice(i, i + 8).map(id => run(id, srcOf(latest[id].file)).then(r => { if (r !== false) n++; })));
 writeFileSync(join(OUT, 'versions.json'), JSON.stringify(latest, null, 1));
+if (Object.keys(POSES).length) writeFileSync(join(OUT, 'poses.json'), JSON.stringify(POSES, null, 1));
 console.log(HI ? 'hi' : 'base', 'converted', n, 'of', ids.length, 'src', SRC);

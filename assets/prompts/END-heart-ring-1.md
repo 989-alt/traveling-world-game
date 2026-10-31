@@ -1,0 +1,7 @@
+# END-heart-ring-1 hand-drawn sky blue marker heart outline with an open center, sprite source on magenta
+Scene: one hand-drawn heart outline alone, seen straight on: a single thick marker stroke in sky blue drawing a heart shape with a playful slightly wobbly hand-drawn line, the stroke ends overlapping a little at the top notch, three tiny short marker dashes radiating from the upper right of the heart, the whole inside of the heart kept open showing the backdrop so a badge fits inside, the heart centered and filling about 84 percent of the frame, readable at 84 pixels. Everywhere around and inside the heart the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered.
+Lighting: flat even light, the marker stroke a matte flat color, the backdrop keeps one uniform tone in every corner and in the open center.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #38BDF8 sky blue marker, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 1:1

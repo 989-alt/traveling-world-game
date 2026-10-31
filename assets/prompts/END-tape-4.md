@@ -1,0 +1,7 @@
+# END-tape-4 strip of pink masking tape with torn ends and a plain face, sprite source on magenta
+Scene: one strip of masking tape alone, seen straight on: a long flat rectangle about five units wide and one unit tall with slightly torn irregular short ends, a flat bright pink paper face kept completely plain, a faint lighter translucent sheen band running along the upper half, a few tiny soft crinkle lines near the ends, the strip centered, level, and filling about 90 percent of the frame width, readable at 150 pixels wide. Everywhere around it the backdrop is one flat even magenta field filling every pixel edge to edge.
+Camera: straight-on front view, orthographic feel, centered and level.
+Lighting: soft even top light with a faint shade line under the bottom edge of the tape, the backdrop keeps one uniform tone in every corner.
+Color grading: game token palette in words: sky-top deep sky blue, sky-mid light sky blue, cloud white, grass-green tile tops, warm brown cliff rock, gold and cream accents. This cut: #F0609F pink tape, #F79BC4 sheen, #FF00FF backdrop.
+Texture/Medium: vivid cel-shaded anime mobile game illustration, crisp dark outlines, flat saturated color fills with soft two-tone shading, matte painterly texture with a faint paper grain, glossy highlights only on metal and water, one consistent look across every asset of this floating-island world-travel board game for children.
+AR 16:9

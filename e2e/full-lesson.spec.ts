@@ -419,7 +419,9 @@ test('40분 놀이 전체: 사람 4명 동시 입장 → 가속 시계 → 앞 2
         else if (e.ev === 'stamp' && e.seat === seat && !botAns) stamps.add(e.country);
       }
       await expect(p.page.locator('[data-k="stamps"] li')).toHaveCount(stamps.size);
-      await expect(p.page.locator('[data-k="pin"]')).toHaveCount(stamps.size);
+      // U12: 지도 핀 → 여권 나라 도장 격자 9칸(9곳 넘으면 8칸 + 마지막 칸 '+n')
+      await expect(p.page.locator('[data-k="pin"]')).toHaveCount(stamps.size > 9 ? 8 : stamps.size);
+      if (stamps.size > 9) await expect(p.page.locator('[data-k="pin-more"]')).toHaveAttribute('data-n', String(stamps.size - 8));
       // 마그넷 줄: 그 자리 랜드마크 나라 수(최대 4줄)
       const lm = fin.filter((e): e is Ev<'build'> => e.ev === 'build' && e.seat === seat && e.level === 4).length;
       if (lm) expect(await p.page.locator('[data-k="magnet"]').count()).toBeGreaterThanOrEqual(1);

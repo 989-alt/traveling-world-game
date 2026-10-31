@@ -7,9 +7,9 @@ type Entry = string | { file: string; optional?: boolean; fallback?: string };
 const entries = raw.entries as Record<string, Entry>;
 const file = (e: Entry) => (typeof e === 'string' ? e : e.file);
 
-// 지연 로드 대상: 컷씬·카드·배지·미션·결과 화면 그림(result.*, U6 — 결과 화면이 뜰 때 받는다)·고해상(.big)·BGM, 캐릭터 P01 외 포즈·랜드마크 배지·건물 2~3단계(게임 시작 때 gameStartKeys 로 받는다).
+// 지연 로드 대상: 컷씬·카드·배지·미션·결과 화면 그림(result.*, U6 · 엔딩 end.*·포즈 P20/P21, U12 — 결과 화면이 뜰 때 받는다)·고해상(.big)·BGM, 캐릭터 P01 외 포즈·랜드마크 배지·건물 2~3단계(게임 시작 때 gameStartKeys 로 받는다).
 // 첫 로드(로비) 세트 = 나머지. 합계 ≤ 3MB 는 assets.test 가 지킨다.
-const LAZY = /^(cutscene|culture|event|card|badge|mission|mc|result)\.|\.big$|^bgm\.|^char\.\d+\.p(?!01$)|^landmark\.\d+$|^building\.\d+\.[23]$/;
+const LAZY = /^(cutscene|culture|event|card|badge|mission|mc|result|end)\.|\.big$|^bgm\.|^char\.\d+\.p(?!01$)|^landmark\.\d+$|^building\.\d+\.[23]$/;
 export const isLazy = (key: string) => LAZY.test(key);
 
 export const hasAsset = (key: string) => key in entries;
@@ -102,4 +102,10 @@ export const tileLazyKeys = (n: number) =>
   [`culture.${n}`, `cutscene.${n}`, `landmark.${n}.big`, `badge.${n}`].filter(hasAsset);
 
 /** 게임 시작 때 받아 둘 키: 캐릭터 P01 외 보드 포즈, 랜드마크 배지, 건물 2~3단계(.big 은 컷씬 직전에). */
-export const gameStartKeys = () => Object.keys(entries).filter(k => /^(char\.\d+\.p\d+|landmark\.\d+|building\.\d+\.[23])$/.test(k) && isLazy(k));
+export const gameStartKeys = () => Object.keys(entries).filter(k => /^(char\.\d+\.p(?!2[01])\d+|landmark\.\d+|building\.\d+\.[23])$/.test(k) && isLazy(k)); // 엔딩 포즈 P20·P21 은 결과 화면에서(U12)
+
+/** U12 엔딩 포즈 실측(manifest.poses, 키잉 때 잼): h = 트림 높이 ÷ 정사각 한 변, body = 발~정수리 ÷ 트림 높이(P20 은 트로피 포함이라 < 1),
+ *  chest = 목 메달 중심(트림 상자 x·y 비율). 없는 키는 P21 평균값 */
+export interface Pose { h: number; body: number; chest: [number, number] }
+const POSES = (raw as unknown as { poses?: Record<string, Pose> }).poses ?? {};
+export const poseOf = (key: string): Pose => POSES[key] ?? { h: 0.9615, body: 1, chest: [0.5, 0.5] };

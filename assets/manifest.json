@@ -1375,7 +1375,60 @@
     "own.flag.4": "webp/FLAG-tall-4.webp",
     "own.pennant.4": "webp/PENNANT-4.webp",
     "own.balcony.4": "webp/BALCONY-4.webp",
-    "ui.star-gold": "webp/UI-star-gold.webp"
+    "ui.star-gold": "webp/UI-star-gold.webp",
+    "end.photoBg": "webp/END-photo-bg.webp",
+    "end.frame": "webp/END-photo-frame.webp",
+    "end.passport.wide": "webp/END-passport-wide.webp",
+    "end.passport.open.1": "webp/END-passport-open-1.webp",
+    "end.passport.closed.1": "webp/END-passport-closed-1.webp",
+    "end.tape.1": "webp/END-tape-1.webp",
+    "end.heart.1": "webp/END-heart-ring-1.webp",
+    "end.passport.open.2": "webp/END-passport-open-2.webp",
+    "end.passport.closed.2": "webp/END-passport-closed-2.webp",
+    "end.tape.2": "webp/END-tape-2.webp",
+    "end.heart.2": "webp/END-heart-ring-2.webp",
+    "end.passport.open.3": "webp/END-passport-open-3.webp",
+    "end.passport.closed.3": "webp/END-passport-closed-3.webp",
+    "end.tape.3": "webp/END-tape-3.webp",
+    "end.heart.3": "webp/END-heart-ring-3.webp",
+    "end.passport.open.4": "webp/END-passport-open-4.webp",
+    "end.passport.closed.4": "webp/END-passport-closed-4.webp",
+    "end.tape.4": "webp/END-tape-4.webp",
+    "end.heart.4": "webp/END-heart-ring-4.webp",
+    "end.medalNeck.gold": "webp/END-medal-neck-gold.webp",
+    "end.medalNeck.silver": "webp/END-medal-neck-silver.webp",
+    "end.medalNeck.bronze": "webp/END-medal-neck-bronze.webp",
+    "end.medalNeck.plain": "webp/END-medal-neck-plain.webp",
+    "end.stampRing.red": "webp/END-stamp-ring-red.webp",
+    "end.stampRing.blue": "webp/END-stamp-ring-blue.webp",
+    "char.1.p20": "webp/CH1-P20.webp",
+    "char.1.p20.big": "webp/CH1-P20@1024.webp",
+    "char.1.p21": "webp/CH1-P21.webp",
+    "char.1.p21.big": "webp/CH1-P21@1024.webp",
+    "char.2.p20": "webp/CH2-P20.webp",
+    "char.2.p20.big": "webp/CH2-P20@1024.webp",
+    "char.2.p21": "webp/CH2-P21.webp",
+    "char.2.p21.big": "webp/CH2-P21@1024.webp",
+    "char.3.p20": "webp/CH3-P20.webp",
+    "char.3.p20.big": "webp/CH3-P20@1024.webp",
+    "char.3.p21": "webp/CH3-P21.webp",
+    "char.3.p21.big": "webp/CH3-P21@1024.webp",
+    "char.4.p20": "webp/CH4-P20.webp",
+    "char.4.p20.big": "webp/CH4-P20@1024.webp",
+    "char.4.p21": "webp/CH4-P21.webp",
+    "char.4.p21.big": "webp/CH4-P21@1024.webp",
+    "char.5.p20": "webp/CH5-P20.webp",
+    "char.5.p20.big": "webp/CH5-P20@1024.webp",
+    "char.5.p21": "webp/CH5-P21.webp",
+    "char.5.p21.big": "webp/CH5-P21@1024.webp",
+    "char.6.p20": "webp/CH6-P20.webp",
+    "char.6.p20.big": "webp/CH6-P20@1024.webp",
+    "char.6.p21": "webp/CH6-P21.webp",
+    "char.6.p21.big": "webp/CH6-P21@1024.webp",
+    "char.7.p20": "webp/CH7-P20.webp",
+    "char.7.p20.big": "webp/CH7-P20@1024.webp",
+    "char.7.p21": "webp/CH7-P21.webp",
+    "char.7.p21.big": "webp/CH7-P21@1024.webp"
   },
   "hi": [
     "webp/BG-board.webp",
@@ -1428,6 +1481,10 @@
     "webp/CH1-P18.webp",
     "webp/CH1-P18@1024.webp",
     "webp/CH1-P19.webp",
+    "webp/CH1-P20.webp",
+    "webp/CH1-P20@1024.webp",
+    "webp/CH1-P21.webp",
+    "webp/CH1-P21@1024.webp",
     "webp/CH2-P01.webp",
     "webp/CH2-P01@1024.webp",
     "webp/CH2-P02.webp",
@@ -1453,6 +1510,10 @@
     "webp/CH2-P18.webp",
     "webp/CH2-P18@1024.webp",
     "webp/CH2-P19.webp",
+    "webp/CH2-P20.webp",
+    "webp/CH2-P20@1024.webp",
+    "webp/CH2-P21.webp",
+    "webp/CH2-P21@1024.webp",
     "webp/CH3-P01.webp",
     "webp/CH3-P01@1024.webp",
     "webp/CH3-P02.webp",
@@ -1478,6 +1539,10 @@
     "webp/CH3-P18.webp",
     "webp/CH3-P18@1024.webp",
     "webp/CH3-P19.webp",
+    "webp/CH3-P20.webp",
+    "webp/CH3-P20@1024.webp",
+    "webp/CH3-P21.webp",
+    "webp/CH3-P21@1024.webp",
     "webp/CH4-P01.webp",
     "webp/CH4-P01@1024.webp",
     "webp/CH4-P02.webp",
@@ -1503,6 +1568,10 @@
     "webp/CH4-P18.webp",
     "webp/CH4-P18@1024.webp",
     "webp/CH4-P19.webp",
+    "webp/CH4-P20.webp",
+    "webp/CH4-P20@1024.webp",
+    "webp/CH4-P21.webp",
+    "webp/CH4-P21@1024.webp",
     "webp/CH5-P01.webp",
     "webp/CH5-P01@1024.webp",
     "webp/CH5-P02.webp",
@@ -1528,6 +1597,10 @@
     "webp/CH5-P18.webp",
     "webp/CH5-P18@1024.webp",
     "webp/CH5-P19.webp",
+    "webp/CH5-P20.webp",
+    "webp/CH5-P20@1024.webp",
+    "webp/CH5-P21.webp",
+    "webp/CH5-P21@1024.webp",
     "webp/CH6-P01.webp",
     "webp/CH6-P01@1024.webp",
     "webp/CH6-P02.webp",
@@ -1553,6 +1626,10 @@
     "webp/CH6-P18.webp",
     "webp/CH6-P18@1024.webp",
     "webp/CH6-P19.webp",
+    "webp/CH6-P20.webp",
+    "webp/CH6-P20@1024.webp",
+    "webp/CH6-P21.webp",
+    "webp/CH6-P21@1024.webp",
     "webp/CH7-P01.webp",
     "webp/CH7-P01@1024.webp",
     "webp/CH7-P02.webp",
@@ -1578,6 +1655,10 @@
     "webp/CH7-P18.webp",
     "webp/CH7-P18@1024.webp",
     "webp/CH7-P19.webp",
+    "webp/CH7-P20.webp",
+    "webp/CH7-P20@1024.webp",
+    "webp/CH7-P21.webp",
+    "webp/CH7-P21@1024.webp",
     "webp/CUT-01.webp",
     "webp/CUT-02.webp",
     "webp/CUT-04.webp",
@@ -1604,6 +1685,31 @@
     "webp/CUT-cloud-near.webp",
     "webp/CUT-rays.webp",
     "webp/DICE-sum-burst.webp",
+    "webp/END-heart-ring-1.webp",
+    "webp/END-heart-ring-2.webp",
+    "webp/END-heart-ring-3.webp",
+    "webp/END-heart-ring-4.webp",
+    "webp/END-medal-neck-bronze.webp",
+    "webp/END-medal-neck-gold.webp",
+    "webp/END-medal-neck-plain.webp",
+    "webp/END-medal-neck-silver.webp",
+    "webp/END-passport-closed-1.webp",
+    "webp/END-passport-closed-2.webp",
+    "webp/END-passport-closed-3.webp",
+    "webp/END-passport-closed-4.webp",
+    "webp/END-passport-open-1.webp",
+    "webp/END-passport-open-2.webp",
+    "webp/END-passport-open-3.webp",
+    "webp/END-passport-open-4.webp",
+    "webp/END-passport-wide.webp",
+    "webp/END-photo-bg.webp",
+    "webp/END-photo-frame.webp",
+    "webp/END-stamp-ring-blue.webp",
+    "webp/END-stamp-ring-red.webp",
+    "webp/END-tape-1.webp",
+    "webp/END-tape-2.webp",
+    "webp/END-tape-3.webp",
+    "webp/END-tape-4.webp",
     "webp/EV-antarctic.webp",
     "webp/EV-climate-blizzard.webp",
     "webp/EV-climate-drought.webp",
@@ -1900,5 +2006,119 @@
     "webp/us_machine_farm.webp",
     "webp/us_makena.webp",
     "webp/us_terrace_compare.webp"
-  ]
+  ],
+  "poses": {
+    "char.1.p20": {
+      "h": 0.9614,
+      "body": 0.72,
+      "chest": [
+        0.5,
+        0.584
+      ]
+    },
+    "char.1.p21": {
+      "h": 0.9617,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.55
+      ]
+    },
+    "char.2.p20": {
+      "h": 0.9613,
+      "body": 0.7,
+      "chest": [
+        0.5,
+        0.551
+      ]
+    },
+    "char.2.p21": {
+      "h": 0.9618,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.48
+      ]
+    },
+    "char.3.p20": {
+      "h": 0.9614,
+      "body": 0.72,
+      "chest": [
+        0.5,
+        0.564
+      ]
+    },
+    "char.3.p21": {
+      "h": 0.9613,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.49
+      ]
+    },
+    "char.4.p20": {
+      "h": 0.9616,
+      "body": 0.745,
+      "chest": [
+        0.5,
+        0.577
+      ]
+    },
+    "char.4.p21": {
+      "h": 0.9614,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.49
+      ]
+    },
+    "char.5.p20": {
+      "h": 0.9617,
+      "body": 0.72,
+      "chest": [
+        0.5,
+        0.594
+      ]
+    },
+    "char.5.p21": {
+      "h": 0.9616,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.52
+      ]
+    },
+    "char.6.p20": {
+      "h": 0.9614,
+      "body": 0.72,
+      "chest": [
+        0.5,
+        0.574
+      ]
+    },
+    "char.6.p21": {
+      "h": 0.9617,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.46
+      ]
+    },
+    "char.7.p20": {
+      "h": 0.9616,
+      "body": 0.58,
+      "chest": [
+        0.5,
+        0.825
+      ]
+    },
+    "char.7.p21": {
+      "h": 0.9614,
+      "body": 1,
+      "chest": [
+        0.5,
+        0.7
+      ]
+    }
+  }
 }

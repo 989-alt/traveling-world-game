@@ -30,6 +30,16 @@ const RULES = [
   [/^mc\./, { exact: [512, 512] }], // U1 미션 그림 카드 1:1
   [/^ui\.rotate$/, { max: 1536 }], // U1 세로 안내 일러스트(폭 768 × 1365)
   [/^ui\.rotate-wide$/, { exact: [1024, 576] }], // U4 세로 안내 가로판 16:9(폭 1024)
+  // U12 엔딩 END-*(DESIGN §19.4): 기본 = 표시 ×2
+  [/^end\.photoBg$/, { exact: [1560, 1040] }],
+  [/^end\.frame$/, { exact: [1640, 1380] }], // 9 조각 맞춤(창 780×520 · 아래 테 150 × 2)
+  [/^end\.passport\.open\.\d$/, { max: 1000, min: 900 }],
+  [/^end\.passport\.wide$/, { max: 1536, min: 1500 }],
+  [/^end\.passport\.closed\.\d$/, { max: 320 }],
+  [/^end\.medalNeck\./, { max: 192 }],
+  [/^end\.tape\.\d$/, { exact: [600, 136] }],
+  [/^end\.heart\.\d$/, { exact: [336, 336] }],
+  [/^end\.stampRing\./, { exact: [192, 192] }],
   [/\.big$/, { max: 1024 }], // 컷씬용 1024 (랜드마크·캐릭터 P10~13·18)
   [/^char\.\d+\.p19$/, { exact: [512, 512] }], // 문화 카드 빼꼼 반신(R2 A2·D7)
   [/^char\.\d+\.p\d\d$/, { max: 256, min: Math.ceil(96 * ZOOM) }], // U5 포즈: 귀퉁이 전신 96 × 1.8
@@ -74,6 +84,8 @@ const HI_MIN = [
   [/^ui\.sign$/, 545], // 간판 9-slice 가운데(184 px)가 장치 439 px 로 → 256 × 2.13
   [/^char\.\d+\.p19$/, 611], // 문화 카드 빼꼼
   [/^char\.\d+\.p1[023]\.big$/, 2048], // 문항 옆 고민 포즈 2530 → 상한
+  [/^char\.\d+\.p2[01]\.big$/, 2048], // U12 엔딩 포즈(사용자 "최소 2K")
+  [/^end\.(photoBg|frame|passport\.(open\.\d|wide))$/, 2048], // U12 큰 면 4종 긴 변 2048
   [/^char\.\d+\.p\d\d$/, 498], // 보드 캐릭터 줌
   [/^landmark\.\d+\.big$/, 1253], // 컷씬 랜드마크
   [/^(cutscene|ui\.boardBg)/, 2048], // 화면 가득 3840 → 상한
