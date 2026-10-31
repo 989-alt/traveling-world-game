@@ -157,6 +157,39 @@ test('U12 §19.7: 그림 에셋 엔딩 — svg 0, 로제트·목 메달 앵커, 
   expect(css).not.toMatch(/gradient\(/);
 });
 
+// U12 사용자 지적(2026-10-31): 로봇 입(분홍)이 마젠타로 키잉돼 배경이 비쳤다. 그림 안쪽 반투명 픽셀(투명·그림 테두리에서 먼 곳) 검사 — 포즈 14 + END 25
+test('U12 키잉: 포즈·엔딩 그림 안쪽에 뚫린(반투명) 곳 없음', async ({ page }) => {
+  test.skip(test.info().project.name !== 'desktop', '그림 검사는 한 번');
+  await page.goto(`${BASE}/dev/results?kind=final`);
+  const files = [...[1, 2, 3, 4, 5, 6, 7].flatMap((n) => [`CH${n}-P20@1024`, `CH${n}-P21@1024`]),
+    'END-photo-frame', 'END-passport-wide', 'END-stamp-ring-red', 'END-stamp-ring-blue',
+    ...[1, 2, 3, 4].flatMap((n) => [`END-passport-open-${n}`, `END-passport-closed-${n}`, `END-tape-${n}`, `END-heart-ring-${n}`]),
+    ...['gold', 'silver', 'bronze', 'plain'].map((m) => `END-medal-neck-${m}`)];
+  const bad = await page.evaluate(async (fs) => {
+    const out: Record<string, number> = {};
+    for (const f of fs) {
+      const img = new Image();
+      img.src = `/webp/${f}.webp`;
+      await img.decode();
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const cx = cv.getContext('2d')!; cx.drawImage(img, 0, 0);
+      const a = cx.getImageData(0, 0, W, H).data;
+      const r = Math.max(4, Math.round(Math.max(W, H) / 170));
+      const near = new Uint8Array(W * H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (x < r || y < r || x >= W - r || y >= H - r) near[y * W + x] = 1;
+        if (a[(y * W + x) * 4 + 3] < 8) for (let dy = -r; dy <= r; dy += r) for (let dx = -r; dx <= r; dx += r) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < W && Y < H) near[Y * W + X] = 1; }
+      }
+      let n = 0;
+      for (let p = 0; p < W * H; p++) { const al = a[p * 4 + 3]; if (al >= 8 && al < 248 && !near[p]) n++; }
+      out[f] = n / (W * H);
+    }
+    return out;
+  }, files);
+  for (const [f, v] of Object.entries(bad)) expect(v, f).toBeLessThan(0.001); // 키잉 전(전역 거리) CH6-P21 1.7%·CH7-P21 0.35%
+});
+
 test('U12: 닫힌 여권 누르면 주인이 바뀌고, Tab 순서 = 순위', async ({ page }) => {
   await open(page, 'kind=final'); // 순위 0·1·3·2, 나 = 0
   const ranks = await page.locator('[data-k="rank"] li').evaluateAll((ls) => ls.map((l) => (l as HTMLElement).dataset.seat));

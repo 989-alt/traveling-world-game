@@ -128,14 +128,61 @@ if (dry) {
 const sharp = createRequire(import.meta.url)(arg('--sharp') ?? process.env.SHARP_PATH ?? join(homedir(), 'Desktop/math-baseball/node_modules/sharp'));
 mkdirSync(OUT, { recursive: true });
 
+/** U12 사용자 지적(2026-10-31): 전역 거리 키잉은 그림 안의 분홍·보라(로봇 입·분홍 재킷·보라 후드)까지 반투명으로 뚫었다.
+ *  엔딩 그림·포즈는 '바탕'만 지운다: 거의 순수한 마젠타(d < 45) 덩어리 중 테두리에 닿거나 충분히 큰 것(팔과 몸 사이·여권 틀 창·하트 가운데)
+ *  = 바탕(2), 그 둘레 r px = 경계 띠(1, 기존 거리 램프·디스필), 나머지(0) = 불투명 그대로 */
+const CONNECTED = /^(END-|CH\d-P2[01]$)/;
+function bgZone(data, W, H) {
+  const N = W * H, core = new Uint8Array(N);
+  const dd = new Float32Array(N);
+  for (let p = 0; p < N; p++) { const R = data[p * 4], G = data[p * 4 + 1], B = data[p * 4 + 2]; dd[p] = Math.sqrt((R - 255) ** 2 + G ** 2 + (B - 255) ** 2); core[p] = dd[p] < 45 ? 1 : 0; }
+  // 마젠타 색조(R·B ≫ G, R≈B): 바탕 위에 그려진 어두운 마젠타 그림자도 바탕. 분홍(R ≫ B)·보라(B ≫ R)는 아님
+  const hue = (p) => { const R = data[p * 4], G = data[p * 4 + 1], B = data[p * 4 + 2]; return R - G > 40 && B - G > 40 && Math.abs(R - B) < 50; };
+  const lab = new Int32Array(N), zone = new Uint8Array(N), minN = Math.round(N * 0.00015);
+  let id = 0;
+  for (let p = 0; p < N; p++) {
+    if (!core[p] || lab[p]) continue;
+    id++; const st = [p], mem = []; lab[p] = id; let edge = false;
+    while (st.length) {
+      const q = st.pop(); mem.push(q); const x = q % W, y = (q / W) | 0;
+      if (x === 0 || y === 0 || x === W - 1 || y === H - 1) edge = true;
+      if (x > 0 && core[q - 1] && !lab[q - 1]) { lab[q - 1] = id; st.push(q - 1); }
+      if (x < W - 1 && core[q + 1] && !lab[q + 1]) { lab[q + 1] = id; st.push(q + 1); }
+      if (y > 0 && core[q - W] && !lab[q - W]) { lab[q - W] = id; st.push(q - W); }
+      if (y < H - 1 && core[q + W] && !lab[q + W]) { lab[q + W] = id; st.push(q + W); }
+    }
+    let sum = 0; for (const q of mem) sum += dd[q];
+    if (edge || mem.length >= minN || sum / mem.length < 28) for (const q of mem) zone[q] = 2; // 손가락 사이 같은 작은 바탕 칸도(거의 순수 마젠타)
+  }
+  { // 바탕에서 마젠타 색조로 이어진 곳(바닥 그림자)까지 넓힘 — 얼굴 안 분홍 입처럼 바탕과 떨어진 곳은 그대로
+    const st = [];
+    for (let p = 0; p < N; p++) if (zone[p] === 2) st.push(p);
+    while (st.length) {
+      const q = st.pop(), x = q % W, y = (q / W) | 0;
+      for (const r of [x > 0 ? q - 1 : -1, x < W - 1 ? q + 1 : -1, y > 0 ? q - W : -1, y < H - 1 ? q + W : -1]) if (r >= 0 && zone[r] !== 2 && hue(r)) { zone[r] = 2; st.push(r); }
+    }
+  }
+  // 경계 띠: 바탕에서 r px 안(가로·세로 최댓값 필터 두 번)
+  const r = Math.max(3, Math.round(W / 400));
+  const tmp = new Uint8Array(N);
+  for (let y = 0; y < H; y++) { let last = -1e9; for (let x = 0; x < W; x++) { if (zone[y * W + x] === 2) last = x; if (x - last <= r) tmp[y * W + x] = 1; } last = 1e9; for (let x = W - 1; x >= 0; x--) { if (zone[y * W + x] === 2) last = x; if (last - x <= r) tmp[y * W + x] = 1; } }
+  for (let x = 0; x < W; x++) { let last = -1e9; for (let y = 0; y < H; y++) { if (tmp[y * W + x]) last = y; if (y - last <= r && zone[y * W + x] !== 2) zone[y * W + x] = 1; } last = 1e9; for (let y = H - 1; y >= 0; y--) { if (tmp[y * W + x]) last = y; if (last - y <= r && zone[y * W + x] !== 2) zone[y * W + x] = 1; } }
+  return zone;
+}
+
+/** U12 사용자 지적: 생성 포즈 중 옆으로 퍼져 그려진 것(분홍 모자 소녀). 보드 서기 포즈(P01, 캐릭터 시트와 같음)의 다리 폭 ÷ 키(행 78~86%)와 비교한
+ *  가로 보정 배수 — CH4-P21 0.274 vs 0.343 → 0.80, CH4-P20 은 같은 그림체라 0.85(다리를 벌린 자세라 행 비교 불가). 나머지는 ±3% 안이라 1 */
+const UNSQUASH = { 'CH4-P21': 0.8, 'CH4-P20': 0.85 };
+
 async function key(file, id) {
   const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const [lo, hi] = tight(id) ? [70, 110] : [90, 140];
+  const near = CONNECTED.test(id) ? bgZone(data, info.width, info.height) : null;
   let x0 = info.width, y0 = info.height, x1 = -1, y1 = -1;
   for (let i = 0, p = 0; i < data.length; i += 4, p++) {
     const R = data[i], G = data[i + 1], B = data[i + 2];
     const d = Math.sqrt((R - 255) ** 2 + G ** 2 + (B - 255) ** 2);
-    const a = d < lo ? 0 : d < hi ? (d - lo) / (hi - lo) : 1;
+    const a = near && !near[p] ? 1 : near && near[p] === 2 ? 0 : d < lo ? 0 : d < hi ? (d - lo) / (hi - lo) : 1;
     if (a > 0 && a < 1) { // 디스필
       data[i] = Math.min(R, (G + B) / 2 + 40);
       data[i + 2] = Math.min(B, (G + R) / 2 + 40);
@@ -148,8 +195,9 @@ async function key(file, id) {
   }
   if (/^(END-|CH\d-P2[01]$)/.test(id)) unfringe(data, info.width, info.height);
   if (isTile(id) || id === 'UI-signpost' || rsSpec(id)?.[0] === 'frame') return sharp(data, { raw: info }).png().toBuffer(); // 프레임 유지
-  const w = x1 - x0 + 1, h = y1 - y0 + 1, side = Math.round(Math.max(w, h) * 1.04);
-  const crop = await sharp(data, { raw: info }).extract({ left: x0, top: y0, width: w, height: h }).png().toBuffer();
+  let w = x1 - x0 + 1; const h = y1 - y0 + 1, side = Math.round(Math.max(w, h) * 1.04);
+  let crop = await sharp(data, { raw: info }).extract({ left: x0, top: y0, width: w, height: h }).png().toBuffer();
+  if (UNSQUASH[id]) { w = Math.round(w * UNSQUASH[id]); crop = await sharp(crop).resize(w, h, { fit: 'fill' }).png().toBuffer(); }
   if (FREE[id] || isPlaza(id) || ['w', 'box'].includes(rsSpec(id)?.[0]) || ['frame9', 'long', 'fill'].includes(endSpec(id)?.[0])) return crop; // 트림만(정사각 패딩 없음)
   if (/^CH\d-P2[01]$/.test(id)) POSES[id] = { h: +(h / side).toFixed(4), w: +(w / side).toFixed(4) };
   // 발 앵커: 바닥 중앙에 붙임. 아이콘은 가운데.

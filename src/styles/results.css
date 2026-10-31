@@ -41,17 +41,17 @@
 .end-develop { position: absolute; z-index: 5; background: #FFFFFF; opacity: 0; pointer-events: none; }
 .end-frame { position: absolute; inset: 0; z-index: 6; display: block; width: 100%; height: 100%; filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.32)); }
 /* 로제트(발 x, 574) · 하트 링 · 테이프 이름표(발 x, 622) · 제목(410, 664) — 틀 아래 흰 테 */
-.end-rosette { position: absolute; z-index: 7; width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+.end-rosette { position: absolute; z-index: 8; width: 64px; height: 64px; margin: -32px 0 0 -32px; }
 .end-ro-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 3px rgb(0 0 0 / 0.3)); }
 .end-ro-n { position: absolute; left: 0; right: 0; top: 60%; transform: translateY(-50%); color: var(--foreground); font: var(--weight-regular) 30px / 1 var(--font-display); text-align: center; text-shadow: 0 1px 0 rgb(255 255 255 / 0.7); }
-.end-heart { position: absolute; left: -10px; top: -12px; width: 84px; height: 84px; object-fit: contain; }
+.end-heart { position: absolute; left: -16px; top: -18px; width: 96px; height: 96px; object-fit: contain; } /* 하트 안쪽 칸 가운데 = 로제트 가운데, 끝은 테이프 위 층 */
 .end-heart.end-fb-ring { --seat: var(--seat-1); }
 .end-tape { position: absolute; z-index: 7; width: 150px; height: 34px; margin: -17px 0 0 -75px; }
 .end-person.is-me .end-tape { width: 180px; height: 40px; margin: -20px 0 0 -90px; }
 .end-tape-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
 .end-name { position: absolute; left: 12px; right: 12px; top: 50%; transform: translateY(-50%); overflow: hidden; color: var(--foreground); font: var(--weight-regular) 18px / 1.15 var(--font-display); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .end-person.is-me .end-name { font-size: 20px; }
-.end-title { position: absolute; left: 0; width: 820px; margin: -22px 0 0; z-index: 7; color: var(--foreground); font: var(--weight-regular) 40px / 1.1 var(--font-display); letter-spacing: 0.06em; text-align: center; }
+.end-title { position: absolute; left: 0; width: 820px; margin: -20px 0 0; z-index: 7; color: var(--foreground); font: var(--weight-regular) 36px / 1.1 var(--font-display); letter-spacing: 0.06em; text-align: center; }
 
 /* ── 펼친 여권(§19.2 오른쪽 띠): 그림 뒤 = 초상·스티커(틀이 뚫림), 그림 위 = 글자·도장 ── */
 .end-book { position: absolute; z-index: 4; color: var(--card-foreground); }
@@ -80,8 +80,9 @@
 .end-stamp--blue .end-stamp-t { color: #1D4FB8; }
 /* 스티커 '+n' · 3줄(잉크) */
 .end-sticker-more { position: absolute; color: #A86A00; font: normal 15px / 1 var(--font-display); }
-.end-lines { position: absolute; left: 55%; width: 39%; display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0; list-style: none; }
-.end-lines li { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: #1C2B4A; font: var(--weight-bold) 14px / 1.22 var(--font-body); letter-spacing: -0.03em; word-break: keep-all; }
+.end-lines { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
+/* 한 줄 = 줄 선 하나: 줄 상자(18px) 아래끝을 줄 선 2px 아래에(한글 글자 밑이 줄 선에 앉음), 줄바꿈 0 */
+.end-lines li { position: absolute; left: 56%; width: 38%; margin-top: 2px; transform: translateY(-100%); overflow: hidden; color: #1C2B4A; font: var(--weight-bold) 14px / 18px var(--font-body); letter-spacing: -0.04em; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── 닫힌 여권 3: 부채꼴, 표지 창에 얼굴 ── */
 .end-closed { position: absolute; inset: 0; z-index: 5; pointer-events: none; }

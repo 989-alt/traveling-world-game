@@ -253,7 +253,7 @@ function Passport({ seat, info, r, monopolies, isMe, swap }: { seat: Seat; info:
         <Coins r={r} top={pBottom + 9} />
         <StampGrid r={r} top={6.5} bottom={sTop - 2.5} />
         {r.landmarks.length > 3 && <b class="end-sticker-more" style={{ left: `${g.s[2][0] + g.s[2][2] - 1}%`, top: `${g.s[2][1] - 3}%` }}>+{r.landmarks.length - 3}</b>}
-        <Lines r={r} top={sBottom + 3.5} />
+        <Lines r={r} lines={g.lines.slice(1, 4)} />
       </div>
     </section>
   );
@@ -326,19 +326,19 @@ function StampGrid({ r, top, bottom }: { r: SeatReport; top: number; bottom: num
 }
 
 /** 3줄(잉크): 도착 퀴즈·참/거짓·헷갈린 생각 번호 — 오른쪽 면 줄 선 위 */
-function Lines({ r, top }: { r: SeatReport; top: number }) {
+function Lines({ r, lines }: { r: SeatReport; lines: number[] }) {
   const a = r.total.arrive;
   const t = r.total.tf;
   const rows = r.isBot
-    ? ['봇은 학습 기록을 모으지 않아요', `도장 ${r.stamps.length}곳을 모았어요`, `랜드마크 ${r.landmarks.length}개를 세웠어요`]
+    ? ['봇은 기록을 모으지 않아요', `도장 ${r.stamps.length}곳을 모았어요`, `랜드마크 ${r.landmarks.length}개 세웠어요`]
     : [
       a.n ? `도착 퀴즈 ${frac(a)} 맞혔어요` : '도착 퀴즈를 아직 안 풀었어요',
       t.n ? `참/거짓 ${frac(t)} 맞혔어요` : '참/거짓을 아직 안 골랐어요',
-      r.wrongM.length ? `헷갈린 생각 ${r.wrongM.slice(0, 4).join(' ')}${r.wrongM.length > 4 ? ' …' : ''}` : '헷갈린 생각 번호 없음',
+      r.wrongM.length ? `헷갈린 생각 ${r.wrongM.slice(0, 3).join(' ')}${r.wrongM.length > 3 ? ' …' : ''}` : '헷갈린 생각 번호 없음',
     ];
   return (
-    <ul class="end-lines" data-k="lines" style={{ top: `${top}%` }}>
-      {rows.map((text, i) => <li key={i} style={{ animationDelay: `${T.lines + i * 0.12}s` }}>{text}</li>)}
+    <ul class="end-lines" data-k="lines">
+      {rows.map((text, i) => <li key={i} data-line={lines[i]} style={{ top: `${lines[i] ?? 80 + i * 4}%`, animationDelay: `${T.lines + i * 0.12}s` }}>{text}</li>)}
     </ul>
   );
 }
