@@ -1479,7 +1479,8 @@
     "char.7.p21bronze.s4": "webp/CH7-P21-bronze-s4.webp",
     "char.7.p21plain.s4": "webp/CH7-P21-plain-s4.webp",
     "end.passport.stand.4": "webp/END-passport-stand-4.webp",
-    "end.tab.back": "webp/END-tab-back.webp"
+    "end.tab.back": "webp/END-tab-back.webp",
+    "end.tab.home": "webp/END-tab-home.webp"
   },
   "hi": [
     "webp/BG-board.webp",
@@ -2107,7 +2108,8 @@
     "webp/END-passport-open-2-v2.webp",
     "webp/END-passport-open-3-v2.webp",
     "webp/END-passport-stand-4.webp",
-    "webp/END-tab-back.webp"
+    "webp/END-tab-back.webp",
+    "webp/END-tab-home.webp"
   ],
   "poses": {
     "char.1.p20": {

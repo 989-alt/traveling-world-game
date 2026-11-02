@@ -18,7 +18,7 @@ import { BUILDING } from '../overlays/ActionPanel';
 import { CONTINENT_NAME, won } from '../overlays/parts';
 import { STAGE, useStageScale } from '../overlays/PlankDialog';
 import {
-  BALLOON, BOOK, FOOT_Y, GROUP, LANDMARK, OPEN_V2, RIGHT, ROSETTE, ROSETTE_Y, STAND, STAND_H, STAND_SLOTS, TAB, TAPE, TAPE_ROT, WINDOW, figure, footXs, landmarkX, medalPoseKey, stampName, toStage, type OpenV2,
+  BALLOON, BOOK, FOOT_Y, GROUP, LANDMARK, OPEN_V2, RIGHT, ROSETTE, ROSETTE_Y, STAND, STAND_H, STAND_SLOTS, TAB, HOME, TAPE, TAPE_ROT, WINDOW, figure, footXs, landmarkX, medalPoseKey, stampName, toStage, type OpenV2,
 } from './end-geom';
 import { countryName, META } from './meta';
 import '../../styles/results.css';
@@ -29,6 +29,8 @@ export interface ResultsProps {
   seats: SeatInfo[];
   mySeat?: Seat | null;
   meta?: MetaMap;
+  /** U15 '처음으로' 책갈피를 누름(없으면 책갈피를 그리지 않는다) */
+  onHome?: () => void;
 }
 
 const TITLE = '최종 결과';
@@ -55,7 +57,7 @@ function photoLandmark(r: SeatReport | undefined): string | null {
   return null;
 }
 
-export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps) {
+export function Results({ log, seats, mySeat = null, meta = META, onHome }: ResultsProps) {
   const rep = useMemo(() => buildReport(log, meta, seats.map((s) => s.isBot)), [log, meta, seats]);
   const order = rep.final;
   const ranks = order?.ranks ?? seats.map((s) => s.seat);
@@ -73,7 +75,7 @@ export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps
   const [phase, setPhase] = useState<'wait' | 'intro' | 'done'>('wait');
   useEffect(() => {
     let live = true;
-    const keys = ['end.photoBg', 'end.frame', `end.passport.open.${me + 1}`, 'end.tab.more', ...ranks.flatMap((s, n) => [heroOf(s, n), `end.tape.${s + 1}`, `end.rosette.${n + 1}`, `end.passport.stand.${s + 1}`])].filter(hasAsset);
+    const keys = ['end.photoBg', 'end.frame', `end.passport.open.${me + 1}`, 'end.tab.more', ...(onHome ? ['end.tab.home'] : []), ...ranks.flatMap((s, n) => [heroOf(s, n), `end.tape.${s + 1}`, `end.rosette.${n + 1}`, `end.passport.stand.${s + 1}`])].filter(hasAsset);
     const go = () => { if (live) setPhase((p) => (p === 'wait' ? (calm ? 'done' : 'intro') : p)); };
     void preload(keys).then(go);
     const t = setTimeout(go, 2500);
@@ -98,6 +100,12 @@ export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps
             <h1 class="end-empty-title">{END_TITLE}</h1>
             <p>아직 한 번도 주사위를 굴리지 않았어요. 게임을 하면 여기에 기록이 쌓여요.</p>
           </section>
+          {onHome && (
+            <button type="button" class="end-tab end-home" data-k="home" aria-label="처음으로" onClick={onHome}
+              style={{ left: px(HOME.back.x), top: px(HOME.back.y), width: px(TAB.w), height: px(TAB.h) }}>
+              <Pic k="end.tab.home" class="end-tab-img" fallback={<span class="end-tab-img end-fb-tab end-fb-home"><span class="end-fb-tab-t">처음으로</span></span>} />
+            </button>
+          )}
         </div>
       </main>
     );
@@ -191,6 +199,14 @@ export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps
           <Pic key={detail ? 'back' : 'more'} k={detail ? 'end.tab.back' : 'end.tab.more'} class="end-tab-img"
             fallback={<span class="end-tab-img end-fb-tab"><span class="end-fb-tab-t">{detail ? '돌아가기' : '자세히 보기'}</span></span>} />
         </button>
+        {/* U15 '처음으로' = 책갈피 탭 그림(END-tab-home). 두 장 모두 여권 책등에 걸림. 누르면 이 기기만 첫 화면(저장 자리 삭제) */}
+        {onHome && (
+          <button type="button" class="end-tab end-home" data-k="home" aria-label="처음으로" onClick={onHome}
+            style={{ left: px(detail ? HOME.back.x : HOME.x), top: px(detail ? HOME.back.y : HOME.y), width: px(TAB.w), height: px(TAB.h) }}>
+            <Pic k="end.tab.home" class="end-tab-img"
+              fallback={<span class="end-tab-img end-fb-tab end-fb-home"><span class="end-fb-tab-t">처음으로</span></span>} />
+          </button>
+        )}
 
         {/* ── 둘째 장(S9 전부): 와이드 여권 그릇 ── */}
         <section class="end-wide" data-k="detail-page" aria-label="자세한 학습 기록" hidden={!detail}>

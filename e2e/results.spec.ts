@@ -413,3 +413,99 @@ test('U13: 이름 7자(형용사+동물)가 테이프 안에 22px(넘치면 20px
     expect(r.ell).not.toBe('ellipsis');
   }
 });
+
+// ── U15 '처음으로'(END-tab-home): 엔딩 두 장 모두 여권 책등에 걸린 책갈피 → 이 기기만 첫 화면, 새로고침해도 첫 화면 ──
+const SHOTS15 = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U15-shots/', import.meta.url));
+type Rect = { l: number; t: number; r: number; b: number; s: string };
+const rects = (els: Element[], sel: string) => els.filter((e) => (e as HTMLElement).offsetParent !== null)
+  .map((e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, s: `${sel}:${e.className}` }; });
+const cross = (a: Rect, b: Rect) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+async function homeClear(page: Page, sels: string[]) {
+  const home = page.getByRole('button', { name: '처음으로' });
+  await expect(home).toBeVisible();
+  const h = await home.evaluate((e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, s: 'home' }; });
+  const tab = await page.locator('[data-k="detail"]').evaluate((e) => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, s: 'tab' }; });
+  // 같은 크기(높이 같음, 폭 ±1)·같은 높이에서 내려옴
+  expect(Math.abs((h.b - h.t) - (tab.b - tab.t))).toBeLessThanOrEqual(0.5);
+  expect(Math.abs((h.r - h.l) - (tab.r - tab.l))).toBeLessThanOrEqual(1);
+  expect(Math.abs(h.t - tab.t)).toBeLessThanOrEqual(0.5);
+  // 그림이 실제로 그려진 폭이 단추 안(가려진 그림 0)
+  const img = await home.locator('img').evaluate((e: HTMLImageElement) => ({ ok: e.complete && e.naturalWidth > 0, w: e.getBoundingClientRect().width, src: e.currentSrc }));
+  expect(img.ok, img.src).toBe(true);
+  expect(img.src).toMatch(/END-tab-home\.webp/);
+  const others: Rect[] = [tab];
+  for (const s of sels) others.push(...(await page.locator(s).evaluateAll(rects, s)));
+  expect(others.length).toBeGreaterThan(sels.length);
+  const hit = others.filter((o) => cross(h, o) > 0.5).map((o) => o.s);
+  expect(hit).toEqual([]);
+  return home;
+}
+
+test('U15: 처음으로 책갈피 — 첫 장·둘째 장 모두 보이고 도장·사진·초상·다른 탭과 겹침 0, 키보드로 누름', async ({ page }) => {
+  for (const q of ['kind=final&stamps=12', 'solo=1']) {
+    const errors = await open(page, q);
+    const SUMMARY = ['[data-k="map"] li', '.end-portrait', '.end-owner', '.end-frame', '.end-sticker', '[data-k="medals"] li', '.end-cp'];
+    const home = await homeClear(page, SUMMARY);
+    if (q === 'kind=final&stamps=12') await page.screenshot({ path: `${SHOTS15}summary-${test.info().project.name}.png` });
+    await page.locator('[data-k="detail"]').click();
+    await expect(page.locator('[data-k="detail-page"]')).toBeVisible();
+    await homeClear(page, ['.rs-learn', '.rs-side', '.rs-tabs', '.rs-who', '[data-k="row"]']);
+    if (q === 'kind=final&stamps=12') await page.screenshot({ path: `${SHOTS15}detail-${test.info().project.name}.png` });
+    // 키보드: Tab 으로 닿고 Enter 로 누름(하네스는 누른 횟수만 센다)
+    await home.focus();
+    await expect(home).toBeFocused();
+    await page.keyboard.press('Enter');
+    expect(await page.evaluate(() => (window as unknown as { __home: { n: number } }).__home.n)).toBe(1);
+    expect(errors).toEqual([]);
+  }
+  // 빈 기록 화면에도(갇히지 않게)
+  await open(page, 'scenario=empty');
+  await expect(page.getByRole('button', { name: '처음으로' })).toBeVisible();
+});
+
+test('U15: 실제 방 — 끝난 판 결과에서 처음으로 → 첫 화면, 새로고침해도 첫 화면(저장 자리 삭제, 방은 그대로)', async ({ browser }) => {
+  test.setTimeout(240_000);
+  const { setup, Srv, nextCode } = await import('./helpers/room-server');
+  const { joinCode } = await import('./helpers/entry');
+  const B = await setup('u15home');
+  const srv = new Srv(B.RoomCtor, nextCode('TWHM'));
+  const tablet = test.info().project.name === 'tablet-touch';
+  const ctx = await browser.newContext({ baseURL: B.base, viewport: tablet ? { width: 1180, height: 820 } : { width: 1366, height: 768 }, hasTouch: tablet, isMobile: tablet, reducedMotion: 'reduce' });
+  try {
+    await ctx.routeWebSocket(/\/api\/rooms\/[A-Z0-9]{6}\/ws$/, (route) => srv.attach(route, 'a'));
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await joinCode(page, srv.code);
+    await page.locator('.pick[data-char="1"]').click();
+    await page.locator('[data-act="start"]').click();
+    await expect(page.locator('.app')).toHaveAttribute('data-phase', 'playing', { timeout: 15_000 });
+    // 주사위 기록 하나(빈 기록이 아니게) + 곧 놀이 시간 끝 → 최종 결과
+    srv.do((g) => { g.clock.remainingMs = 1_500; g.log.push({ ev: 'dice', seat: 0, d1: 1, d2: 2 }); });
+    await expect.poll(() => srv.g.phase, { timeout: 30_000, intervals: [250] }).toBe('finished');
+    await expect(page.locator('.rs[data-kind="final"]')).toBeVisible({ timeout: 15_000 });
+    expect(await page.evaluate(() => localStorage.getItem('tw.seat'))).not.toBeNull();
+    // 첫 장 → 둘째 장에서도 보이고, 둘째 장에서 누른다
+    await expect(page.getByRole('button', { name: '처음으로' })).toBeVisible();
+    await page.locator('[data-k="detail"]').click();
+    await expect(page.locator('[data-k="detail-page"]')).toBeVisible();
+    await page.getByRole('button', { name: '처음으로' }).click();
+    await expect(page.locator('.app')).toHaveAttribute('data-phase', 'entry');
+    await expect(page.locator('.sc--entry')).toBeVisible();
+    await expect(page.locator('[data-act="intro-start"]')).toBeVisible();
+    await expect(page.locator('.rs')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('tw.seat'))).toBeNull();
+    // 서버에는 나가기를 보내지 않는다(방장 자리의 leave = 끝내기). 끝난 방은 그대로
+    expect(srv.sent('a', /"t":"(leave|end)"/)).toBe(0);
+    expect(srv.room.rec).not.toBeNull();
+    await page.reload();
+    await expect(page.locator('.app')).toHaveAttribute('data-phase', 'entry');
+    await expect(page.locator('.sc--entry')).toBeVisible();
+    await page.waitForTimeout(1500); // 자동 복귀가 있었다면 이 사이에 방으로 간다
+    await expect(page.locator('.app')).toHaveAttribute('data-phase', 'entry');
+    await expect(page.locator('.rs')).toHaveCount(0);
+  } finally {
+    srv.stop();
+    await ctx.close();
+    await B.close();
+  }
+});

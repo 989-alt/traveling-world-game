@@ -37,7 +37,7 @@ const RULES = [
   // U13 §19.9.5: 로제트 240 · 세운 여권 긴 변 272 · 책갈피 탭 긴 변 300 · 열기구 880
   [/^end\.rosette\.\d$/, { exact: [240, 240] }],
   [/^end\.passport\.stand\.\d$/, { max: 272, min: 260 }],
-  [/^end\.tab\.(more|back)$/, { max: 300, min: 290 }],
+  [/^end\.tab\.(more|back|home)$/, { max: 300, min: 290 }],
   [/^end\.balloon$/, { exact: [880, 880] }],
   [/^char\.\d+\.p2[01](gold|silver|bronze|plain)(\.s\d)?$/, { exact: [1024, 1024] }], // U13 메달 포즈(표시 280, hi 2048)
   [/^end\.passport\.wide$/, { max: 1536, min: 1500 }],
@@ -92,7 +92,7 @@ const HI_MIN = [
   [/^char\.\d+\.p1[023]\.big$/, 2048], // 문항 옆 고민 포즈 2530 → 상한
   [/^char\.\d+\.p2[01]\.big$/, 2048], // U12 엔딩 포즈(사용자 "최소 2K")
   [/^char\.\d+\.p2[01](gold|silver|bronze|plain)(\.s\d)?$/, 2048], // U13 메달 포즈
-  [/^end\.(rosette\.\d|passport\.stand\.\d|tab\.(more|back)|balloon)$/, 0], // U13 작은 그림: hi 는 표시 ×4(하한 없음, hi 목록 필수)
+  [/^end\.(rosette\.\d|passport\.stand\.\d|tab\.(more|back|home)|balloon)$/, 0], // U13 작은 그림: hi 는 표시 ×4(하한 없음, hi 목록 필수)
   [/^end\.(photoBg|frame|passport\.(open\.\d|wide))$/, 2048], // U12 큰 면 4종 긴 변 2048
   [/^char\.\d+\.p\d\d$/, 498], // 보드 캐릭터 줌
   [/^landmark\.\d+\.big$/, 1253], // 컷씬 랜드마크

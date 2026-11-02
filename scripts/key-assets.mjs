@@ -89,7 +89,7 @@ const endSpec = id => (V2.test(id) && latest[id]?.v >= 2 ? END_V2[id.replace(/-\
   : /^END-medal-neck-/.test(id) ? ['long', 192, 90] : /^END-tape-/.test(id) ? ['fill', [600, 136], 88]
   : /^END-heart-ring-/.test(id) ? ['sq', 336, 90] : /^END-stamp-ring-/.test(id) ? ['sq', 192, 90]
   // U13 §19.9.5: 로제트 240(숫자 새김) · 세운 여권 긴 변 272(100×136 ×2) · 책갈피 탭 긴 변 300(40×150 ×2) · 열기구 880 바닥 중앙
-  : /^END-rosette-\d$/.test(id) ? ['sq', 240, 90] : /^END-passport-stand-\d$/.test(id) ? ['long', 272, 90] : /^END-tab-(more|back)$/.test(id) ? ['long', 300, 90]
+  : /^END-rosette-\d$/.test(id) ? ['sq', 240, 90] : /^END-passport-stand-\d$/.test(id) ? ['long', 272, 90] : /^END-tab-(more|back|home)$/.test(id) ? ['long', 300, 90]
   : id === 'END-balloon' ? ['sqb', 880, 88] : null);
 // U13 v2(글자가 그림에 든 판): 틀 = 9 조각 + 제목 재배치(아래 테 160), 펼친 여권 = 트림 뒤 긴 변 1024(생성본이 0.9 비율이라 늘리지 않음)
 const V2 = /^END-(photo-frame|passport-open-\d)$/;

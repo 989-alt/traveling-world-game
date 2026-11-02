@@ -78,7 +78,7 @@ export function App() {
     if (s.seat === null) return <PinEntry client={client} s={s} />;
     // U14: 멈춘 순간 판에 있던 기기(자리 PIN 을 받음)는 판 위 멈춤 모달, 다시 들어온 기기는 이어 하기 화면
     if (s.room.phase === 'paused' && !s.pins) return <Paused client={client} s={s} />;
-    if (s.room.phase === 'finished' && !monoHold) return <Finished s={s} />;
+    if (s.room.phase === 'finished' && !monoHold) return <Finished client={client} s={s} />;
     return <Game client={client} s={s} ending={monoHold} />;
   }
 }

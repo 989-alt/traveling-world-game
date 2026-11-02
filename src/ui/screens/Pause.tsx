@@ -148,9 +148,11 @@ function ResumeScreen({ client, s }: { client: GameClient; s: ClientState }) {
   );
 }
 
-export function Finished({ s }: { s: ClientState }) {
+export function Finished({ client, s }: { client: GameClient; s: ClientState }) {
   // 순위·자산은 log 의 result 이벤트에서 나온다
-  return <Results log={s.log} seats={resultSeats(s)} mySeat={s.seat} meta={metaWith(s.room!.cards)} />;
+  // U15 '처음으로': 이 기기만 첫 화면 — 저장 자리를 지우고 소켓을 닫는다(leave). 서버에 나가기를 보내지 않는다:
+  // 끝난 판은 바꿀 것이 없고, 방장 자리의 'leave' 는 끝내기(방 삭제)라 다른 기기의 결과 화면까지 닫힌다
+  return <Results log={s.log} seats={resultSeats(s)} mySeat={s.seat} meta={metaWith(s.room!.cards)} onHome={() => client.leave()} />;
 }
 
 /** 재개 안내: 옛 판(40칸) 저장본은 이어 할 수 없어 서버가 대기실로 돌렸다(PRD §9.1, 2026-10-26 판 재설계).

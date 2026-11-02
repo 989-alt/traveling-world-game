@@ -99,6 +99,9 @@ export const STAND: Record<number, { a: number; w: Box }> = {
 /** 책갈피 탭: '자세히 보기' = 펼친 여권 위변 22px 위에서 내려와 오른쪽 표지 끝에 걸림(도장 격자 오른끝 ≈ 1287 과 교차 0).
  *  '돌아가기' = 둘째 장 와이드 여권(33,64,1300,640) 오른쪽 위에 걸림. 높이 150, 폭 = 150 × 그림 비율 0.29 */
 export const TAB = { x: 1300, dy: -22, w: 44, h: 150, back: { x: 1262, y: 42 } } as const;
+/** U15 '처음으로' 책갈피(END-tab-home, 탭과 같은 크기·같은 높이): 여권 가운데 접힘(책등)에 걸린다 — 첫 장 = 펼친 여권 책등 x 1056
+ *  (왼쪽 초상 틀 끝 ≈ 983 · 오른쪽 이름·도장 격자 시작 1091 사이), 둘째 장 = 와이드 여권 책등 x 683(왼쪽 표 끝 641 · 오른쪽 글 시작 725 사이 홈) */
+export const HOME = { x: BOOK.x + BOOK.w / 2 - TAB.w / 2, y: BOOK.top + TAB.dy, back: { x: 33 + 1300 / 2 - TAB.w / 2, y: TAB.back.y } } as const;
 
 /** 도장 안 나라 이름(2~4자 기준). 긴 이름은 흔히 쓰는 줄임으로 */
 const SHORT: Record<string, string> = { sa: '사우디', cd: '콩고' };

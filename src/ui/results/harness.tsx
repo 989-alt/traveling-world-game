@@ -73,4 +73,7 @@ const soloSeats: SeatInfo[] = [
 ];
 const log = q.get('scenario') === 'empty' ? [] : solo ? soloLog() : fullLog();
 const me = q.get('me');
-render(<Results log={log} seats={solo ? soloSeats : seats} mySeat={me === 'none' ? null : me ? (Number(me) as Seat) : solo ? 3 : 0} />, document.getElementById('app')!);
+// U15 '처음으로': 앱에서는 client.leave(). 하네스는 누른 횟수만 센다(window.__home)
+const home = { n: 0 };
+(window as unknown as { __home: typeof home }).__home = home;
+render(<Results log={log} seats={solo ? soloSeats : seats} mySeat={me === 'none' ? null : me ? (Number(me) as Seat) : solo ? 3 : 0} onHome={() => { home.n++; }} />, document.getElementById('app')!);

@@ -25,6 +25,7 @@
 .end-book:has(.end-fb-book) .end-fb-label { position: absolute; left: 50%; bottom: 100%; display: block; color: #142038; font: 700 16px / 1 var(--font-hand); white-space: nowrap; transform: translate(-50%, -70px); }
 .end-fb-tab { display: flex; align-items: center; justify-content: center; width: 40px; height: 100%; border-radius: 2px; background: #1E3A6B; }
 .end-fb-tab-t { color: #FFFFFF; font: 700 18px / 1.1 var(--font-hand); writing-mode: vertical-rl; }
+.end-fb-home { background: #9B1C1C; }
 
 /* ── 손글씨(§19.9.2): Gaegu 700, 잉크색·기울기는 자리마다, multiply 로 아래 그림 결이 비친다. text-shadow 0 ── */
 .rs-stage .end-hand, .rs-stage .end-grid .end-stamp-t { font-family: var(--font-hand); font-weight: 700; mix-blend-mode: multiply; text-shadow: none; }
@@ -100,6 +101,8 @@
 /* ── '자세히 보기' / '돌아가기' 책갈피 탭(그림 글자, 하나의 버튼 — 자리·그림만 바뀜) ── */
 .end-tab { position: absolute; z-index: 6; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; transition: transform 0.15s ease; }
 .end-stage[data-page="detail"] .end-tab { z-index: 9; }
+/* U15 '처음으로' 책갈피(END-tab-home): 같은 탭 모양, 여권 책등에 걸림(첫 장·둘째 장·빈 기록 모두 위) */
+.end-home { z-index: 9; }
 .end-tab:hover { transform: translateY(4px); }
 .end-tab-img { display: block; width: auto; height: 100%; filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.3)); }
 
