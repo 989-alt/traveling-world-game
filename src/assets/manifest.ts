@@ -1,5 +1,5 @@
 // 에셋 매니페스트 조회. 코드는 파일 경로 대신 키만 쓴다(assets/manifest.json 이 키 -> 파일).
-// 키: tile.<n>(30칸, R5d TILE) plaza plaza.mask.<대륙> ui.signpost building.<n>.<1-3> landmark.<n>[.big] culture.<n> cutscene.<n> char.<c>.p<NN>[.big]|f00
+// 키: tile.<n>(30칸, R5d TILE) plaza plaza.mask.<대륙> ui.signpost building.<n>.<1-3> landmark.<n>[.big] culture.<n> cutscene.<n> char.<c>.p<NN>[.big]|f00 sfx.<효과음 ID>(U16 녹음, LAZY)
 //     card.<cardId>(th-2, aq-s1) item.<보상> event.<k> ui.<k> bgm.<k> + 묶음 2 optional(badge.<n> card.<cardId>)
 import raw from '../../assets/manifest.json';
 
@@ -9,7 +9,7 @@ const file = (e: Entry) => (typeof e === 'string' ? e : e.file);
 
 // 지연 로드 대상: 컷씬·카드·배지·미션·결과 화면 그림(result.*, U6 · 엔딩 end.*·포즈 P20/P21, U12 — 결과 화면이 뜰 때 받는다)·고해상(.big)·BGM, 캐릭터 P01 외 포즈·랜드마크 배지·건물 2~3단계(게임 시작 때 gameStartKeys 로 받는다).
 // 첫 로드(로비) 세트 = 나머지. 합계 ≤ 3MB 는 assets.test 가 지킨다.
-const LAZY = /^(cutscene|culture|event|card|badge|mission|mc|result|end)\.|\.big$|^bgm\.|^char\.\d+\.p(?!01$)|^landmark\.\d+$|^building\.\d+\.[23]$/;
+const LAZY = /^(cutscene|culture|event|card|badge|mission|mc|result|end)\.|\.big$|^bgm\.|^sfx\.|^char\.\d+\.p(?!01$)|^landmark\.\d+$|^building\.\d+\.[23]$/;
 export const isLazy = (key: string) => LAZY.test(key);
 
 export const hasAsset = (key: string) => key in entries;

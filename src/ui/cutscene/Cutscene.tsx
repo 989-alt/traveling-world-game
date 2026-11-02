@@ -2,6 +2,7 @@
 // 움직이는 속성은 transform·opacity·clip-path 뿐(WAAPI). 파티클은 canvas 1장. 글자는 전부 코드.
 // 그림이 하나라도 못 오면(오류·1.5초 초과) 배너만 2초 — 멈추는 일은 없다. 아무 데나 누르면 건너뛴다.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { assetUrl, hasAsset } from '../../assets/manifest';
 import { preload } from '../../assets/preload';
 import { CUT_MS, HOLD_MS } from '../../shared/protocol';
@@ -63,6 +64,10 @@ export function Cutscene(p: CutsceneProps) {
     });
     return () => { live = false; clearTimeout(timer); };
   }, [p.tile, p.charId]);
+
+  // U16 §21.2: 컷씬 동안 BGM 0(300ms 내림 · 끝 500ms 올림), 샷 1 시작에 팡파르(재접속으로 중간부터 이어 보면 생략)
+  useEffect(() => { audio.setDuck('cutscene', true); return () => audio.setDuck('cutscene', false); }, []);
+  useEffect(() => { if (mode !== 'loading' && from.current < 500) audio.playSfx('fanfare'); }, [mode === 'loading']);
 
   useEffect(() => {
     if (mode === 'loading') return;

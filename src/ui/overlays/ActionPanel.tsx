@@ -1,7 +1,8 @@
 // 행동 패널(DESIGN §4.2 작은 두루마리): 사기·건설·통행료·인수. 문구는 PRD §3.2 꼴 그대로.
 // 도착한 사람만 누르고, 나머지는 같은 패널을 읽기만 한다. 방패 팝업은 땅 주인에게만.
 import type { ComponentChildren } from 'preact';
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { STEP_MS } from '../../shared/economy';
 import { josa } from '../../state/nick';
 import { Timer } from '../missions/Timer';
@@ -30,6 +31,7 @@ export interface ScrollPanelProps {
 /** 작은 두루마리 하나. 한 번 누르면 모든 버튼이 잠긴다 */
 export function ScrollPanel(p: ScrollPanelProps) {
   const [done, setDone] = useState(false);
+  useEffect(() => { audio.playSfx('card-open'); }, []); // U16 §21.2.2 행동 패널 펼침
   const sent = useRef(false);
   const primary = useAutoFocus<HTMLButtonElement>(p.mine);
   const go = (c: ActionChoice) => {

@@ -12,6 +12,7 @@ import { MOTIONS } from '../characters/motions';
 import { MotionScheduler } from '../characters/scheduler';
 import { PlankButton, PlankDialog, STAGE, useStageScale } from '../overlays/PlankDialog';
 import { ScrollDialog, SignButton } from '../overlays/ScrollPanel';
+import { SoundSign } from '../overlays/SoundSign';
 import { tryFullscreenOnce } from '../device/fullscreen';
 import { Rules } from './Rules';
 import '../../styles/screens.css';
@@ -34,10 +35,10 @@ type Popup = null | 'menu' | 'join' | 'make';
 export function Entry({ client }: { client: GameClient }) {
   const [popup, setPopup] = useState<Popup>(null);
   const [rules, setRules] = useState(false);
-  const [muted, setMuted] = useState(audio.muted);
   const scale = useStageScale();
   const startRef = useRef<HTMLButtonElement>(null);
   const still = popup !== null || rules;
+  useEffect(() => { audio.playBgm('bgm.lobby'); }, []); // U16 §21.2.1 입장·팝업 = 로비 곡(첫 제스처 뒤 시작)
   useIdle(still);
 
   const closeAll = () => { setPopup(null); requestAnimationFrame(() => startRef.current?.focus({ preventScroll: true })); };
@@ -60,9 +61,7 @@ export function Entry({ client }: { client: GameClient }) {
           <i class="in-star in-star--l" aria-hidden="true" /><i class="in-star in-star--r" aria-hidden="true" />
         </button>
         <div class="in-signs">
-          <SignButton label={muted ? '소리 켜기' : '소리 끄기'} onClick={() => { audio.setMuted(!muted); setMuted(!muted); }}>
-            <SpeakerIcon off={muted} />
-          </SignButton>
+          <SoundSign />
           <SignButton label="규칙 보기" onClick={() => setRules(true)}><b class="sign-q">?</b></SignButton>
         </div>
         <span class="in-version">{VERSION}</span>
@@ -125,14 +124,6 @@ function useIdle(paused: boolean) {
 const PlayIcon = () => (
   <svg class="intro-start-play" viewBox="0 0 48 48" aria-hidden="true">
     <path d="M14 8.5c0-2.3 2.5-3.7 4.4-2.5l22.7 15.5a3 3 0 0 1 0 5L18.4 42c-1.9 1.2-4.4-.2-4.4-2.5z" fill="#FFFFFF" stroke="#142038" stroke-width="4.5" stroke-linejoin="round" />
-  </svg>
-);
-
-const SpeakerIcon = ({ off }: { off: boolean }) => (
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-    <path d="M4 9h4l5-4v14l-5-4H4z" />
-    {off ? <path d="m16 9 5 6m0-6-5 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none" />
-      : <path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none" />}
   </svg>
 );
 

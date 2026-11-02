@@ -176,7 +176,7 @@ export function MissionPanel(p: MissionPanelProps) {
       <header class="mp-head">
         <div class="mp-banner"><h2 class="mp-title">{m.title}</h2></div>
         <p class="mp-prompt">{m.prompt}</p>
-        <div class="mp-timer"><Timer deadlineAt={p.deadlineAt} totalMs={total} watch /></div>
+        <div class="mp-timer"><Timer deadlineAt={p.deadlineAt} totalMs={total} watch tick={p.role === 'player' && p.phase === 'play'} /></div>
       </header>
       <div class="mp-area" aria-disabled={frozen}>{activity}</div>
       {p.phase === 'tf' && !player ? (

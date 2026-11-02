@@ -1,6 +1,7 @@
 // 문화 카드(PRD §3.4, v3 02): 크림 테 카드, 큰 그림, 아래 캡션. 맛보기 뱃지는 있을 때만 자리를 차지한다.
 // 첫 방문은 3초 동안 탭을 받지 않는다(서버도 거부). 그 뒤 방문은 도착한 사람이 탭하면 넘어간다(상한 3초는 서버).
 import { useEffect, useRef } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { AssetImg, Pic } from '../../assets/AssetImg';
 import { hasAsset } from '../../assets/manifest';
 import type { CultureCard as Card } from '../../shared/content-types';
@@ -24,6 +25,7 @@ const BADGE_KIND = { food: '맛보기 음식', festival: '맛보기 축제', pla
 
 export function CultureCard(p: CultureCardProps) {
   const sent = useRef(false);
+  useEffect(() => { audio.playSfx('card-open'); }, []); // U16 §21.2.2 카드 펼침
   const canSkip = p.mine && !p.firstVisit;
   const tap = () => {
     if (!canSkip || sent.current) return; // 첫 방문 3초는 탭 무시

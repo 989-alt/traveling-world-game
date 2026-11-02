@@ -6,6 +6,7 @@ import { STEP_MS } from '../../shared/economy';
 import type { ItemKind, Reward } from '../../shared/types';
 import { timeLeft } from './logic';
 import { Timer, useNow } from './Timer';
+import { audio } from '../../audio/engine';
 
 export const REWARD_TEXT: Record<Reward, { name: string; desc: string }> = {
   travelTile: { name: '세계 여행', desc: '세계 여행 칸으로 가요' },
@@ -36,7 +37,7 @@ function Icon({ r }: { r: Reward }) {
 export function RewardPick({ options, deadlineAt, onChoose }: RewardPickProps) {
   const [done, setDone] = useState(false);
   const left = timeLeft(deadlineAt, useNow());
-  const choose = (i: number) => { if (done) return; setDone(true); onChoose(i); };
+  const choose = (i: number) => { if (done) return; setDone(true); audio.playSfx('sparkle'); onChoose(i); }; // U16: 보상 고름 확정 반짝
 
   const expire = useRef(() => {});
   expire.current = () => choose(0); // 무응답 → 첫 번째

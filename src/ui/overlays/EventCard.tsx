@@ -7,6 +7,8 @@ import type { LogEvent } from '../../shared/types';
 import { josa } from '../../state/nick';
 import { REWARD_TEXT } from '../missions/RewardPick';
 import { CONTINENT_NAME, keyActivate, useAutoFocus, won } from './parts';
+import { useEffect } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 
 // 보이는 시간은 shared/timing EVENT_MS(3.2초) 한 곳 — 서버가 같은 값을 다음 마감에 더한다(PRD §4.3 U10)
 type Ev = Extract<LogEvent, { ev: 'event' }>;
@@ -61,6 +63,13 @@ export function eventText(e: Ev, name: string): { title: string; body: string; k
 export function EventCard({ ev, name, onClose }: { ev: Ev; name: string; onClose: () => void }) {
   const t = eventText(ev, name);
   const self = useAutoFocus<HTMLElement>();
+  // U16 §21.2.2: 알림 카드가 열리는 순간 종이 펼침 + 칸 소리(무인도 첨벙 · 축제 징글 · 남극·기후·한국 탐험 차임)
+  useEffect(() => {
+    audio.playSfx('card-open');
+    if (ev.kind === 'island') audio.playSfx('splash');
+    else if (ev.kind === 'festival') audio.playSfx('festival');
+    else if (ev.kind === 'antarctic' || ev.kind === 'climate' || ev.kind === 'korea') audio.playSfx('chime');
+  }, []);
   return (
     <section class="evc" ref={self} role="button" tabIndex={0} aria-label={`${t.title}. 누르면 닫혀요`} data-event={ev.kind} onClick={onClose} onKeyDown={keyActivate(onClose)}>
       <header class="evc-band"><h2 class="evc-title">{t.title}</h2></header>

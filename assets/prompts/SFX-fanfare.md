@@ -1,0 +1,2 @@
+# SFX-fanfare
+A short triumphant orchestral fanfare for a landmark being completed in a children's world-travel game: brass flourish rising over three beats, timpani roll, cymbal crash, then a bright sustained chord with glockenspiel sparkle that resolves cleanly. Exactly about 4 seconds, grand but warm, no vocals, no drums loop, starts immediately, ends with a clean decay into silence. Family-friendly cartoon adventure style.

@@ -245,3 +245,29 @@ test('해설 카드 4단계 비교: 까닭 앞 같은 점·다른 점 색 꼬리
   await expect(page.locator('.ex-reasons li')).toHaveCount(2);
   await expect(page.locator('.ex-kind')).toHaveCount(0);
 });
+
+// U16(DESIGN §21.1): 큰 카드 동안 간판 사슬 — 진짜 카드 부품(문항·건설 미리보기·문화·해설·미션·보상·방패) + 진짜 GameMenu(folded) 하네스
+test('U16 사슬 접힘: 큰 카드 7종 위에서 사슬 간판(시계·규칙·멈춤)이 카드·답 단추·타이머와 교차 0, 시계는 role=timer 하나', async ({ page }) => {
+  const views: [string, string][] = [['question', '.qs, .qs .ov-ans, .qs .tm'], ['build', '.qs, .qs-bld'], ['culture', '.cc, .cc-peek'], ['explain', '.ex'], ['mission', '.mp, .mp .tm'], ['reward', '.rw'], ['shield', '.ap--shield']];
+  for (const [view, sel] of views) {
+    await page.route(/\/src\/main\.tsx(\?.*)?$/, (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+    await page.goto(`${BASE}/dev/overlay?view=${view}`);
+    await page.addScriptTag({ type: 'module', url: '/e2e/helpers/chain-harness.tsx' });
+    await page.waitForFunction(() => '__chain' in window && document.querySelectorAll('.gm .gm-sign.is-chain').length === 3);
+    await page.waitForTimeout(600);
+    const r = await page.evaluate((s) => {
+      const sr = document.querySelector('.gm')!.getBoundingClientRect(), k = sr.width / 1366;
+      const st = (el: Element) => { const b = el.getBoundingClientRect(); return { x: (b.left - sr.left) / k, y: (b.top - sr.top) / k, w: b.width / k, h: b.height / k }; };
+      return {
+        chain: [...document.querySelectorAll('.gm .gm-sign.is-chain')].map(st),
+        cards: [...document.querySelectorAll(s)].map(st),
+        timers: [...document.querySelectorAll('.gm [role="timer"], .board-hud [role="timer"]')].filter((el) => getComputedStyle(el).visibility !== 'hidden').length,
+      };
+    }, sel);
+    expect(r.cards.length, view).toBeGreaterThan(0);
+    const hit = (a: typeof r.chain[0], b: typeof a) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+    const bad = r.chain.flatMap((c, i) => r.cards.filter((d) => hit(c, d)).map(() => `${view}: 사슬 ${i}`));
+    expect(bad).toEqual([]);
+    expect(r.timers, view).toBe(1);
+  }
+});

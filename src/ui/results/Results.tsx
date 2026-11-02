@@ -8,6 +8,7 @@
 // (잉크색·기울기·multiply). 크기 = 머리 폭 기준, 발 기준선 한 줄. 메달 포즈·v2 여권·세운 여권·탭이 아직 없는 경우는 U12 그림으로 내려간다.
 // 보내는 것 없음: 로그에서 그 자리에서 계산해 그리기만 한다. 애니메이션 §19.6(약 6초), 움직임 줄이기 = 마지막 장면 한 번 페이드.
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { AssetImg, Pic } from '../../assets/AssetImg';
 import { assetUrl, hasAsset } from '../../assets/manifest';
 import { preload } from '../../assets/preload';
@@ -86,6 +87,19 @@ export function Results({ log, seats, mySeat = null, meta = META, onHome }: Resu
     const t = setTimeout(() => setPhase('done'), T.done * 1000);
     return () => clearTimeout(t);
   }, [phase]);
+  // U16 §21.2: 결과 곡 · 0.3초 뒤 반짝 1회 · 여권 도장(격자 등장 T.grid 부터 180ms 간격, ≤ 6, 움직임 줄이기면 1회)
+  useEffect(() => {
+    audio.playBgm('bgm.result');
+    const t = setTimeout(() => audio.playSfx('sparkle'), 300);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    if (phase === 'wait' || rep.empty) return;
+    const n = Math.min(calm ? 1 : 6, rep.seats[me]?.stamps.length ?? 0);
+    const at = phase === 'intro' ? T.grid * 1000 : 0;
+    const ts = Array.from({ length: n }, (_, i) => setTimeout(() => audio.playSfx('stamp'), at + i * 180));
+    return () => ts.forEach(clearTimeout);
+  }, [phase === 'wait']);
 
   const stageCls = `rs-stage end-stage end-${phase}${calm ? ' end-calm' : ''}`;
   const stageStyle = { width: `${STAGE.w}px`, height: `${STAGE.h}px`, transform: `translate(-50%, -50%) scale(${scale})` };

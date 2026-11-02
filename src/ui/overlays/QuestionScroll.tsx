@@ -2,6 +2,7 @@
 // 한 번 누르면 바로 잠긴다(연타·바꾸기 불가). 시간이 다 되면 '시간이 다 됐어요'(표시만), 버튼은 서버가 단계를 넘기면 판째 내려간다.
 // R2 T-D: 막대 44 + 남색 손잡이·금 캡(D1), 스톱워치(D2), 청사진 스케치 2(D3), 건설 미리보기(D5), 고민 포즈 P13·P10 교대(D6).
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { Pic } from '../../assets/AssetImg';
 import { cardAssetOf, hasAsset } from '../../assets/manifest';
 import { STEP_MS } from '../../shared/economy';
@@ -47,6 +48,7 @@ const LETTER = ['a', 'b', 'c', 'd'] as const;
 
 export function QuestionScroll(p: QuestionScrollProps) {
   const [picked, setPicked] = useState<number | boolean | null>(null);
+  useEffect(() => { audio.playSfx('card-open'); }, []); // U16 §21.2.2 두루마리 펼침
   const sent = useRef(false);
   const now = useNow(200);
   // 남은 시간은 표시용. 버튼 잠금은 서버가 단계를 넘길 때(이 판이 내려갈 때)만 — 기기 시계가 틀려도 서버 마감 전엔 누를 수 있다.
@@ -84,7 +86,7 @@ export function QuestionScroll(p: QuestionScrollProps) {
         <h2 class="qs-country">{p.country}</h2>
         <ContinentChip continent={p.continent} />
         {p.review && <span class="ov-chip ov-chip--review">복습</span>}
-        <div class="qs-timer"><Timer deadlineAt={p.deadline ?? 0} totalMs={STEP_MS.question} watch /></div>
+        <div class="qs-timer"><Timer deadlineAt={p.deadline ?? 0} totalMs={STEP_MS.question} watch tick={p.mine} /></div>
       </header>
       <div class="qs-paper">
         <i class="qs-frame" aria-hidden="true" />

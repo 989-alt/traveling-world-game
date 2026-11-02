@@ -285,4 +285,10 @@
   --modal-h: 280px;
   --modal-fade: 150ms;
   --duration-banner-end: 4000ms;
+  /* U16(DESIGN §21.1·§21.3): 큰 카드 동안 간판 사슬 (size.chain-timer · motion.chain) */
+  --chain-timer-w: 100px;
+  --chain-timer-h: 36px;
+  --chain-drop: 350ms;
+  --chain-lift: 250ms;
+  --chain-fade: 150ms;
 }

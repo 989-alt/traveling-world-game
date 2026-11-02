@@ -2,6 +2,7 @@
 // 전체판 = 그림 + 정답 + 까닭 2문장(4단계는 자료 2개 나란히), 짧은판 = 그림 + 정답 한 줄.
 // 참/거짓 단계면 아래 띠에 문장과 참·거짓 버튼(도착한 사람 화면엔 안 뜬다). 한 번 누르면 잠기고, 안 누르면 아무것도 보내지 않는다.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { AssetImg } from '../../assets/AssetImg';
 import { hasAsset } from '../../assets/manifest';
 import type { PublicCard } from '../../state/content';
@@ -101,6 +102,11 @@ export function chartCities(files: string[]): CityKey[] | null {
 
 export function ExplainCard(p: ExplainCardProps) {
   const c = p.card;
+  // U16 §21.2.2: 해설 카드가 열릴 때 도착자 결과(전원, 관전 기기 0.7×). 시간 초과도 오답 소리
+  useEffect(() => {
+    audio.playSfx('card-open');
+    if (p.correct !== null) audio.playSfx(p.correct ? 'correct' : 'wrong', { spectator: !p.mine });
+  }, []);
   useShown(p.onShown, SHOWN_MS[p.variant], !!p.covered);
   const key = hasAsset(`card.${c.id}`) ? `card.${c.id}` : c.country === 'aq' ? 'event.antarctic' : `culture.${p.tile}`;
   const two = p.variant === 'full' && c.level === 4 && !!c.image2;

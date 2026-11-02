@@ -8,6 +8,8 @@ import {
   coinChanges, coinCount, digitReels, DROP_MS, FLY_MS, plan, POP_MS, POP_REDUCED_MS, reelMs, type CoinFlow, type Reel,
 } from './coin-logic';
 import { CHAR, CORNER_FEET, CORNER_HS, HUD } from './geometry';
+import { audio } from '../../audio/engine';
+
 
 // ── 롤링 숫자 ─────────────────────────────────────────
 
@@ -172,6 +174,7 @@ export function useCoinFx({ coins, bankrupt, owners, log, instant, reduced }: Co
     for (const pp of p.pops) {
       later(pp.at - now, () => {
         const id = ++ids.current;
+        audio.playSfx(pp.gain ? 'coin-get' : 'coin-pay'); // U16 §21.2.2: 증감 팝과 같은 순간(같은 소리 120ms 안은 엔진이 버림)
         setPops((cur) => {
           const used = new Set(cur.filter((x) => x.seat === pp.seat).map((x) => x.lane));
           let lane = 0;

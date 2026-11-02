@@ -171,6 +171,28 @@ describe('광장·이정표·다리·HUD 자리 (DESIGN §16.4·§16.9.2)', () =
     expect(b).toHaveLength(4 + 1 + 1 + 2 + 5);
     for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) expect(boxesHit(b[i].box, b[j].box), `${b[i].id}·${b[j].id}`).toBe(false);
   });
+  it('U16 §21.1 사슬(접힘): 시계 칩·규칙·멈춤 상자가 서로·HUD·큰 카드 고정 상자와 교차 0, 스테이지 안, 밧줄 18·이음 12 로 이어짐', () => {
+    const b = hudBoxes(true);
+    expect(b.map((x) => x.id).filter((id) => id.startsWith('chain-'))).toEqual(['chain-timer', 'chain-rules', 'chain-save']);
+    expect(b.some((x) => ['timer', 'rules', 'save'].includes(x.id))).toBe(false); // 광장 간판 3 은 접힘 동안 자리를 비운다
+    for (let i = 0; i < b.length; i++) for (let j = i + 1; j < b.length; j++) expect(boxesHit(b[i].box, b[j].box), `${b[i].id}·${b[j].id}`).toBe(false);
+    const ch = Object.fromEntries(b.filter((x) => x.id.startsWith('chain-')).map((x) => [x.id, x.box]));
+    expect(ch['chain-timer']).toEqual({ x: 1256, y: 18, w: 100, h: 36 });
+    expect(ch['chain-rules']).toEqual({ x: 1284, y: 66, w: 44, h: 44 });
+    expect(ch['chain-save']).toEqual({ x: 1284, y: 122, w: 44, h: 44 });
+    expect(ch['chain-timer'].y).toBe(HUD.chain.rope); // 스테이지 윗변에서 밧줄 18
+    expect(ch['chain-rules'].y - (ch['chain-timer'].y + ch['chain-timer'].h)).toBe(HUD.chain.link);
+    expect(ch['chain-save'].y - (ch['chain-rules'].y + ch['chain-rules'].h)).toBe(HUD.chain.link);
+    for (const x of Object.values(ch)) { expect(x.x + x.w).toBeLessThanOrEqual(STAGE.w); expect(x.y).toBeGreaterThanOrEqual(0); }
+    // 큰 카드 고정 상자(DESIGN §21.1 검산): 문항 두루마리 · 건설 문항 카드 + 미리보기 · 문화·해설 720 · 미션 1040 · 방패 520 · 보상 ≤ 1183
+    const cardsFixed: [string, Box][] = [
+      ['문항', { x: 303, y: 124, w: 760, h: 520 }],
+      ['건설 카드', { x: 243, y: 124, w: 760, h: 520 }], ['건설 미리보기', { x: 1047, y: 174, w: 240, h: 420 }],
+      ['문화·해설', { x: 323, y: 0, w: 720, h: 768 }], ['미션', { x: 163, y: 0, w: 1040, h: 768 }],
+      ['방패', { x: 423, y: 0, w: 520, h: 768 }], ['보상', { x: 183, y: 0, w: 1000, h: 768 }],
+    ];
+    for (const [id, cb] of cardsFixed) for (const [cid, x] of Object.entries(ch)) expect(boxesHit(cb, x), `${id}·${cid}`).toBe(false);
+  });
   it('다리 30: 이웃 칸 쌍마다 하나, 틈을 건너 양쪽 땅덩이에 6px 이상 걸친다', () => {
     expect(BRIDGES).toHaveLength(30);
     for (const br of BRIDGES) {

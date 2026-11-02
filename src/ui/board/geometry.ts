@@ -210,7 +210,18 @@ export const HUD = {
   save: { x: 793, y: 235, w: 44, h: 44 },
   /** 간판을 매단 밧줄 길이(간판 윗변 213 에서 위로) — 윗줄 칸 상자 아래(y 171)에서 멈춘다 */
   rope: 42,
+  /** U16(DESIGN §21.1): 큰 카드(어두운 단계 창) 동안 간판 3 이 접히는 오른쪽 위 세로 사슬. 중심 x 1306, 스테이지 윗변에서 밧줄 18,
+   *  시계 칩 100×36(y 18~54) → 이음 12 → 규칙 44×44(y 66~110) → 이음 12 → 멈춤/나가기 44×44(y 122~166). 모든 큰 카드 오른쪽 끝(≤ 1287)보다 바깥 */
+  chain: {
+    x: 1306, rope: 18, link: 12,
+    timer: { y: 36, w: px('chain-timer-w'), h: px('chain-timer-h') },
+    rules: { y: 88, w: 44, h: 44 },
+    save: { y: 144, w: 44, h: 44 },
+  },
 } as const;
+
+/** 사슬 간판 상자(HangSign at: 중심 + 크기) */
+export const chainAt = (k: 'timer' | 'rules' | 'save') => ({ x: HUD.chain.x, ...HUD.chain[k] });
 
 // ── U10 보드에서 칸 고르기(DESIGN §18.2·§18.3) ──
 /** 고르기 간판: 주사위 자리 (533,290)~(833,400), 축제는 단추 줄로 높이 150(y 290~440). 윗변 290 고정, 밧줄 33(남은 시간 간판 아랫변 257 에서) */
@@ -246,16 +257,16 @@ export function cornerBoxes(): { id: string; box: Box }[] {
   });
 }
 
-/** HUD·이정표 상자(교차 검사·e2e 공용) */
-export function hudBoxes(): { id: string; box: Box }[] {
+/** HUD·이정표 상자(교차 검사·e2e 공용). folded = 큰 카드 동안(U16 §21.1): 광장 간판 3 대신 오른쪽 위 사슬 상자 chain-timer·chain-rules·chain-save */
+export function hudBoxes(folded = false): { id: string; box: Box }[] {
   const { panel, dice, timer, rules, save } = HUD;
   const at = (c: { x: number; y: number; w: number; h: number }): Box => ({ x: c.x - c.w / 2, y: c.y - c.h / 2, w: c.w, h: c.h });
   return [
     ...HUD.panels.map((c, i) => ({ id: `panel${i + 1}`, box: { x: c.x - panel.w / 2, y: c.y - panel.h / 2, w: panel.w, h: panel.h } })),
     { id: 'dice', box: { ...dice } },
-    { id: 'timer', box: at(timer) },
-    { id: 'rules', box: at(rules) },
-    { id: 'save', box: at(save) },
+    ...(folded
+      ? (['timer', 'rules', 'save'] as const).map((k) => ({ id: `chain-${k}`, box: at(chainAt(k)) }))
+      : [{ id: 'timer', box: at(timer) }, { id: 'rules', box: at(rules) }, { id: 'save', box: at(save) }]),
     ...SIGNPOSTS.map((s) => ({ id: `sign-${s.continent}`, box: s.board })),
   ];
 }

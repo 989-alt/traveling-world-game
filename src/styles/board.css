@@ -477,13 +477,19 @@
    주사위와 같은 150ms 페이드, 줌이 풀리기 시작(out)하면 돌아온다. 자리·크기는 그대로 */
 .board-hud.is-cam .panel,
 .board-hud.is-cam .board-timer-sign,
-.game:has(.board-hud.is-cam) .gm-sign {
+.game:has(.board-hud.is-cam) .gm-sign:not(.is-chain) {
   opacity: 0;
   pointer-events: none;
 }
 .board-timer-sign,
 .gm-sign {
   transition: opacity var(--duration-fast) linear;
+}
+/* U16(DESIGN §21.1): 큰 카드 동안 판 시계 간판은 사슬 시계 칩에 자리를 넘긴다 — visibility 로 접근성 트리에서도 빠져 role=timer 가 하나만 남는다 */
+.game.is-folded .board-timer-sign {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--chain-fade) linear, visibility 0s linear var(--chain-fade);
 }
 
 /* ── 주사위 B: 나무 컵 + 금테 쟁반(§17.1). HUD 상자 (583,282) 200×166 — 자리는 dice-show.ts CUP 에서 ── */

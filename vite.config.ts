@@ -11,7 +11,8 @@ const copyAssets = (): Plugin => ({
   closeBundle() {
     for (const [dir, ext] of [['webp', '.webp'], ['audio', '.mp3']]) {
       mkdirSync(`dist/${dir}`, { recursive: true });
-      cpSync(`assets/${dir}`, `dist/${dir}`, { recursive: true, filter: s => statSync(s).isDirectory() || s.endsWith(ext) });
+      // audio/raw = 다듬기 전 생성 원본 2안(U16) — 싣지 않는다
+      cpSync(`assets/${dir}`, `dist/${dir}`, { recursive: true, filter: s => !s.includes('/raw') && (statSync(s).isDirectory() || s.endsWith(ext)) });
     }
   },
 });

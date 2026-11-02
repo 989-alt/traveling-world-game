@@ -5,18 +5,20 @@ import { hasAsset, tileLazyKeys } from '../../assets/manifest';
 import { preload } from '../../assets/preload';
 import { buildCost, landPrice, tollQuote } from '../../engine/pay';
 import { BOARD, countryLabel, TRAVEL_TILE } from '../../shared/board';
-import { STEP_MS, TAKEOVER_MAX_LEVEL, TOLL_RATE } from '../../shared/economy';
+import { LAST_MINUTES_MS, STEP_MS, TAKEOVER_MAX_LEVEL, TOLL_RATE } from '../../shared/economy';
+import { audio, FINAL_FADE_MS } from '../../audio/engine';
 import type { Mission } from '../../shared/content-types';
-import type { GameState, LogEvent } from '../../shared/types';
+import type { GameState, LogEvent, Seat } from '../../shared/types';
 import type { GameClient } from '../../state/client';
 import { cardIn, cultureOf, materialOf, missionOf, questionOf, tfOf } from '../../state/content';
 import { josa } from '../../state/nick';
 import { freezeScreenClock } from '../../state/clock';
 import { localDeadline, stepKeyOf, type ClientState } from '../../state/store';
 import { lastOf, noticeShowMs, noticesFrom, seatViews, stepView, type Notice } from '../../state/view';
-import { Board, type BoardGame } from '../board/Board';
+import { Board, Hourglass, type BoardGame } from '../board/Board';
 import type { BoardPick } from '../board/PickLayer';
-import { HUD } from '../board/geometry';
+import { chainAt, HUD } from '../board/geometry';
+import { useRemaining, type ClockGame } from '../board/remaining';
 import { HangSign } from '../board/HangSign';
 import { RotateGuard, usePortrait } from '../board/RotateGuard';
 import { Cutscene } from '../cutscene/Cutscene';
@@ -148,6 +150,8 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   const picking = view.kind === 'travel' || view.kind === 'pickTile' || view.kind === 'festival';
   const overlay = holding || ending || camHold || picking ? null : renderStep();
   const covered = !!overlay || !!head || paused;
+  /** U16 §21.1: 어두운 단계 창(문화·문항·해설·보상·미션·방패 = <Stage dim>)이 떠 있는 동안 간판을 오른쪽 위 사슬로 접는다. 멈춤만으로는 안 접는다 */
+  const folded = !!overlay && (overlay.props as { dim?: boolean }).dim === true;
 
   function waiting(text: string) {
     return <Stage><p class="ov-wait" role="status">{text}</p></Stage>;
@@ -314,6 +318,7 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
 
   const host = me === room.hostSeat;
   const pm = usePauseUi(client, s, host, paused, gameRef);
+  useGameSound(s, view.kind, paused, overlay !== null && view.kind === 'question', me, ending);
   const resumeFix = useRef(paused);
   useEffect(() => {
     // 재개(U14): 멈출 때 떠 있던 컷씬은 서버가 민 t0 로 남은 샷부터 다시(재접속 복구와 같은 길). 끝난 컷씬은 뺀다
@@ -328,7 +333,7 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
     resumeFix.current = paused;
   }, [paused]);
   return (
-    <div ref={gameRef} class={`game${paused ? ' is-paused' : ''}`} data-ending={ending ? '1' : undefined} data-step={t.step} data-seat={me ?? ''} data-turn={t.seat}
+    <div ref={gameRef} class={`game${paused ? ' is-paused' : ''}${folded && !ending ? ' is-folded' : ''}`} data-ending={ending ? '1' : undefined} data-step={t.step} data-seat={me ?? ''} data-turn={t.seat}
       data-paused={paused ? '1' : undefined}>
       <Board game={g as unknown as BoardGame} players={players} mySeat={me} log={s.log} covered={covered}
         onRoll={(gauge) => act({ type: 'roll', gauge })} noZoom={s.resynced} onCamera={setCam} clockAt={s.clockAt}
@@ -339,7 +344,7 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
       <Fragment key={`${t.seat}|${overlayStep()}|${t.tile}`}>{overlay}</Fragment>
       {/* 알림 카드: 게임 루트 고정 레이어(z.notice — HUD·오버레이 위, 세로 안내 아래). 한 번 열리면 제 시간을 다 채운다 */}
       {head && !ending && headOpen && <Fragment key={head.id}>{renderNotice(head)}</Fragment>}
-      {!ending && <GameMenu host={host} paused={paused} onRules={() => setRules(true)} onPause={() => client.send({ t: 'pause' })} onLeave={pm.openLeave} />}
+      {!ending && <GameMenu host={host} paused={paused} folded={folded} game={g} clockAt={s.clockAt} onRules={() => setRules(true)} onPause={() => client.send({ t: 'pause' })} onLeave={pm.openLeave} />}
       {rules && !pm.open && <Rules onClose={() => setRules(false)} />}
       {/* 멈춤 모달·확인 창·자리 번호 화면(z 50, DESIGN §20). 형제는 inert, 세로 안내(아래 RotateGuard)만 그 위 */}
       {!ending && pm.node}
@@ -347,6 +352,45 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
       <RotateGuard />
     </div>
   );
+}
+
+/** U16 소리(DESIGN §21.2): 장면 곡(판 → 미션 → 막판 5분, 결과는 Results) · 더킹(문항 .6 · 멈춤 .25) · 멈춤/계속하기 차임 ·
+ *  참/거짓 결과(내 결과만, 내 기기) · 미션 판정 · 막판 종. 멈춤 중엔 곡을 바꾸지 않는다(시계가 안 줄어 막판 전환도 없음) */
+function useGameSound(s: ClientState, kind: string, paused: boolean, asking: boolean, me: Seat | null, ending: boolean) {
+  const g = s.room!.game!;
+  const mission = kind === 'mission';
+  const final = useRef(g.clock.remainingMs <= LAST_MINUTES_MS);
+  const key = useRef<string | null>(null);
+  useEffect(() => {
+    if (paused || ending) return;
+    // 막판 전환은 남은 시간 ≤ 5분이 된 첫 상태에서 1회. 미션 중이면 미션이 끝난 뒤
+    let bell = false;
+    if (!final.current && g.clock.remainingMs <= LAST_MINUTES_MS && !mission) { final.current = true; bell = key.current !== null; }
+    const next = mission ? 'bgm.mission' : final.current ? 'bgm.final' : 'bgm.board';
+    if (next === key.current) return;
+    audio.playBgm(next, bell ? FINAL_FADE_MS : undefined);
+    if (bell) audio.playSfx('bell');
+    key.current = next;
+  }, [mission, g.clock.remainingMs <= LAST_MINUTES_MS, paused, ending]);
+  useEffect(() => { audio.setDuck('question', asking && !paused); }, [asking, paused]);
+  const wasPaused = useRef(paused);
+  useEffect(() => {
+    audio.setPaused(paused);
+    if (paused !== wasPaused.current) audio.playSfx('chime'); // 멈춤 모달 열림 · 계속하기(닫힘)
+    wasPaused.current = paused;
+  }, [paused]);
+  useEffect(() => () => { audio.setDuck('question', false); audio.setPaused(false); }, []);
+  // 새 로그: 참/거짓 결과(내 기기, 내 결과만) · 미션 판정(전원)
+  const seen = useRef(s.seq);
+  useEffect(() => {
+    if (s.seq === seen.current) return;
+    seen.current = s.seq;
+    if (s.resynced) return;
+    for (const e of s.fresh) {
+      if (e.ev === 'tf_answer' && e.seat === me && e.value !== null) audio.playSfx(e.correct ? 'correct' : 'wrong');
+      if (e.ev === 'mission') audio.playSfx(e.success ? 'mission-ok' : 'mission-fail');
+    }
+  }, [s.seq]);
 }
 
 function whyNoTakeover(log: LogEvent[], e: Extract<LogEvent, { ev: 'toll' }>, level: number): NoTakeover {
@@ -359,27 +403,46 @@ function whyNoTakeover(log: LogEvent[], e: Extract<LogEvent, { ev: 'toll' }>, le
 }
 
 /** 규칙 · 멈춤/나가기 = 광장 뒤쪽 매달린 간판 2개(DESIGN §16.4·§20.5, 타이머 양옆). 윗줄 칸·패널을 가리지 않는다.
- *  방장 = 멈춤(1탭 즉시, 멈춘 동안 disabled). 학생 = 나가기(문 아이콘) → 내 화면만 나가기 확인 창(C-L) */
-export function GameMenu({ host, paused = false, onRules, onPause, onLeave }: {
-  host: boolean; paused?: boolean; onRules: () => void; onPause: () => void; onLeave?: () => void;
+ *  방장 = 멈춤(1탭 즉시, 멈춘 동안 disabled). 학생 = 나가기(문 아이콘) → 내 화면만 나가기 확인 창(C-L)
+ *  folded(U16 §21.1): 큰 카드(어두운 단계 창) 동안 간판 3 이 스테이지 오른쪽 위 세로 사슬로 접힌다 — 시계 칩(판 시계 간판은 숨김) · 규칙 · 멈춤.
+ *  단추 요소는 하나씩 그대로(자리만 바뀐다), 시계 칩만 접힘 동안 더해진다 */
+export function GameMenu({ host, paused = false, folded = false, game, clockAt, onRules, onPause, onLeave }: {
+  host: boolean; paused?: boolean; folded?: boolean; game?: ClockGame; clockAt?: number; onRules: () => void; onPause: () => void; onLeave?: () => void;
 }) {
+  const at = (k: 'rules' | 'save') => (folded ? chainAt(k) : HUD[k]);
+  const rope = folded ? HUD.chain.link : HUD.rope;
+  const cls = `gm-sign${folded ? ' is-chain' : ''}`;
   return (
     <Stage class="ov-layer--menu">
-      <nav class="gm" aria-label="게임 메뉴">
-        <HangSign at={HUD.rules} class="gm-sign">
+      <nav class={`gm${folded ? ' is-folded' : ''}`} aria-label="게임 메뉴">
+        <HangSign at={at('rules')} rope={rope} class={cls}>
           <button type="button" class="hang-plate gm-btn" aria-label="규칙 보기" title="규칙" onClick={onRules}>규칙</button>
         </HangSign>
         {host ? (
-          <HangSign at={HUD.save} class="gm-sign">
+          <HangSign at={at('save')} rope={rope} class={cls}>
             <button type="button" class="hang-plate gm-btn" data-act="pause" disabled={paused} aria-label="멈춤" title="멈춤" onClick={onPause}><PauseIcon /></button>
           </HangSign>
-        ) : onLeave && (
-          <HangSign at={HUD.save} class="gm-sign">
+        ) : onLeave ? (
+          <HangSign at={at('save')} rope={rope} class={cls}>
             <button type="button" class="hang-plate gm-btn" data-act="leave-sign" disabled={paused} aria-label="게임 나가기" title="게임 나가기" onClick={onLeave}><DoorIcon /></button>
           </HangSign>
-        )}
+        ) : null}
+        {folded && game ? <ChainTimer game={game} clockAt={clockAt} /> : null}
       </nav>
     </Stage>
+  );
+}
+
+/** 사슬 맨 위 놀이 시계 칩 100×36(모래시계 14 + mm:ss 20px). 막판 5분은 붉게, "통행료 ×1.5" 칩은 생략(aria-label 에만) */
+function ChainTimer({ game, clockAt }: { game: ClockGame; clockAt?: number }) {
+  const r = useRemaining(game, clockAt);
+  return (
+    <HangSign at={chainAt('timer')} rope={HUD.chain.rope} class={`gm-sign is-chain gm-chain-timer${r.last ? ' is-last' : ''}`}>
+      <div class="hang-plate gm-timer" role="timer" data-last={r.last ? '1' : '0'} aria-label={r.label}>
+        <Hourglass />
+        <b>{r.text}</b>
+      </div>
+    </HangSign>
   );
 }
 

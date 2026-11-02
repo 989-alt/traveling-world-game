@@ -2,7 +2,8 @@
 // 그 순위 한 줄은 멈춤 화면 아래로 왔다. 자리 번호 화면은 남은 시간 칩 + 자리 PIN 4자리(화면 폭 20% 이상) + 순위 한 줄 — 사진으로 찍어 두게 한다.
 // 2026-11-02 U14(DESIGN §20): 멈춘 순간 판에 있던 기기는 판 위 멈춤 모달(Game.tsx)이고, 자리 번호 화면은 그 모달의 작은 글자로 연다.
 // 이 파일의 Paused 는 다시 들어온 기기(PIN 없음) 전용 이어 하기 화면 — 방장 [게임 끝내기]·학생 [게임 나가기] 작은 글자 + 확인 창(C-E·C-L).
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { AssetImg } from '../../assets/AssetImg';
 import { assetsOf } from '../../engine/pay';
 import { BOARD, countryNameOf } from '../../shared/board';
@@ -24,6 +25,7 @@ export { mmss };
 
 /** 멈춘 방에 다시 들어온 기기(PIN 없음): 이어 하기 화면 */
 export function Paused({ client, s }: { client: GameClient; s: ClientState }) {
+  useEffect(() => { audio.playBgm('bgm.lobby'); }, []); // U16 §21.2.1 이어 하기 화면 = 로비 곡
   return <ResumeScreen client={client} s={s} />;
 }
 

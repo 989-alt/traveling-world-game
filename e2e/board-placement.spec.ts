@@ -910,3 +910,115 @@ test('U14 세로 안내 + 멈춤 모달: 세로면 모달도 inert(안 눌림·E
   await page.waitForSelector('.board-rotate');
   expect(await page.evaluate(() => [...document.querySelector('.board-rotate')!.parentElement!.children].filter((c) => !c.classList.contains('board-rotate')).every((c) => c.hasAttribute('inert')))).toBe(true);
 });
+
+// ── U16(DESIGN §21.1): 큰 카드 동안 간판 사슬 ──
+const U16_SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U16-shots/', import.meta.url));
+async function openChain(page: Page, query: string) {
+  await page.goto(`${BASE}/dev/board?${query}`);
+  await page.addScriptTag({ type: 'module', url: '/e2e/helpers/chain-harness.tsx' });
+  await page.waitForFunction(() => '__chain' in window && document.querySelectorAll('.gm .hang').length >= 2);
+  await page.waitForFunction(() => [...document.images].every((i) => i.complete), null, { timeout: 15_000 });
+  await page.waitForTimeout(600); // 사슬 350ms · 카드 ov-pop 350ms
+}
+/** 스테이지 px 로 잰 상자: 사슬 간판 3(판·밧줄 포함 판만) + 카드 */
+const CHAIN_MEASURE = (cardSel: string[]) => {
+  const sr = document.querySelector('.gm')!.getBoundingClientRect(), k = sr.width / 1366;
+  const st = (el: Element) => { const b = el.getBoundingClientRect(); return { x: (b.left - sr.left) / k, y: (b.top - sr.top) / k, w: b.width / k, h: b.height / k }; };
+  return {
+    k,
+    chain: [...document.querySelectorAll('.gm .gm-sign.is-chain')].map((el) => ({ id: el.querySelector('.hang-plate')!.getAttribute('aria-label') ?? '', box: st(el), ropes: [...el.querySelectorAll('.hang-rope')].map(st) })),
+    plaza: document.querySelectorAll('.gm .gm-sign:not(.is-chain)').length,
+    cards: cardSel.flatMap((s) => [...document.querySelectorAll(s)].map((el) => ({ id: s, box: st(el) }))),
+    timers: [...document.querySelectorAll('[role="timer"]')].filter((el) => getComputedStyle(el).visibility !== 'hidden' && el.closest('.gm, .board-hud')).map((el) => el.getAttribute('aria-label')),
+    boardTimerVis: getComputedStyle(document.querySelector('.board-timer-sign')!).visibility,
+  };
+};
+const CHAIN_VIEWS: [string, string[]][] = [
+  ['question', ['.qs']], ['build', ['.qs', '.qs-bld']], ['culture', ['.cc', '.cc-peek']], ['explain', ['.ex']],
+  ['mission', ['.mp']], ['reward', ['.rw']], ['shield', ['.ap--shield']],
+];
+test('U16 사슬 접힘 6상태: 큰 카드 동안 간판 3 이 오른쪽 위 사슬(1306 · y 36/88/144) — 카드와 교차 0, 스테이지 안, role=timer 1개(판 간판 hidden)', async ({ page }, info) => {
+  test.setTimeout(120_000);
+  mkdirSync(U16_SHOTS, { recursive: true });
+  const proj = info.project.name;
+  for (const [view, sels] of CHAIN_VIEWS) {
+    await openChain(page, `view=${view}`);
+    const r = await page.evaluate(CHAIN_MEASURE, sels);
+    expect(r.plaza, `${view}: 광장 간판 0`).toBe(0);
+    expect(r.chain.map((c) => c.id), view).toEqual(['규칙 보기', '멈춤', expect.stringMatching(/^남은 시간 23분 \d+초$/)]);
+    const c = (b: Box) => [Math.round(b.x + b.w / 2), Math.round(b.y + b.h / 2), Math.round(b.w), Math.round(b.h)];
+    expect(c(r.chain[0].box)).toEqual([1306, 88, 44, 44]);
+    expect(c(r.chain[1].box)).toEqual([1306, 144, 44, 44]);
+    expect(c(r.chain[2].box)).toEqual([1306, 36, 100, 36]);
+    expect(r.cards.length, `${view} 카드`).toBeGreaterThan(0);
+    const bad: string[] = [];
+    for (const s of r.chain) {
+      if (s.box.x + s.box.w > 1366.5 || s.box.y < -0.5) bad.push(`${s.id} 스테이지 밖`);
+      for (const cd of r.cards) {
+        if (hit(s.box, cd.box)) bad.push(`${s.id}·${cd.id}`);
+        for (const rp of s.ropes) if (hit(rp, cd.box)) bad.push(`${s.id} 밧줄·${cd.id}`);
+      }
+    }
+    expect(bad, view).toEqual([]);
+    if (view === 'reward') expect(Math.max(...r.cards.map((x) => x.box.x + x.box.w)), '보상 창 오른쪽 끝 ≤ 1183').toBeLessThanOrEqual(1183);
+    expect(r.timers, `${view}: role=timer 는 사슬 칩 하나(+ 카드 타이머는 .gm/.board-hud 밖)`).toHaveLength(1);
+    expect(r.boardTimerVis).toBe('hidden');
+    if (['question', 'build', 'explain', 'mission', 'reward'].includes(view) || proj === 'tablet-touch') await page.screenshot({ path: `${U16_SHOTS}${view}-${proj}.png` });
+  }
+});
+
+test('U16 사슬: 카드가 연달아 바뀌어도(문화 → 문항 → 해설) 한 번만 내려오고, 카드가 닫히면 광장 자리(573·793, 235)로 복귀', async ({ page }) => {
+  await openChain(page, 'view=culture');
+  const drops = () => page.evaluate(() => (window as unknown as { __drops: number }).__drops);
+  await page.evaluate(() => {
+    const w = window as unknown as { __drops: number };
+    w.__drops = 0;
+    document.addEventListener('animationstart', (e) => { if ((e as AnimationEvent).animationName === 'gm-chain-drop' && (e.target as Element).querySelector('[aria-label="규칙 보기"]')) w.__drops++; });
+  });
+  const ruleEl = await page.locator('[aria-label="규칙 보기"]').elementHandle();
+  for (const v of ['question', 'explain']) {
+    await page.evaluate((x) => (window as unknown as { __chain: { setView: (v: string) => void } }).__chain.setView(x), v);
+    await page.waitForTimeout(450);
+    await expect(page.locator('.gm.is-folded')).toHaveCount(1);
+  }
+  expect(await drops()).toBe(0); // 처음 내려온 뒤 다시 안 내려옴
+  expect(await ruleEl!.evaluate((el) => el.isConnected)).toBe(true); // 같은 단추 요소(자리만 바뀜)
+  await page.evaluate(() => (window as unknown as { __chain: { setView: (v: string) => void } }).__chain.setView('none'));
+  await page.waitForTimeout(300);
+  await expect(page.locator('.gm.is-folded')).toHaveCount(0);
+  await expect(page.locator('.gm-chain-timer')).toHaveCount(0);
+  expect(await ruleEl!.evaluate((el) => el.isConnected)).toBe(true);
+  const c = await page.evaluate(() => {
+    const sr = document.querySelector('.gm')!.getBoundingClientRect(), k = sr.width / 1366;
+    return [...document.querySelectorAll('.gm .hang-plate')].map((el) => { const b = el.getBoundingClientRect(); return [Math.round((b.left - sr.left + b.width / 2) / k), Math.round((b.top - sr.top + b.height / 2) / k)]; });
+  });
+  expect(c).toEqual([[573, 235], [793, 235]]);
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.board-timer-sign')!).visibility)).toBe('visible');
+  await expect(page.locator('[role="timer"]')).toHaveCount(1);
+});
+
+test('U16 사슬 간판: 막판 5분은 시계 칩이 붉고 aria-label 에 통행료 1.5배, ×1.5 칩 글자는 없음 · 멈춤 1탭 · 학생은 나가기', async ({ page }) => {
+  await openChain(page, 'view=question&last=1');
+  const chip = page.locator('.gm-chain-timer');
+  await expect(chip).toHaveClass(/is-last/);
+  await expect(chip.locator('[role="timer"]')).toHaveAttribute('aria-label', /통행료 1\.5배$/);
+  await expect(page.locator('.gm .board-timer-chip')).toHaveCount(0);
+  await page.locator('.gm [data-act="pause"]').click();
+  expect(await page.evaluate(() => (window as unknown as { __chain: { pauses: number } }).__chain.pauses)).toBe(1);
+  await page.screenshot({ path: `${U16_SHOTS}chain-last-${test.info().project.name}.png`, clip: { x: page.viewportSize()!.width - 220, y: 0, width: 220, height: 220 } });
+  await openChain(page, 'view=mission&host=0');
+  await expect(page.locator('.gm.is-folded [data-act="leave-sign"]')).toHaveAttribute('aria-label', '게임 나가기');
+});
+
+test('U16 사슬 + 세로 안내: 세로면 사슬 간판이 inert(안 눌림), 가로로 돌리면 눌린다', async ({ page }) => {
+  const vp = page.viewportSize()!;
+  await openChain(page, 'view=question');
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.waitForSelector('.board-rotate');
+  await page.locator('.gm [data-act="pause"]').click({ force: true, timeout: 1000 }).catch(() => {});
+  expect(await page.evaluate(() => (window as unknown as { __chain: { pauses: number } }).__chain.pauses)).toBe(0);
+  await page.setViewportSize(vp);
+  await expect(page.locator('.board-rotate')).toHaveCount(0);
+  await page.locator('.gm [data-act="pause"]').click();
+  expect(await page.evaluate(() => (window as unknown as { __chain: { pauses: number } }).__chain.pauses)).toBe(1);
+});

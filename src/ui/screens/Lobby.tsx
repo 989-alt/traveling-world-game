@@ -1,5 +1,6 @@
 // 로비(PRD §8-2, v3 08): 방 코드 알약, 자리 4칸(빈자리는 로봇), 캐릭터 6종 고르기, 방장의 시작 버튼.
-import { useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { audio } from '../../audio/engine';
 import { AssetImg, Pic } from '../../assets/AssetImg';
 import { PIN_RE } from '../../shared/protocol';
 import type { Seat } from '../../shared/types';
@@ -8,6 +9,7 @@ import { josa } from '../../state/nick';
 import type { ClientState } from '../../state/store';
 import { seatViews } from '../../state/view';
 import { SignButton } from '../overlays/ScrollPanel';
+import { SoundSign } from '../overlays/SoundSign';
 import { Rules } from './Rules';
 import '../../styles/screens.css';
 
@@ -29,6 +31,11 @@ export function Lobby({ client, s }: { client: GameClient; s: ClientState }) {
   const takenChars = room.seats.filter((x) => x.taken).map((x) => x.charId);
   const host = s.seat !== null && s.seat === room.hostSeat;
   const full = room.seats.every((x) => x.taken);
+  // U16 §21.2: 로비 곡(입장과 같은 곡이라 끊김 0) · 자리가 채워지면 착지 '툭'
+  useEffect(() => { audio.playBgm('bgm.lobby'); }, []);
+  const filled = room.seats.filter((x) => x.taken).length;
+  const wasFilled = useRef(filled);
+  useEffect(() => { if (filled > wasFilled.current) audio.playSfx('land'); wasFilled.current = filled; }, [filled]);
 
   return (
     <main class="sc sc--lobby">
@@ -69,11 +76,11 @@ export function Lobby({ client, s }: { client: GameClient; s: ClientState }) {
         ) : (
           <div class="lobby-go">
             {host
-              ? <button type="button" class="start-btn" data-act="start" onClick={() => client.send({ t: 'start' })}><span class="start-tri" aria-hidden="true" />출발하기</button>
+              ? <button type="button" class="start-btn" data-act="start" onClick={() => { audio.playSfx('fly'); client.send({ t: 'start' }); }}><span class="start-tri" aria-hidden="true" />출발하기</button>
               : <p class="sc-note-line" role="status">{josa(seats[room.hostSeat].name, '이', '가')} 출발을 누르면 바로 시작해요</p>}
           </div>
         )}
-        <div class="lobby-signs"><SignButton label="규칙 보기" onClick={() => setRules(true)}><b class="sign-q">?</b></SignButton></div>
+        <div class="lobby-signs"><SoundSign /><SignButton label="규칙 보기" onClick={() => setRules(true)}><b class="sign-q">?</b></SignButton></div>
       </div>
       {rules && <Rules onClose={() => setRules(false)} />}
     </main>
@@ -83,6 +90,7 @@ export function Lobby({ client, s }: { client: GameClient; s: ClientState }) {
 /** 이미 시작한 방에 처음 보는 기기로 왔다: 자리 번호를 고르고 저장 화면에서 찍어 둔 PIN 4자리를 넣는다 */
 export function PinEntry({ client, s }: { client: GameClient; s: ClientState }) {
   const seats = seatViews(s.room!);
+  useEffect(() => { audio.playBgm('bgm.lobby'); }, []); // PIN 입력도 로비 곡
   const [seat, setSeat] = useState<Seat | null>(null);
   const [pin, setPin] = useState('');
   const ok = seat !== null && PIN_RE.test(pin);

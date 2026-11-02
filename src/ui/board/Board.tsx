@@ -8,7 +8,6 @@ import { assetUrl, boardKeys } from '../../assets/manifest';
 import { Pic } from '../../assets/AssetImg';
 import { isLoaded, preload } from '../../assets/preload';
 import { BOARD, BOARD_SIZE, continentTiles, type Continent, type Tile } from '../../shared/board';
-import { LAST_MINUTES_MS } from '../../shared/economy';
 import type { GameState, LogEvent, Seat } from '../../shared/types';
 import { josa } from '../../state/nick';
 import { Character, type Ambient } from '../characters/Character';
@@ -26,6 +25,8 @@ import { boxesHit, BRIDGES, CHAR, CORNER_FEET, CORNER_HS, HUD, hudBoxes, PLAZA_A
 import { place } from './layout';
 import { flagClip, ownGeo } from './own-geo';
 import { CoinFlyLayer, useCoinFx } from './CoinFx';
+import { useRemaining } from './remaining';
+import { audio } from '../../audio/engine';
 import { PlayerPanel } from './PlayerPanel';
 import { usePortrait } from './RotateGuard';
 import { fitScale } from '../device/stage';
@@ -150,6 +151,7 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
       token.setDrifting(id(s as Seat), p.islandTurns > 0 && !p.bankrupt);
       if (p.bankrupt && !wasOut.current[s]) {
         sched.setBankrupt(id(s as Seat)); // 귀퉁이·말 둘 다 쓰러짐 → 회색
+        audio.playSfx('bankrupt');
         token.setBankrupt(id(s as Seat));
         players.forEach((o) => o.seat !== s && sched.trigger(id(o.seat), 'surprised'));
       }
@@ -170,7 +172,7 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     const at = (ms: number, f: () => void) => monoTimers.current.push(setTimeout(f, ms));
     const key = Date.now();
     if (reduced) { // 즉시 글로우·자리색, 띠·색종이 없이 배너 2초
-      setGlow(m); paint(m); setBand({ ...m, key });
+      setGlow(m); paint(m); setBand({ ...m, key }); audio.playSfx('monopoly');
       at(MONO.reducedBanner, () => setBand((b) => (b?.key === key ? null : b)));
       at(MONO.end, () => { setGlow((g) => (g === m ? null : g)); pending.current.delete(m.continent); });
       return;
@@ -178,7 +180,7 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     at(MONO.glow, () => { setGlow(m); token.trigger(id(m.seat), 'hop'); });
     at(MONO.hop2, () => token.trigger(id(m.seat), 'hop'));
     at(MONO.paint, () => paint(m));
-    at(MONO.band, () => setBand({ ...m, key }));
+    at(MONO.band, () => { setBand({ ...m, key }); audio.playSfx('monopoly'); });
     at(MONO.end, () => { setGlow((g) => (g === m ? null : g)); setBand((b) => (b?.key === key ? null : b)); pending.current.delete(m.continent); });
   };
 
@@ -227,6 +229,12 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
     for (const ev of log.slice(seen.current)) {
       for (const c of cuesFor(ev, seats, owners.current)) cue(id(c.seat), c.motion);
       if (ev.ev === 'event' && ev.kind === 'monopoly') playMonopoly({ continent: ev.payload.continent as Continent, seat: ev.seat });
+      // U16 §21.2.2: 땅 사기 깃발 · 건물 한 단계(랜드마크는 컷씬 팡파르) · 인수 · 방패로 막음. 다시 받기·탭 숨김은 소리 없음
+      if (!noZoom && !document.hidden) {
+        if (ev.ev === 'buy') audio.playSfx('flag');
+        else if (ev.ev === 'build' && ev.level < 4) audio.playSfx('build');
+        else if (ev.ev === 'takeover') audio.playSfx(ev.shielded ? 'shield' : 'takeover');
+      }
       // 재접속 다시 받기·탭 숨김은 연출 없이 바로(이동도 바로)
       if (ev.ev === 'dice') { if (noZoom || document.hidden) { moveGate.current = 0; showRoll(null); } else onDice(ev); }
     }
@@ -379,8 +387,11 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
         if (chip !== null) setHopChip({ seat: s as Seat, n: chip, key: r!.id });
         const land = () => {
           set(s, { busy: false });
+          audio.playSfx('land'); // 마지막 홉(이동 끝) 착지
           if (chip !== null) hopTimers.current.set(s + 100, setTimeout(() => setHopChip((c) => (c?.key === r!.id ? null : c)), 300));
         };
+        const flying = mv?.via === 'travel' || mv?.via === 'mission'; // 세계여행·내 땅으로: 첫 홉 대신 휘익
+        if (flying) audio.playSfx('fly');
         if (d > MAX_HOP) { // 순간 이동(세계여행·무인도 등): 도착 칸으로 카메라가 날아간다
           set(s, { pos: to, hop: false, busy: true });
           hopTimers.current.set(s, setTimeout(land, HOP_GAP_MS));
@@ -391,6 +402,7 @@ export function Board({ game, players, mySeat, log, covered, onRoll, noZoom, onC
           i++;
           set(s, { pos: (from + i) % BOARD_SIZE, hop: true, busy: true });
           token.trigger(id(s as Seat), 'hop');
+          if (i < d && !(flying && i === 1)) audio.playSfx('hop'); // 홉마다 통(≤ 12), 마지막 칸은 착지 소리
           hopTimers.current.set(s, setTimeout(i < d ? step : land, HOP_GAP_MS));
         };
         step();
@@ -738,25 +750,14 @@ const AmbientFilters = memo(function AmbientFilters() {
 /** 남은 놀이 시간 간판(DESIGN §15.5 보드 HUD, 2026-10-28 U1): 모래시계 16 + mm:ss 22px.
  *  막판(마지막 5분, 모든 길이 같음)은 간판 면이 붉고 아래에 "통행료 ×1.5" 칩. 서버 값이 기준이고, 다음 상태가 오기 전엔 받은 시각부터 1초씩 줄여 보인다 */
 function TimerSign({ game, clockAt }: { game: BoardGame; clockAt?: number }) {
-  const running = game.phase === 'playing' && clockAt !== undefined;
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!running) return;
-    setNow(Date.now());
-    const h = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(h);
-  }, [running, clockAt]);
-  const ms = Math.max(0, game.clock.remainingMs - (running ? Math.max(0, now - clockAt!) : 0));
-  const sec = Math.ceil(ms / 1000);
-  const mm = Math.floor(sec / 60), ss = sec % 60;
-  const last = ms <= LAST_MINUTES_MS;
+  const r = useRemaining(game, clockAt);
   return (
-    <HangSign at={HUD.timer} class={`board-timer-sign${last ? ' is-last' : ''}`}>
-      <div class="hang-plate board-timer" role="timer" data-last={last ? '1' : '0'} aria-label={`남은 시간 ${mm}분 ${ss}초${last ? ', 통행료 1.5배' : ''}`}>
+    <HangSign at={HUD.timer} class={`board-timer-sign${r.last ? ' is-last' : ''}`}>
+      <div class="hang-plate board-timer" role="timer" data-last={r.last ? '1' : '0'} aria-label={r.label}>
         <Hourglass />
-        <b>{String(mm).padStart(2, '0')}:{String(ss).padStart(2, '0')}</b>
+        <b>{r.text}</b>
       </div>
-      {last && <span class="board-timer-chip" aria-hidden="true">통행료 ×1.5</span>}
+      {r.last && <span class="board-timer-chip" aria-hidden="true">통행료 ×1.5</span>}
     </HangSign>
   );
 }

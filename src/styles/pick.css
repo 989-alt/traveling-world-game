@@ -212,7 +212,7 @@
 }
 .pick-bubble.is-below { animation-name: pick-bubble-in-below; }
 /* 윗줄 칸 말풍선(칸 아래 y 177~257)은 규칙·멈춤 간판(메뉴 레이어, y 213~257)과 겹칠 수 있다 → 말풍선이 떠 있는 동안 메뉴 간판을 걷는다(줌 때와 같은 방식) */
-.game:has(.pick-bubble.is-below:not(.is-gone)) .gm-sign {
+.game:has(.pick-bubble.is-below:not(.is-gone)) .gm-sign:not(.is-chain) {
   opacity: 0;
   pointer-events: none;
 }

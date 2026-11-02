@@ -58,7 +58,7 @@ test('인트로: 로고·무대·캐릭터 6+봇·시작하기·간판 2·버전
   const sb = (await start.boundingBox())!;
   expect(Math.round(sb.width)).toBe(460);
   expect(Math.round(sb.height)).toBe(104);
-  await expect(page.getByRole('button', { name: '소리 끄기' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '소리: 전부' })).toBeVisible();
   await expect(page.getByRole('button', { name: '규칙 보기' })).toBeVisible();
   await expect(page.locator('.in-version')).toBeVisible();
   expect(await page.locator('input').count()).toBe(0);
@@ -68,9 +68,9 @@ test('인트로: 로고·무대·캐릭터 6+봇·시작하기·간판 2·버전
   await page.getByRole('button', { name: '규칙 보기' }).click();
   await expect(page.getByRole('dialog', { name: '게임 규칙' })).toBeVisible();
   await page.getByRole('button', { name: '알겠어요' }).click();
-  // 소리 간판: 누르면 '소리 켜기'로
-  await page.getByRole('button', { name: '소리 끄기' }).click();
-  await expect(page.getByRole('button', { name: '소리 켜기' })).toBeVisible();
+  // 소리 간판(U16 3단): 누르면 '효과음만'으로
+  await page.getByRole('button', { name: '소리: 전부' }).click();
+  await expect(page.getByRole('button', { name: '소리: 효과음만' })).toBeVisible();
   expect(errors).toEqual([]);
   await ctx.close();
 });
@@ -351,3 +351,47 @@ for (const mode of ['ok', 'reject', 'none'] as const) {
     await ctx.close();
   });
 }
+
+// U16(DESIGN §21.2.3): 소리 설정 3단 간판 — 전부 → 효과음만 → 무음 순환, 새로고침 유지, 옛 tw.muted=1 은 무음으로 이관,
+// 첫 제스처 뒤 로비 곡(bgm.lobby), 무음이면 BGM·효과음 0, 규칙 창 안에도 같은 간판. 첫 화면 요청에 audio/ 0건
+test('U16 소리 설정 3단: 순환·새로고침 유지·옛 tw.muted 이관·무음 재생 0·규칙 창 간판·첫 로드 audio 0', async ({ browser }) => {
+  const { ctx, page, errors } = await open(browser, null, 's');
+  const audioReq: string[] = [];
+  page.on('request', (r) => { if (/\/audio\//.test(r.url())) audioReq.push(r.url()); });
+  await page.reload();
+  await settle(page);
+  expect(audioReq, '첫 화면(제스처 전) 소리 요청 0').toEqual([]);
+  const A = () => page.evaluate(() => { const a = (window as unknown as { __audio: { mode: string; current: string | null; unlocked: boolean; log: { name: string }[]; recorded: string[] } }).__audio; return { mode: a.mode, current: a.current, unlocked: a.unlocked, log: a.log.map((x) => x.name), recorded: a.recorded }; });
+  await page.mouse.click(20, 740); // 첫 제스처(빈 자리)
+  await expect.poll(async () => (await A()).current).toBe('bgm.lobby');
+  await expect.poll(async () => (await A()).recorded.length, { timeout: 10_000 }).toBe(27); // 녹음 효과음 27 디코드(LAZY, 제스처 뒤)
+  expect(audioReq.some((u) => /SFX-tap\.mp3/.test(u))).toBe(true);
+  const sign = (name: string) => page.locator('.in-signs').getByRole('button', { name });
+  await sign('소리: 전부').click();
+  await expect(sign('소리: 효과음만')).toBeVisible();
+  await expect.poll(async () => (await A()).current).toBe(null); // 효과음만: BGM 멈춤
+  expect(await page.evaluate(() => localStorage.getItem('tw.sound'))).toBe('sfx');
+  await sign('소리: 효과음만').click();
+  await expect(sign('소리: 꺼짐')).toBeVisible();
+  const n0 = (await A()).log.length;
+  await sign('규칙 보기').click(); // 무음: 탭·카드 소리 0
+  await expect(page.getByRole('dialog', { name: '게임 규칙' })).toBeVisible();
+  expect((await A()).log.length).toBe(n0);
+  await expect(page.locator('.rules .sound-sign')).toHaveAttribute('aria-label', '소리: 꺼짐'); // 규칙 창 안 같은 간판
+  await page.locator('.rules .sound-sign').click();
+  await expect(page.locator('.rules .sound-sign')).toHaveAttribute('aria-label', '소리: 전부');
+  await expect.poll(async () => (await A()).current).toBe('bgm.lobby');
+  await page.getByRole('button', { name: '알겠어요' }).click();
+  await sign('소리: 전부').click();
+  await sign('소리: 효과음만').click();
+  await page.reload();
+  await expect(sign('소리: 꺼짐')).toBeVisible(); // 새로고침 유지
+  // 옛 2단 저장값 이관
+  await page.evaluate(() => { localStorage.removeItem('tw.sound'); localStorage.setItem('tw.muted', '1'); });
+  await page.reload();
+  await expect(sign('소리: 꺼짐')).toBeVisible();
+  expect(await page.evaluate(() => [localStorage.getItem('tw.sound'), localStorage.getItem('tw.muted')])).toEqual(['off', null]);
+  await page.screenshot({ path: fileURLToPath(new URL('../../harness/state/traveling-world/reports/U16-shots/sound-sign-desktop.png', import.meta.url)), clip: { x: 1166, y: 0, width: 200, height: 80 } });
+  expect(errors).toEqual([]);
+  await ctx.close();
+});

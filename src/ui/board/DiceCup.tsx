@@ -126,7 +126,7 @@ export function DiceCup(p: DiceCupProps) {
     }
     if (bounced.current !== show.id) out(false);
     if (show.shakeFrom !== undefined && now < show.t0) setPhase('shake'); // 봇: 누름 없이 흔들기 600
-    at(show.t0, () => { setPhase('tilt'); audio.playSfx('dice'); });
+    at(show.t0, () => { setPhase('tilt'); audio.playSfx('dice-shake'); });
     at(show.t0 + DICE.tilt, () => setPhase('pour'));
     if (bounced.current !== show.id) {
       at(show.t0 + DICE.pour, () => {
@@ -148,7 +148,7 @@ export function DiceCup(p: DiceCupProps) {
         face(0, show.d1!); face(1, show.d2!); // 서버 눈으로 고정
         setPhase('stop');
       });
-      at(times.pop, () => setPhase('pop'));
+      at(times.pop, () => { setPhase('pop'); audio.playSfx('dice-land'); }); // 합 숫자 터짐과 같은 순간
       at(times.end, () => setPhase('done'));
     }
   }, [show]);

@@ -1261,3 +1261,166 @@ test('독점승(§16.5): 실제 판에서 대륙 마지막 칸을 사면 보드�
   await expect(b.page.locator('.board-root')).toHaveCount(0);
   await close(srv, ps);
 });
+
+// ── U16(DESIGN §21): 간판 사슬(실제 판) · 소리 ─────────────────────────
+const U16_SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U16-shots/', import.meta.url));
+type AuLog = { name: string; at: number; src: string; vol: number };
+const au = (page: Page) => page.evaluate(() => {
+  const a = (window as unknown as { __audio: { current: string | null; duck: number; log: AuLog[]; recorded: string[] } }).__audio;
+  return { current: a.current, duck: a.duck, log: a.log.map((x) => ({ ...x })), recorded: [...a.recorded] };
+});
+/** 같은 소리 최소 간격(DESIGN §21.2.2 표) 위반 */
+const GAPS: Record<string, number> = { tap: 80, hop: 100, 'card-open': 300, tick: 900, 'coin-get': 120, 'coin-pay': 120, stamp: 150 };
+const gapBad = (log: AuLog[]) => {
+  const bad: string[] = [];
+  for (const [n, gap] of Object.entries(GAPS)) {
+    const ts = log.filter((x) => x.name === n).map((x) => x.at);
+    for (let i = 1; i < ts.length; i++) if (ts[i] - ts[i - 1] < gap - 1) bad.push(`${n} ${ts[i] - ts[i - 1]}ms`);
+  }
+  return bad;
+};
+/** 접힘 사슬·카드 상자(스테이지 px) */
+const chainBoxes = (page: Page, cardSel: string) => page.evaluate((sel) => {
+  const sr = document.querySelector('.gm')!.getBoundingClientRect(), k = sr.width / 1366;
+  const st = (el: Element) => { const b = el.getBoundingClientRect(); return { x: (b.left - sr.left) / k, y: (b.top - sr.top) / k, w: b.width / k, h: b.height / k }; };
+  return {
+    chain: [...document.querySelectorAll('.gm .gm-sign.is-chain')].map((el) => st(el)),
+    cards: [...document.querySelectorAll(sel)].map((el) => st(el)),
+    timers: [...document.querySelectorAll('.gm [role="timer"], .board-hud [role="timer"]')].filter((el) => getComputedStyle(el).visibility !== 'hidden').length,
+  };
+}, cardSel);
+const boxHit = (a: { x: number; y: number; w: number; h: number }, b: typeof a) => Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) > 0.5 && Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) > 0.5;
+async function expectChainClear(page: Page, cardSel: string, label: string) {
+  await expect(page.locator('.gm.is-folded')).toHaveCount(1);
+  await page.waitForTimeout(450); // 사슬 350ms
+  const r = await chainBoxes(page, cardSel);
+  expect(r.chain.length, `${label} 사슬 간판`).toBeGreaterThanOrEqual(3);
+  expect(r.cards.length, `${label} 카드`).toBeGreaterThan(0);
+  const bad: string[] = [];
+  for (const c of r.chain) for (const d of r.cards) if (boxHit(c, d)) bad.push(`${label}: 사슬 (${Math.round(c.x)},${Math.round(c.y)}) · 카드`);
+  expect(bad).toEqual([]);
+  expect(r.timers, `${label}: role=timer(놀이 시계)는 사슬 칩 하나`).toBe(1);
+}
+
+for (const vp of [{ name: 'desktop', w: 1366, h: 768, touch: false }, { name: 'tablet', w: 1180, h: 820, touch: true }]) {
+  test(`U16 사슬 멈춤(${vp.name}): 실제 판 문항·해설·미션·보상 동안 간판이 오른쪽 위 사슬, 카드와 교차 0 · 사슬 멈춤 1탭 → 모달 · 재개 뒤 사슬 그대로 · 카드가 닫히면 광장 복귀 + 스크린숏`, async ({ browser }) => {
+    mkdirSync(U16_SHOTS, { recursive: true });
+    const srv = new Srv(nextCode());
+    const ps: Who[] = [];
+    for (let i = 0; i < 2; i++) {
+      const ctx = await browser.newContext({ baseURL: BASE, viewport: { width: vp.w, height: vp.h }, hasTouch: vp.touch, isMobile: vp.touch });
+      await ctx.routeWebSocket(/\/api\/rooms\/[A-Z0-9]{6}\/ws$/, (route) => srv.attach(route, `p${i}`));
+      const page = await ctx.newPage();
+      await page.goto('/');
+      await joinCode(page, srv.code);
+      await page.locator(`.pick[data-char="${i}"]`).click();
+      await expect(page.locator('.lb-slot.is-me')).toHaveCount(1);
+      ps.push({ ctx, page, tag: `p${i}` });
+    }
+    await ps[0].page.locator('[data-act="start"]').click();
+    for (const p of ps) await expect(p.page.locator('.board-root')).toBeVisible();
+    const host = ps[0].page;
+    const tp = async (sel: string) => { const el = host.locator(sel).first(); if (vp.touch) await el.tap(); else await el.click(); };
+    // 판(펼침): 광장 간판 2 + 판 시계 간판
+    await expect(host.locator('.gm.is-folded')).toHaveCount(0);
+    srv.do((g) => { g.revealedCards.push('th-1'); });
+    srv.arrive(0, 2); // 타이 → 문화 카드
+    await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).toBe('culture');
+    await expect(host.locator('.cc')).toBeVisible({ timeout: 8000 });
+    await expectChainClear(host, '.cc, .cc-peek', '문화');
+    srv.hurry(200);
+    await expect(host.locator('.qs')).toBeVisible({ timeout: 8000 });
+    await expectChainClear(host, '.qs, .qs-bld', '문항');
+    await host.screenshot({ path: `${U16_SHOTS}game-question-${vp.name}.png` });
+    // 사슬 멈춤 1탭 → 모달(z 50) 위, 사슬은 그 아래 inert·disabled
+    await tp('.gm.is-folded [data-act="pause"]');
+    await expect.poll(() => srv.g.phase).toBe('paused');
+    await expect(host.locator('.ov-layer--pause')).toBeVisible();
+    await expect(host.locator('.gm.is-folded [data-act="pause"]')).toBeDisabled();
+    await host.screenshot({ path: `${U16_SHOTS}game-paused-${vp.name}.png` });
+    await tp('.pm [data-act="resume"]');
+    await expect.poll(() => srv.g.phase).toBe('playing');
+    await expect(host.locator('.ov-layer--pause')).toHaveCount(0);
+    await expect(host.locator('.gm.is-folded')).toHaveCount(1); // 재개 뒤 사슬 그대로
+    // 해설
+    const ans = answerOf(srv);
+    await tp(`.qs .ov-ans[data-choice="${ans}"]`);
+    await expect(host.locator('.ex')).toBeVisible({ timeout: 8000 });
+    await expectChainClear(host, '.ex', '해설');
+    await host.screenshot({ path: `${U16_SHOTS}game-explain-${vp.name}.png` });
+    // 해설이 닫히면(행동 패널 = 어둡지 않음) 광장 자리로 복귀
+    srv.hurry(200);
+    await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).not.toBe('explanation');
+    if (srv.g.turn.step === 'tf') { srv.hurry(200); await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).not.toBe('tf'); }
+    await expect(host.locator('.gm.is-folded')).toHaveCount(0, { timeout: 8000 });
+    await expect(host.locator('.gm-chain-timer')).toHaveCount(0);
+    expect(await host.locator('.board-timer-sign').evaluate((el) => getComputedStyle(el).visibility)).toBe('visible');
+    // 미션
+    srv.arrive(0, 6);
+    await expect(host.locator('.mp')).toBeVisible({ timeout: 10_000 });
+    await expectChainClear(host, '.mp', '미션');
+    await host.screenshot({ path: `${U16_SHOTS}game-mission-${vp.name}.png` });
+    // 보상 고르기(도착자): 미션 성공 뒤 단계를 서버 상태로 바로 연다
+    srv.do((g) => { g.turn = { ...g.turn, step: 'reward', missionSuccess: true, rewardOptions: ['tollFree', 'shield', 'travelTile'] }; });
+    srv.hurry(9000);
+    await expect(host.locator('.rw')).toBeVisible({ timeout: 8000 });
+    await expectChainClear(host, '.rw', '보상');
+    const rw = await chainBoxes(host, '.rw');
+    expect(Math.max(...rw.cards.map((c) => c.x + c.w)), '보상 창 오른쪽 끝 ≤ 1183').toBeLessThanOrEqual(1183);
+    await host.screenshot({ path: `${U16_SHOTS}game-reward-${vp.name}.png` });
+    await close(srv, ps);
+  });
+}
+
+test('U16 소리·bgm·효과음: 첫 제스처 뒤 판 bgm.board → 문항 더킹 .6 → 멈춤 .25(차임) → 재개 .6 → 해설 1·정답(관전 .7×) → 미션 bgm.mission → 판 → 남은 5분 bgm.final + 종 · 한 턴 순서 주사위→홉→착지→카드→정답, 홉 ≤ 12, 최소 간격 위반 0', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 2);
+  const [a, b] = ps;
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).current, { timeout: 5000 }).toBe('bgm.board');
+  await expect.poll(async () => (await au(a.page)).recorded.length, { timeout: 10_000 }).toBe(27);
+  srv.do((g) => { g.revealedCards.push('th-1'); });
+  srv.arrive(0, 2);
+  await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).toBe('culture');
+  srv.hurry(200);
+  for (const p of ps) await expect(p.page.locator('.qs')).toBeVisible({ timeout: 8000 });
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).duck).toBe(0.6);
+  await tap(a.page, '.gm.is-folded [data-act="pause"]');
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).duck).toBe(0.25);
+  expect((await au(a.page)).log.at(-1)!.name).toBe('chime');
+  await tap(a.page, '.pm [data-act="resume"]');
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).duck).toBe(0.6);
+  await tap(a.page, `.qs .ov-ans[data-choice="${answerOf(srv)}"]`);
+  for (const p of ps) await expect(p.page.locator('.ex')).toBeVisible({ timeout: 8000 });
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).duck).toBe(1);
+  const la = (await au(a.page)).log, lb = (await au(b.page)).log;
+  expect(la.find((x) => x.name === 'correct')?.vol).toBeCloseTo(0.7, 2); // 내 기기
+  expect(lb.find((x) => x.name === 'correct')?.vol).toBeCloseTo(0.49, 2); // 관전 0.7×
+  // 이번 턴(마지막 주사위부터 정답까지) — 앞서 봇 차례 소리는 뺀다
+  const ci = la.findIndex((x) => x.name === 'correct');
+  const di = la.slice(0, ci).map((x) => x.name).lastIndexOf('dice-shake');
+  const turn = la.slice(di, ci + 1).map((x) => x.name);
+  const first = (n: string) => turn.indexOf(n);
+  for (const n of ['dice-shake', 'dice-land', 'hop', 'land', 'card-open', 'correct']) expect(first(n), `${n} 기록: ${turn.join(',')}`).toBeGreaterThanOrEqual(0);
+  expect(first('dice-shake')).toBeLessThan(first('hop'));
+  expect(first('hop')).toBeLessThan(first('land'));
+  expect(first('land')).toBeLessThan(first('card-open'));
+  expect(first('card-open')).toBeLessThan(first('correct'));
+  expect(turn.filter((x) => x === 'hop').length).toBeLessThanOrEqual(12);
+  expect(turn.length, '한 턴 ≤ 14회(탭 제외)').toBeLessThanOrEqual(14 + turn.filter((x) => x === 'tap').length);
+  expect(la.filter((x) => x.src === 'file').length, '녹음 파일로 난 소리').toBeGreaterThan(0);
+  // 미션 → bgm.mission, 끝나면 bgm.board
+  srv.hurry(200);
+  await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).not.toBe('explanation');
+  srv.arrive(0, 6);
+  for (const p of ps) await expect(p.page.locator('.mp')).toBeVisible({ timeout: 10_000 });
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).current).toBe('bgm.mission');
+  for (let i = 0; i < 4 && ['mission', 'tf', 'tfResult'].includes(srv.g.turn.step); i++) { srv.hurry(100); await a.page.waitForTimeout(600); }
+  await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).not.toMatch(/^(mission|tf|tfResult)$/);
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).current, { timeout: 8000 }).toBe('bgm.board');
+  expect((await au(a.page)).log.some((x) => x.name === 'mission-ok' || x.name === 'mission-fail')).toBe(true);
+  // 남은 5분 → bgm.final + 종(1회)
+  srv.do((g) => { g.clock.remainingMs = 4 * 60_000; });
+  for (const p of ps) await expect.poll(async () => (await au(p.page)).current, { timeout: 8000 }).toBe('bgm.final');
+  for (const p of ps) expect((await au(p.page)).log.filter((x) => x.name === 'bell')).toHaveLength(1);
+  for (const p of ps) expect(gapBad((await au(p.page)).log)).toEqual([]);
+  await close(srv, ps);
+});

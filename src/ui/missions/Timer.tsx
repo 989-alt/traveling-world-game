@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { timeLeft } from './logic';
 import { screenNow } from '../../state/clock';
+import { audio } from '../../audio/engine';
 import '../../styles/missions.css'; // .tm 모양(문항 두루마리·행동 패널도 이 타이머를 쓴다)
 
 /** 화면 타이머의 지금. 멈춘 판(U14)에선 state/clock 이 멈춘 시각을 돌려줘 링·막대가 그 값에 고정된다.
@@ -19,9 +20,11 @@ export function useNow(everyMs = 200) {
 const R = 30;
 const C = 2 * Math.PI * R;
 
-export function Timer({ deadlineAt, totalMs, watch }: { deadlineAt: number; totalMs: number; watch?: boolean }) {
+/** tick: 푸는 기기의 문항·미션 타이머만(U16 §21.2.2) — 남은 5초 진입 뒤 매초 째깍(5회) */
+export function Timer({ deadlineAt, totalMs, watch, tick }: { deadlineAt: number; totalMs: number; watch?: boolean; tick?: boolean }) {
   const left = timeLeft(deadlineAt, useNow());
   const sec = Math.ceil(left / 1000);
+  useEffect(() => { if (tick && sec >= 1 && sec <= 5) audio.playSfx('tick'); }, [tick && sec <= 5 ? sec : 0]);
   return (
     <div class={`tm${sec <= 5 ? ' is-warn' : ''}${watch ? ' tm--watch' : ''}`} role="timer" aria-label={`남은 시간 ${sec}초`} data-sec={sec}>
       {watch && <WatchCrown />}

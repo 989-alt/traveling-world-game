@@ -1,6 +1,9 @@
 // 규칙 도움말(PRD §8-16, 정적). 로비·보드에서 연다.
 import { ISLAND_ESCAPE_COST, KOREA_BONUS, SALARY, START_COIN, TF_REWARD } from '../../shared/economy';
 import { Stage, useAutoFocus, won } from '../overlays/parts';
+import { useEffect } from 'preact/hooks';
+import { SoundSign } from '../overlays/SoundSign';
+import { audio } from '../../audio/engine';
 
 const RULES: [string, string][] = [
   ['차례', '주사위 버튼을 누르고 있다가 떼면 굴러가요. 나온 수만큼 칸을 움직여요.'],
@@ -16,10 +19,11 @@ const RULES: [string, string][] = [
 
 export function Rules({ onClose }: { onClose: () => void }) {
   const close = useAutoFocus<HTMLButtonElement>();
+  useEffect(() => { audio.playSfx('card-open'); }, []); // U16 §21.2.2 규칙 창 펼침
   return (
     <Stage dim label="규칙" class="ov-layer--top">
       <section class="rules" role="dialog" aria-modal="true" aria-label="게임 규칙">
-        <header class="ap-bar"><h2 class="ap-title">이렇게 놀아요</h2></header>
+        <header class="ap-bar"><h2 class="ap-title">이렇게 놀아요</h2><SoundSign class="rules-sound" /></header>
         <dl class="rules-list">
           {RULES.map(([k, v]) => [<dt key={`t${k}`}>{k}</dt>, <dd key={`d${k}`}>{v}</dd>])}
         </dl>

@@ -643,6 +643,23 @@
 .gm { position: absolute; inset: 0; pointer-events: none; }
 .gm-btn { width: 100%; }
 .gm-btn:disabled { opacity: .7; cursor: default; transform: none; }
+/* U16(DESIGN §21.1): 큰 카드 동안 오른쪽 위 세로 사슬(자리는 HUD.chain). 내려옴 = 위에서 translateY 350ms bounce + 앞 150ms opacity,
+   펼침(광장 복귀) = 제자리 opacity 150ms. transform·opacity 만 */
+.gm-sign.is-chain { animation: gm-chain-drop var(--chain-drop) var(--ease-bounce) backwards, gm-sign-in var(--chain-fade) linear backwards; }
+.gm:not(.is-folded) .gm-sign { animation: gm-sign-in var(--chain-fade) linear backwards; } /* backwards: 끝난 뒤엔 줌·말풍선 숨김(opacity 0)이 이긴다 */
+@keyframes gm-chain-drop { from { transform: translateY(-170px); } to { transform: none; } }
+@keyframes gm-sign-in { from { opacity: 0; } to { opacity: 1; } }
+/* 사슬 맨 위 놀이 시계 칩 100×36: 모래시계 14 + mm:ss 20px(판 시계 간판과 같은 면). 막판은 붉게, "통행료 ×1.5" 칩 없음 */
+.gm-timer { font-size: 20px; gap: 4px; }
+.gm-timer b { font-weight: var(--weight-regular); }
+.gm-timer .board-timer-ico { flex: none; width: 14px; height: 14px; }
+.gm-chain-timer.is-last .hang-plate {
+  border: 3px solid var(--tile-side-dark);
+  border-image: none;
+  border-radius: 8px;
+  background: var(--timer-warn);
+  color: #FFF;
+}
 
 /* ── 연결 끊김 ── */
 .net-banner {
@@ -713,6 +730,7 @@
 @media (prefers-reduced-motion: reduce) {
   .cc-wrap, .qs, .qs-peek, .ex, .ap, .rules, .evc, .ov-sparkles i { animation: none; }
   .ov-layer--pause, .ap.pm { animation: none; }
+  .gm-sign, .gm-sign.is-chain { animation: none; }
   .qs-peek-img { transition: none; }
   .ov-btn, .ov-ans { transition: none; }
 }

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ROTATE_WIDE, boardKeys, bootKeys, gameStartKeys } from './assets/manifest';
 import { preload } from './assets/preload';
-import { armOnFirstGesture } from './audio/engine';
+import { armOnFirstGesture, audio } from './audio/engine';
 import { FullscreenButton } from './ui/device/FullscreenButton';
 import { armFullscreenOnFirstGesture } from './ui/device/fullscreen';
 import { GameClient, useClient } from './state/client';
@@ -37,6 +37,8 @@ export function App() {
     const reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     holdUntil.current = Date.now() + (reduced ? MONO.reducedBanner : MONO.end);
   }
+  // U16 §21.2.2: 놀이 시간이 다 돼 판이 끝나는 갱신 → 학교 종(결과 화면 직전)
+  if (lastPhase.current === 'playing' && phase === 'finished' && !s.resynced && s.fresh.some((e) => e.ev === 'clock' && e.kind === 'end' && e.by === 'timeout')) audio.playSfx('bell');
   lastPhase.current = phase;
   const monoHold = phase === 'finished' && Date.now() < holdUntil.current;
   useEffect(() => {
