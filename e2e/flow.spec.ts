@@ -21,6 +21,8 @@ import { codeValue, joinCode, openJoin, openMake } from './helpers/entry';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/T07-shots/', import.meta.url));
+/** U14 멈춤 모달 스크린숏(P-H·P-S·C-E·C-L) */
+const U14_SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U14-shots/', import.meta.url));
 /** 2026-10-28 U1 놀이 시간 스크린숏(방 만들기·간판·멈춤·이어 하기) */
 const U1_SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U1-time-shots/', import.meta.url));
 const SOURCE_RE = /지도서|교과서|\[MCP|\[6사|\[4사|pp?\.\s?[0-9]/;
@@ -48,6 +50,7 @@ test.beforeAll(async () => {
   RoomCtor = (await runnerImport<{ Room: typeof Room }>(`${ROOT}worker/room.ts`, { root: ROOT, configFile: false, logLevel: 'error' })).module.Room;
   mkdirSync(SHOTS, { recursive: true });
   mkdirSync(U1_SHOTS, { recursive: true });
+  mkdirSync(U14_SHOTS, { recursive: true });
 });
 test.afterAll(async () => { await server?.close(); rmSync(OUT, { recursive: true, force: true }); });
 
@@ -122,6 +125,8 @@ class Srv {
   /** 서버가 tag 기기로 보낸 메시지 전부 */
   outTo(tag: string) { return this.ctx.getWebSockets().filter((b) => b.tag === tag).flatMap((b) => (b as unknown as Bridge).out); }
   sent(tag: string, re: RegExp) { return this.got.filter((x) => x.tag === tag && re.test(x.msg)).length; }
+  /** tag 기기 소켓이 보낸 것처럼 서버에 메시지 */
+  say(tag: string, m: unknown) { const b = this.ctx.getWebSockets().find((x) => x.tag === tag)!; this.got.push({ tag, msg: JSON.stringify(m), at: Date.now() }); this.room.webSocketMessage(b as unknown as WebSocket, JSON.stringify(m)); }
   dropSocket(tag: string) { this.ctx.getWebSockets().filter((b) => b.tag === tag).forEach((b) => { b.close(); this.room.webSocketClose(b as unknown as WebSocket); }); }
   stop() { clearInterval(this.tick); }
 }
@@ -773,63 +778,336 @@ test('미션 표시 순서: 서버가 섞은 목록을 두 기기가 같게 보�
   }
 });
 
-test('멈춤·이어 하기(U1): 방장 멈춤 간판 → 멈춤 화면(남은 시간·PIN 화면 폭 20% 이상·순위 한 줄) → 여기까지 왔어요(순위·땅·공개 카드) → 남은 시간 그대로 재개', async ({ browser }) => {
+/** 멈춤 모달 열림(pop 350ms·어둡게 150ms)이 끝날 때까지 */
+const pmSettled = (page: Page) => page.waitForFunction(() => {
+  const h = document.querySelector('.pm-host');
+  return !!h && h.getAnimations({ subtree: true }).every((x) => x.playState === 'finished');
+}, undefined, { polling: 100, timeout: 5000 });
+/** U14 모달 스크린숏(DESIGN §20.7): 4상태 × 데스크톱·태블릿 */
+async function pmShot(page: Page, kind: string) {
+  await pmSettled(page);
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: `${U14_SHOTS}${kind}-${test.info().project.name}.png` });
+}
+/** 화면 타이머 링 숫자(문항 두루마리) */
+const ringSec = (page: Page) => page.locator('.qs .tm').getAttribute('data-sec').then(Number);
+/** 받은 메시지가 서버에 닿은 시각 */
+const gotAt = (srv: Srv, tag: string, re: RegExp) => srv.got.filter((x) => x.tag === tag && re.test(x.msg)).at(-1)?.at ?? 0;
+
+test('멈춤 모달(U14): 문항 남은 ≥10초에 방장 간판 1탭 → 두 기기 즉시 멈춤(어둡게·inert·링 고정) → 자리 번호 화면 왕복 → 계속하기 = 남은 마감 그대로', async ({ browser }) => {
   const { srv, ps } = await room(browser, 2);
-  srv.do((g) => {
-    g.tiles[2] = { owner: 0, level: 2, festivalTarget: false }; g.tiles[12] = { owner: 1, level: 0, festivalTarget: false }; g.revealedCards.push('th-1', 'fr-1');
-    g.tiles[16] = { owner: 0, level: 4, festivalTarget: false };
-    g.log.push({ ev: 'dice', seat: 0, d1: 1, d2: 2 }, { ev: 'build', seat: 0, tile: 16, level: 4, cost: 1 }, { ev: 'stamp', seat: 0, country: 'eg', level: 3 });
-  });
-  const host = ps[0].page;
-  const proj = test.info().project.name;
-  // 간판: 모래시계 + mm:ss, "차시" 없음. 방장만 멈춤 간판
-  await expect(host.locator('.board-timer')).toHaveText(/^\d\d:\d\d$/);
-  await expect(host.locator('.board-timer svg')).toHaveCount(1);
-  await expect(ps[1].page.locator('[data-act="pause"]')).toHaveCount(0);
-  await host.locator('[data-act="pause"]').click();
-  await expect(host.locator('.gm-ask')).toContainText('잠깐 쉴까요?');
+  const [a, b] = ps;
+  const host = a.page;
+  srv.do((g) => { g.revealedCards.push('th-1'); g.tiles[12] = { owner: 1, level: 0, festivalTarget: false }; });
+  srv.arrive(0, 2); // 타이 첫 방문 → 문화 카드
+  await expect.poll(() => srv.g.turn.step, { timeout: 8000 }).toBe('culture');
+  srv.hurry(200);
+  for (const p of ps) await expect(p.page.locator('.qs')).toBeVisible({ timeout: 8000 });
+  await expect.poll(() => ringSec(host), { timeout: 5000 }).toBeLessThanOrEqual(18);
+  expect(srv.room.rec!.deadlineAt! - Date.now()).toBeGreaterThanOrEqual(10_000);
+  // 학생 화면엔 멈춤 간판이 없고 나가기 간판, "이 차례가 끝나면" 같은 대기 안내 없음
+  await expect(b.page.locator('[data-act="pause"]')).toHaveCount(0);
+  await expect(b.page.locator('[data-act="leave-sign"]')).toHaveAttribute('aria-label', '게임 나가기');
+  const dl0 = srv.room.rec!.deadlineAt!;
+  const tapAt = Date.now();
+  const clock0 = srv.g.clock.remainingMs - (tapAt - (srv.room.rec!.lastTickAt ?? tapAt)); // 누른 순간의 놀이 시계(서버 시계는 알람 때만 갱신)
+  await tap(host, '[data-act="pause"]'); // 1탭
+  await expect.poll(() => srv.g.phase).toBe('paused');
+  const pausedAt = srv.g.clock.pausedAt!;
+  expect(lastLog(srv, 'clock')).toMatchObject({ kind: 'pause', by: 'host' });
+  expect(Math.abs(lastLog(srv, 'clock')!.remainingMs - clock0)).toBeLessThanOrEqual(1_000); // 누른 그 자리에서 멈춤
+  expect(srv.g.turn.step).toBe('question'); // 그 자리에서
+  for (const p of ps) {
+    await expect(p.page.locator('.ov-layer--pause')).toBeVisible();
+    // 판 위(멈춘 프레임 그대로): 문항 두루마리가 남아 있고, 모달 밖 형제는 전부 inert, 모달은 아님
+    await expect(p.page.locator('.qs')).toHaveCount(1);
+    expect(await p.page.evaluate(() => {
+      const host = document.querySelector('.game > .pm-host')!;
+      const sibs = [...host.parentElement!.children].filter((c) => c !== host && !c.classList.contains('board-rotate'));
+      return sibs.length > 0 && sibs.every((c) => c.hasAttribute('inert')) && !host.hasAttribute('inert');
+    })).toBe(true);
+    // 단색 35% 어둡게, 흐림 없음
+    expect(await p.page.locator('.ov-layer--pause').evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).backdropFilter])).toEqual(['color(srgb 0.0784314 0.12549 0.219608 / 0.35)', 'none']);
+  }
+  for (const p of ps) await pmSettled(p.page);
+  await expect(host.locator('.pm')).toHaveAttribute('data-kind', 'P-H');
+  await expect(host.locator('#pm-title')).toHaveText('잠깐 멈췄어요');
+  await expect(host.locator('.pm-line')).toContainText('친구들 화면도 함께 멈춰 있어요 · 남은 시간');
+  await expect(host.locator('.pm-btn')).toHaveText(['게임 계속하기', '게임 끝내기']);
+  await expect(host.locator('.ov-link')).toHaveText('나중에 이어 하기');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'P-S');
+  await expect(b.page.locator('#pm-title')).toHaveText('방장이 잠깐 멈췄어요');
+  await expect(b.page.locator('.pm-line')).toHaveText('방장이 다시 시작하면 이어서 해요');
+  await expect(b.page.locator('.pm-btn')).toHaveText(['게임 나가기']);
+  await expect(b.page.locator('.ov-link')).toHaveText('내 자리 번호 보기');
+  await expect(host.locator('[data-act="pause"]')).toBeDisabled();
+  // "확인·취소·선택" 단어 0, 글자 ≥ 16px(C-L 작은 줄 제외), 단추 ≥ 200×56, 상자 560×280 가운데, 안 잘림
+  for (const p of ps) {
+    expect(await p.page.locator('.pm').innerText()).not.toMatch(/확인|취소|선택/);
+    const m = await p.page.evaluate(() => {
+      const k = document.querySelector('.ov-stage')!.getBoundingClientRect().width / 1366;
+      const bx = document.querySelector('.pm')!.getBoundingClientRect();
+      const fonts = [...document.querySelectorAll('.pm *')].filter((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim())).map((e) => parseFloat(getComputedStyle(e).fontSize) / k);
+      const btns = [...document.querySelectorAll('.pm .pm-btn')].map((e) => { const r = e.getBoundingClientRect(); return [r.width / k, r.height / k]; });
+      const vw = innerWidth, vh = innerHeight;
+      const inside = [...document.querySelectorAll('.pm, .pm *')].every((e) => { const r = e.getBoundingClientRect(); return r.left >= -0.5 && r.top >= -0.5 && r.right <= vw + 0.5 && r.bottom <= vh + 0.5; });
+      const clipped = [...document.querySelectorAll('.pm .pm-btn, .pm .ap-title, .pm .pm-line')].some((e) => e.scrollWidth > e.clientWidth + 1);
+      return { w: bx.width / k, h: bx.height / k, cx: (bx.left + bx.width / 2) / k, cy: (bx.top + bx.height / 2) / k, minFont: Math.min(...fonts), btns, inside, clipped, stageLeft: document.querySelector('.ov-stage')!.getBoundingClientRect().left / k };
+    });
+    expect(m.w).toBeCloseTo(560, 0);
+    expect(m.h).toBeGreaterThanOrEqual(279.5);
+    expect(Math.abs(m.cx - m.stageLeft - 683)).toBeLessThanOrEqual(2);
+    expect(m.minFont).toBeGreaterThanOrEqual(16);
+    for (const [w, h] of m.btns) { expect(w).toBeGreaterThanOrEqual(199.5); expect(h).toBeGreaterThanOrEqual(55.5); }
+    expect(m.inside).toBe(true);
+    expect(m.clipped).toBe(false);
+  }
+  // 타이머 링이 멈춘 값 그대로(2초 동안), 서버도 넘어가지 않는다
+  const frozen = await ringSec(host);
+  expect(await ringSec(b.page)).toBe(frozen);
+  await host.waitForTimeout(2_000);
+  expect(await ringSec(host)).toBe(frozen);
+  expect(await ringSec(b.page)).toBe(frozen);
+  expect(srv.g.turn.step).toBe('question');
+  // 판 입력은 잠김: 답 단추를 눌러도(억지로) 아무것도 안 간다
+  await host.locator('.qs .ov-ans').first().click({ force: true, timeout: 1000 }).catch(() => {});
+  expect(srv.sent('p0', /"answer"/)).toBe(0);
   await clean(host);
-  await host.screenshot({ path: `${U1_SHOTS}pause-ask-${proj}.png` });
-  await host.locator('[data-act="pause"]').click(); // 두 번 눌러야 멈춤
-  await expect(host.locator('.save')).toBeVisible({ timeout: 4000 });
-  const left = srv.g.clock.remainingMs;
-  expect(srv.g.phase).toBe('paused');
-  expect(left).toBeGreaterThan(39 * 60_000);
+  await pmShot(host, 'P-H');
+  await pmShot(b.page, 'P-S');
+  // 학생 Esc 는 아무 일 없음
+  await b.page.keyboard.press('Escape');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'P-S');
+  // [나중에 이어 하기] → 자리 번호 화면(방 코드 + 내 PIN 하나) → [사진 찍었어요] → 모달로
+  await tap(host, '.ov-link');
   await expect(host.locator('.save-title')).toHaveText('잠깐 쉬어요. 다음에 이어서 해요');
-  const mm = String(Math.floor(Math.ceil(left / 1000) / 60)).padStart(2, '0');
-  await expect(host.locator('[data-k="time-left"]')).toContainText(`${mm}:`);
-  const pin = srv.room.rec!.seats[0].pin;
-  await expect(host.locator('.save-pin')).toHaveText(pin);
+  await expect(host.locator('.save-pin')).toHaveText(srv.room.rec!.seats[0].pin);
+  await expect(host.locator('[data-pin]')).toHaveCount(1);
+  await expect(host.locator('[data-k="room-code"] b')).toHaveText(srv.code);
   const w = await host.locator('.save-pin').evaluate((e) => e.getBoundingClientRect().width / innerWidth);
   expect(w).toBeGreaterThanOrEqual(0.2);
-  // 자기 자리 PIN 하나만(방장도, 자리 2·3 은 시작부터 봇 — PRD §8-11 QA8). '새 친구' 안내 없음
-  for (const p of ps) await expect(p.page.locator('[data-pin]')).toHaveCount(1);
-  await expect(ps[1].page.locator('.save-pin')).toHaveText(srv.room.rec!.seats[1].pin);
-  await expect(host.locator('.save-others')).toHaveCount(0);
-  expect(await host.locator('.save').innerText()).not.toMatch(/새 친구|로봇 자리/);
-  await expect(host.locator('.save-lead')).toContainText('사진');
-  // 다른 기기 복귀에 필요한 방 코드도 사진에 남는다(QA r9)
-  for (const p of ps) await expect(p.page.locator('[data-k="room-code"] b')).toHaveText(srv.room.rec!.code);
-  await expect(host.locator('.pause-rank-item')).toHaveCount(4); // 옛 중간 결과의 순위 한 줄
-  await expect(host.locator('.rs')).toHaveCount(0); // 중간 결과 화면은 없다
-  expect(await host.locator('body').innerText()).not.toMatch(/차시/);
-  await clean(host);
-  await shot(host, 'pause-save');
-  await shot(host, `../U1-time-shots/pause-${proj}`);
   await host.getByRole('button', { name: '사진 찍었어요' }).click();
-  await expect(host.locator('.resume .save-title')).toHaveText('여기까지 왔어요');
-  await expect(host.locator('.rank-row')).toHaveCount(4);
-  await expect(host.locator('.rank-row[data-seat="0"] .land-chip').first()).toContainText('타이 · 시장');
-  await expect(host.locator('.rc')).toHaveCount(2);
-  expect(await host.locator('body').innerText()).not.toMatch(/차시/);
-  await clean(host);
-  await shot(host, 'resume');
-  await shot(host, `../U1-time-shots/resume-${proj}`);
-  await host.locator('[data-act="resume"]').click();
-  await expect(host.locator('.board-root')).toBeVisible();
+  await expect(host.locator('.pm')).toHaveAttribute('data-kind', 'P-H');
+  await tap(b.page, '.ov-link');
+  await expect(b.page.locator('.save-pin')).toHaveText(srv.room.rec!.seats[1].pin);
+  await b.page.getByRole('button', { name: '사진 찍었어요' }).click();
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'P-S');
+  // 키보드: 첫 포커스 = 주 단추, [게임 끝내기] → C-E(첫 포커스 "아니요"), Esc = 아니요 → P-H, Esc = 계속하기
+  await expect(host.locator('.pm [data-act="resume"]')).toBeFocused();
+  await tap(host, '.pm [data-act="ask-end"]');
+  await expect(host.locator('.pm')).toHaveAttribute('data-kind', 'C-E');
+  await expect(host.locator('.pm [data-act="back"]')).toBeFocused();
+  await host.keyboard.press('Tab');
+  await expect(host.locator('.pm [data-act="end"]')).toBeFocused();
+  await host.keyboard.press('Tab');
+  await expect(host.locator('.pm [data-act="back"]')).toBeFocused(); // 창 안에서 순환
+  await host.keyboard.press('Escape');
+  await expect(host.locator('.pm')).toHaveAttribute('data-kind', 'P-H');
+  expect(srv.g.phase).toBe('paused');
+  await host.waitForTimeout(500);
+  await host.keyboard.press('Escape'); // 방장 Esc = 게임 계속하기
+  await expect.poll(() => srv.g.phase).toBe('playing');
+  const resumedAt = gotAt(srv, 'p0', /"t":"resume"/);
+  const d = resumedAt - pausedAt;
+  expect(d).toBeGreaterThan(2_000);
+  expect(Math.abs(srv.room.rec!.deadlineAt! - (dl0 + d))).toBeLessThanOrEqual(300); // 마감이 멈춘 시간만큼 밀림
+  expect(Math.abs(srv.g.clock.remainingMs - clock0)).toBeLessThanOrEqual(1_000); // 놀이 시계 변화 ≤ 1초
+  for (const p of ps) {
+    await expect(p.page.locator('.ov-layer--pause')).toHaveCount(0);
+    await expect(p.page.locator('.game [inert]')).toHaveCount(0);
+    const sec = await ringSec(p.page);
+    expect(Math.abs(sec - frozen)).toBeLessThanOrEqual(1); // 멈춘 값에서 이어감(점프 없음)
+  }
+  // 재개 뒤 판이 다시 돈다: 답이 받아진다
+  const ans = answerOf(srv);
+  await tap(host, `.qs .ov-ans[data-choice="${ans}"]`);
+  await expect.poll(() => srv.g.turn.step, { timeout: 4000 }).toBe('explanation');
+  expect(lastLog(srv, 'answer')!.ms).toBeLessThan(20_000); // 멈춘 시간은 답 시간에 안 셈
+  await close(srv, ps);
+});
+
+test('멈춤 모달(U14) reduced-motion: 모달 pop·어둡게 전환 없이 즉시', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 1);
+  const host = ps[0].page;
+  await host.emulateMedia({ reducedMotion: 'reduce' });
+  await tap(host, '[data-act="pause"]');
+  await expect(host.locator('.pm')).toBeVisible();
+  const anims = await host.evaluate(() => document.querySelector('.pm-host')!.getAnimations({ subtree: true }).length);
+  expect(anims).toBe(0);
+  expect(await host.locator('.ov-layer--pause').evaluate((el) => getComputedStyle(el).animationName)).toBe('none');
+  await tap(host, '[data-act="resume"]');
+  await expect(host.locator('.ov-layer--pause')).toHaveCount(0);
+  await close(srv, ps);
+});
+
+test('멈춤(U14) 컷씬 중: 멈추면 컷씬도 그 프레임에 서고, 재개하면 서버가 민 t0 로 남은 샷부터 다시', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 2);
+  const [a, b] = ps;
+  srv.arrive(0, 16, (g) => { g.tiles[16] = { owner: 0, level: 3, festivalTarget: false }; g.seenCountries.push('eg'); g.players[0].coin = 20000; });
+  await expect(a.page.locator('.qs')).toBeVisible({ timeout: 8000 });
+  await solve(srv, a.page, true);
+  await expect(a.page.locator('.ap[data-kind="build"]')).toBeVisible({ timeout: 4000 });
+  await tap(a.page, '[data-act="build"]');
+  await expect(b.page.locator('.cut')).toHaveAttribute('data-mode', 'play', { timeout: 3000 });
+  await b.page.waitForTimeout(1200);
+  // 컷씬은 화면 전체를 덮고 탭 = 건너뛰기라 간판을 못 누른다 → 방장 소켓으로 멈춤을 보낸다(간판 1탭과 같은 메시지)
+  srv.say('p0', { t: 'pause' });
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'P-S');
+  // 컷씬 타임라인 정지: 멈춘 동안 진행 시각이 안 바뀐다(pause() 가 다음 프레임에 걸리므로 잠깐 뒤부터 잰다)
+  await b.page.waitForTimeout(300);
+  const t1 = await b.page.evaluate(() => document.querySelector('.cut')!.getAnimations({ subtree: true }).map((x) => Number(x.currentTime)).join());
+  await b.page.waitForTimeout(5_500); // 컷씬 제 길이(4.8초)를 넘겨도
+  await expect(b.page.locator('.cut')).toHaveCount(1); // 그대로 떠 있다(끝나지 않음)
+  const t2 = await b.page.evaluate(() => document.querySelector('.cut')!.getAnimations({ subtree: true }).map((x) => Number(x.currentTime)).join());
+  expect(t2).toBe(t1);
+  const lc = srv.room.rec!.lastCut!.at;
+  await tap(a.page, '.pm [data-act="resume"]');
+  await expect.poll(() => srv.g.phase).toBe('playing');
+  expect(srv.room.rec!.lastCut!.at - lc).toBeGreaterThan(5_000); // Δ 만큼 밀림
+  // 재개: 남은 샷부터(새로 마운트, 처음부터가 아님) → 제 길이 안에 닫힘
+  await expect(b.page.locator('.cut')).toHaveAttribute('data-mode', 'play', { timeout: 3000 });
+  await expect(b.page.locator('.cut-banner')).toHaveAttribute('style', /--cut-from: \d+ms/);
+  await expect(b.page.locator('.cut')).toHaveCount(0, { timeout: 5_000 });
+  await close(srv, ps);
+});
+
+test('게임 끝내기(U14): P-H → C-E → [네, 끝낼래요] → 모든 기기 첫 화면(PIN 입력 화면 기기 포함)·저장 자리 0·학생만 띠 4초, 같은 코드는 없는 방', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 2);
+  const [a, b] = ps;
+  // 셋째 기기: 같은 코드로 들어와 PIN 입력 화면에 있다
+  const other = await player(browser, srv, 'x');
+  await joinCode(other.page, srv.code);
+  await expect(other.page.locator('.pin-box')).toBeVisible();
+  for (const p of ps) expect(await p.page.evaluate(() => localStorage.getItem('tw.seat'))).not.toBeNull();
+  await tap(a.page, '[data-act="pause"]');
+  await tap(a.page, '.pm [data-act="ask-end"]');
+  await expect(a.page.locator('#pm-title')).toHaveText('게임을 끝낼까요?');
+  await expect(a.page.locator('.pm-line')).toHaveText('모두 첫 화면으로 돌아가요. 이 판은 저장되지 않아요');
+  await expect(a.page.locator('.pm-btn')).toHaveText(['아니요, 계속할래요', '네, 끝낼래요']);
+  await expect(a.page.locator('.pm .ov-btn--danger')).toHaveCount(1);
+  await expect(a.page.locator('.pm .ov-btn--danger')).toHaveText('네, 끝낼래요');
+  await expect(a.page.locator('.pm .ov-link')).toHaveCount(0);
+  expect(await a.page.locator('.pm .ov-btn--danger').evaluate((e) => getComputedStyle(e).color)).toBe('rgb(255, 255, 255)');
+  await clean(a.page);
+  await pmShot(a.page, 'C-E');
+  // 빠르게 두 번: 두 번째는 막힌다(서버엔 end 한 번)
+  await a.page.locator('.pm [data-act="end"]').dblclick();
+  for (const p of [...ps, other]) await expect(p.page.locator('.app')).toHaveAttribute('data-phase', 'entry', { timeout: 5000 });
+  expect(srv.sent('p0', /"t":"end"/)).toBe(1);
+  expect(srv.room.rec).toBeNull();
+  expect(srv.ctx.data.size).toBe(0);
+  await expect(a.page.locator('[data-bye]')).toHaveCount(0); // 끝낸 방장 기기는 띠 없음
+  for (const p of [b, other]) {
+    await expect(p.page.locator('[data-bye="ended"]')).toHaveText('방장이 게임을 끝냈어요');
+    await expect(p.page.locator('[data-bye="ended"]')).toHaveAttribute('role', 'status');
+  }
+  for (const p of [...ps, other]) expect(await p.page.evaluate(() => localStorage.getItem('tw.seat'))).toBeNull();
+  const t0 = Date.now();
+  await expect(b.page.locator('[data-bye]')).toHaveCount(0, { timeout: 6000 });
+  expect(Date.now() - t0).toBeGreaterThan(2_500); // 약 4초 떠 있다
+  // 새로고침해도 자동 복귀 없음, 같은 코드로 들어가면 없는 방
+  await b.page.reload();
+  await expect(b.page.locator('.app')).toHaveAttribute('data-phase', 'entry');
+  await expect(b.page.locator('[data-act="intro-start"]')).toBeVisible();
+  await joinCode(b.page, srv.code);
+  await expect(b.page.locator('.sc-note')).toContainText('방에 들어갈 수 없어요', { timeout: 8000 });
+  await close(srv, [...ps, other]);
+});
+
+test('게임 나가기(U14): 학생 간판 → C-L(내 화면만 어둡게, 판 계속) → [네, 나갈래요] → 첫 화면·그 자리는 봇 → 같은 PIN 으로 돌아오면 복귀', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 2);
+  const [a, b] = ps;
+  const pin1 = srv.room.rec!.seats[1].pin;
+  await tap(b.page, '[data-act="leave-sign"]');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'C-L');
+  await expect(b.page.locator('#pm-title')).toHaveText('게임에서 나갈까요?');
+  await expect(b.page.locator('.pm-line')).toHaveText('내 자리는 로봇이 이어서 해요. 나는 첫 화면으로 가요');
+  await expect(b.page.locator('.pm-note')).toHaveText('판은 계속 돌아가고 있어요');
+  await expect(b.page.locator('.pm .ov-btn--danger')).toHaveText('네, 나갈래요');
+  await expect(b.page.locator('.pm [data-act="back"]')).toBeFocused();
+  // 내 화면만: 서버엔 아무것도 안 갔고, 방장 화면은 안 어둡고 판이 돈다
+  expect(srv.sent('p1', /"leave"/)).toBe(0);
   expect(srv.g.phase).toBe('playing');
-  expect(srv.g.clock.remainingMs).toBeLessThanOrEqual(left);
-  expect(srv.g.clock.remainingMs).toBeGreaterThan(left - 10_000); // 멈춘 동안은 안 줄었다
+  await expect(a.page.locator('.ov-layer--pause')).toHaveCount(0);
+  await clean(b.page);
+  await pmShot(b.page, 'C-L');
+  // Esc = 아니요 → 닫힘, 판 그대로
+  await b.page.keyboard.press('Escape');
+  await expect(b.page.locator('.ov-layer--pause')).toHaveCount(0);
+  await expect(b.page.locator('.game [inert]')).toHaveCount(0);
+  // 다시 열고 나가기
+  await tap(b.page, '[data-act="leave-sign"]');
+  await tap(b.page, '.pm [data-act="leave"]');
+  await expect(b.page.locator('.app')).toHaveAttribute('data-phase', 'entry', { timeout: 5000 });
+  await expect(b.page.locator('[data-bye]')).toHaveCount(0); // 나간 기기도 띠 없음
+  expect(await b.page.evaluate(() => localStorage.getItem('tw.seat'))).toBeNull();
+  await expect.poll(() => srv.g.seats[1].isBot).toBe(true);
+  expect(srv.room.rec!.seats[1].claimed).toBe(true);
+  await expect(a.page.locator('.panel[data-seat="1"] .panel-bot')).toHaveText('봇');
+  // 봇이 그 자리 차례를 돌린다
+  srv.do((g) => { g.turn = { ...g.turn, seat: 1, step: 'roll' }; });
+  await expect.poll(() => srv.g.log.some((e) => e.ev === 'dice' && e.seat === 1), { timeout: 15_000 }).toBe(true);
+  // 같은 PIN 으로 돌아오면 복귀(다음 차례부터 사람)
+  await joinCode(b.page, srv.code);
+  await expect(b.page.locator('.pin-box')).toBeVisible();
+  await b.page.locator('.pin-seat').nth(1).click();
+  await b.page.locator('#seat-pin').fill(pin1);
+  await b.page.getByRole('button', { name: '돌아가기' }).click();
+  await expect(b.page.locator('.game')).toHaveAttribute('data-seat', '1', { timeout: 5000 });
+  await expect.poll(() => srv.room.rec!.seats[1].connected).toBe(true);
+  await close(srv, ps);
+});
+
+test('나가기 확인 창(U14)이 열린 채: 방장이 멈추면 C-L 닫히고 P-S, 계속하기면 P-S 만 사라짐(C-L 복원 안 함) · 내 차례 마감은 그대로 넘어가고 창은 남음', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 2);
+  const [a, b] = ps;
+  await tap(b.page, '[data-act="leave-sign"]');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'C-L');
+  await tap(a.page, '[data-act="pause"]');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'P-S');
+  await expect(b.page.locator('.pm-note')).toHaveCount(0);
+  await tap(a.page, '[data-act="resume"]');
+  await expect.poll(() => srv.g.phase).toBe('playing');
+  await expect(b.page.locator('.ov-layer--pause')).toHaveCount(0);
+  await expect(b.page.locator('.game [inert]')).toHaveCount(0);
+  // 내 차례(주사위) 중 C-L 을 연 채 마감 → 서버가 굴리고 판이 넘어감, 창은 그대로
+  srv.do((g) => { g.turn = { ...g.turn, seat: 1, step: 'roll' }; });
+  await tap(b.page, '[data-act="leave-sign"]');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'C-L');
+  srv.hurry(300);
+  await expect.poll(() => srv.g.log.some((e) => e.ev === 'dice' && e.seat === 1), { timeout: 5000 }).toBe(true);
+  await b.page.waitForTimeout(500);
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'C-L');
+  expect(srv.sent('p1', /"leave"/)).toBe(0);
+  await close(srv, ps);
+});
+
+test('이어 하기 화면(U14): 다시 들어온 기기(PIN 없음)는 여기까지 왔어요 + 방장 [게임 끝내기]·학생 [게임 나가기] 작은 글자 → 확인 창', async ({ browser }) => {
+  const { srv, ps } = await room(browser, 2);
+  const [a, b] = ps;
+  srv.do((g) => { g.revealedCards.push('th-1'); });
+  await tap(a.page, '[data-act="pause"]');
+  await expect(a.page.locator('.pm')).toBeVisible();
+  // 두 기기 새로고침 → pins 없음 → 이어 하기 화면
+  for (const p of ps) await p.page.reload();
+  await expect(a.page.locator('.resume .save-title')).toHaveText('여기까지 왔어요');
+  await expect(b.page.locator('.resume .save-title')).toHaveText('여기까지 왔어요');
+  await expect(a.page.locator('.resume .ov-link')).toHaveText('게임 끝내기');
+  await expect(b.page.locator('.resume .ov-link')).toHaveText('게임 나가기');
+  expect(await a.page.locator('body').innerText()).not.toMatch(/차시/);
+  await shot(a.page, '../U14-shots/resume-screen');
+  await tap(b.page, '.resume .ov-link');
+  await expect(b.page.locator('.pm')).toHaveAttribute('data-kind', 'C-L');
+  await expect(b.page.locator('.pm-note')).toHaveCount(0);
+  await tap(b.page, '.pm [data-act="back"]');
+  await expect(b.page.locator('.pm')).toHaveCount(0);
+  await tap(a.page, '.resume .ov-link');
+  await expect(a.page.locator('.pm')).toHaveAttribute('data-kind', 'C-E');
+  await tap(a.page, '.pm [data-act="back"]');
+  // [이어서 하기] = 계속하기와 같은 Δ 보정
+  await tap(a.page, '[data-act="resume"]');
+  await expect.poll(() => srv.g.phase).toBe('playing');
+  for (const p of ps) await expect(p.page.locator('.board-root')).toBeVisible();
   await close(srv, ps);
 });
 

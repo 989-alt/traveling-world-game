@@ -32,8 +32,14 @@ const RULES = [
   [/^ui\.rotate-wide$/, { exact: [1024, 576] }], // U4 세로 안내 가로판 16:9(폭 1024)
   // U12 엔딩 END-*(DESIGN §19.4): 기본 = 표시 ×2
   [/^end\.photoBg$/, { exact: [1560, 1040] }],
-  [/^end\.frame$/, { exact: [1640, 1380] }], // 9 조각 맞춤(창 780×520 · 아래 테 150 × 2)
-  [/^end\.passport\.open\.\d$/, { max: 1000, min: 900 }],
+  [/^end\.frame$/, { exact: [1560, 1400] }], // U13 v2: 9 조각 맞춤(시안 비율 780×700, 창 724×524 · 아래 테 148 × 2) + 제목 재배치
+  [/^end\.passport\.open\.\d$/, { max: 1160, min: 1100 }], // U13 v2 가로형 긴 변 1160(표시 폭 ≈ 560 × 2)
+  // U13 §19.9.5: 로제트 240 · 세운 여권 긴 변 272 · 책갈피 탭 긴 변 300 · 열기구 880
+  [/^end\.rosette\.\d$/, { exact: [240, 240] }],
+  [/^end\.passport\.stand\.\d$/, { max: 272, min: 260 }],
+  [/^end\.tab\.(more|back)$/, { max: 300, min: 290 }],
+  [/^end\.balloon$/, { exact: [880, 880] }],
+  [/^char\.\d+\.p2[01](gold|silver|bronze|plain)(\.s\d)?$/, { exact: [1024, 1024] }], // U13 메달 포즈(표시 280, hi 2048)
   [/^end\.passport\.wide$/, { max: 1536, min: 1500 }],
   [/^end\.passport\.closed\.\d$/, { max: 320 }],
   [/^end\.medalNeck\./, { max: 192 }],
@@ -85,6 +91,8 @@ const HI_MIN = [
   [/^char\.\d+\.p19$/, 611], // 문화 카드 빼꼼
   [/^char\.\d+\.p1[023]\.big$/, 2048], // 문항 옆 고민 포즈 2530 → 상한
   [/^char\.\d+\.p2[01]\.big$/, 2048], // U12 엔딩 포즈(사용자 "최소 2K")
+  [/^char\.\d+\.p2[01](gold|silver|bronze|plain)(\.s\d)?$/, 2048], // U13 메달 포즈
+  [/^end\.(rosette\.\d|passport\.stand\.\d|tab\.(more|back)|balloon)$/, 0], // U13 작은 그림: hi 는 표시 ×4(하한 없음, hi 목록 필수)
   [/^end\.(photoBg|frame|passport\.(open\.\d|wide))$/, 2048], // U12 큰 면 4종 긴 변 2048
   [/^char\.\d+\.p\d\d$/, 498], // 보드 캐릭터 줌
   [/^landmark\.\d+\.big$/, 1253], // 컷씬 랜드마크

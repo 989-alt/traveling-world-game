@@ -2,15 +2,18 @@
 // watch: 스톱워치 모양(R2 D2, v3 03·05) — 위 크라운(고리 + 꼭지) + 양옆 단추를 SVG 로 덧붙인다(장식, 크기·자리는 그대로)
 import { useEffect, useState } from 'preact/hooks';
 import { timeLeft } from './logic';
+import { screenNow } from '../../state/clock';
 import '../../styles/missions.css'; // .tm 모양(문항 두루마리·행동 패널도 이 타이머를 쓴다)
 
+/** 화면 타이머의 지금. 멈춘 판(U14)에선 state/clock 이 멈춘 시각을 돌려줘 링·막대가 그 값에 고정된다.
+ *  렌더 때의 값을 돌려준다: 재개 상태(밀린 마감)와 풀린 시계가 같은 렌더에 들어가 링이 튀지 않게 */
 export function useNow(everyMs = 200) {
-  const [now, setNow] = useState(() => Date.now());
+  const [, setNow] = useState(() => screenNow());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), everyMs);
+    const t = setInterval(() => setNow(screenNow()), everyMs);
     return () => clearInterval(t);
   }, [everyMs]);
-  return now;
+  return screenNow();
 }
 
 const R = 30;

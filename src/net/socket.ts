@@ -6,6 +6,8 @@ import type { TotalMinutes } from '../shared/types';
 export const BACKOFF_FIRST_MS = 500;
 export const BACKOFF_MAX_MS = 10_000;
 export const REPLACED = 4000;
+/** U14(PRD §9.4): 4001 = 방장이 끝냄, 4002 = 이 기기가 나감. 둘 다 다시 잇지 않는다 */
+export const FINAL_CLOSES = [4001, 4002];
 /** n 번째(0부터) 재시도까지 기다릴 시간 */
 export const backoff = (n: number) => Math.min(BACKOFF_MAX_MS, BACKOFF_FIRST_MS * 2 ** n);
 
@@ -25,6 +27,8 @@ export interface RoomSocketOpts {
   greet: () => ClientMsg | null;
   onMsg: (m: ServerMsg) => void;
   onStatus: (s: 'connecting' | 'open' | 'retrying' | 'replaced') => void;
+  /** 다시 잇지 않는 닫힘(FINAL_CLOSES)을 받음 */
+  onFinal?: (code: number) => void;
   make?: (url: string) => SocketLike;
   timers?: { set: (f: () => void, ms: number) => unknown; clear: (h: unknown) => void };
 }
@@ -66,6 +70,7 @@ export class RoomSocket {
       this.ws = null;
       // 서버가 4000 으로 닫음 = 같은 자리에 다른 기기가 들어옴. 다시 이으면 서로 자리를 뺏으니 멈춘다
       if (e?.code === REPLACED) { this.closed = true; this.o.onStatus('replaced'); return; }
+      if (e?.code !== undefined && FINAL_CLOSES.includes(e.code)) { this.closed = true; this.o.onFinal?.(e.code); return; }
       this.o.onStatus('retrying');
       this.retry = this.timers.set(() => this.open(), backoff(this.tries++));
     };

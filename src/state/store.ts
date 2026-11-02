@@ -27,10 +27,12 @@ export interface ClientState {
   skew: number;
   /** 마지막 state 를 받은 이 기기 시각. 놀이 시계 간판이 다음 상태까지 1초씩 줄여 보이는 기준(표시만) */
   clockAt: number;
+  /** 첫 화면 안내(U14): 'ended' = 방장이 게임을 끝내서 돌아옴(띠 4초). 끝낸 방장·나간 기기는 null */
+  bye: 'ended' | null;
 }
 
 export const initialState = (code: string | null = null): ClientState => ({
-  conn: 'idle', code, seat: null, pin: null, room: null, log: [], fresh: [], seq: 0, resynced: false, pins: null, error: null, needSync: false, skew: 0, clockAt: 0,
+  conn: 'idle', code, seat: null, pin: null, room: null, log: [], fresh: [], seq: 0, resynced: false, pins: null, error: null, needSync: false, skew: 0, clockAt: 0, bye: null,
 });
 
 export const stepKeyOf = (r: RoomView | null, logLen: number) =>
@@ -54,7 +56,9 @@ export function reduce(s: ClientState, msg: ServerMsg, now = Date.now()): Client
       // 시계 차이: 서버가 실어 보낸 현재 시각으로 매 메시지(전체 다시 받기·증분 모두) 다시 잰다.
       // stepAt(단계 시작 시각)은 '지금'이 아니므로 쓰지 않는다. now 가 없는 옛 서버면 이전 값 유지
       const skew = typeof serverNow === 'number' && Number.isFinite(serverNow) ? serverNow - now : s.skew;
-      return { ...s, code: room.code, room, log, fresh, seq: s.seq + 1, resynced: logFrom === 0, needSync, skew, clockAt: now };
+      // 자리 PIN 은 멈춘 순간 받은 기기만 갖는다(멈춤 모달 ↔ 이어 하기 화면 가름, U14). 판이 다시 돌면 버린다
+      const pins = room.phase === 'playing' ? null : s.pins;
+      return { ...s, code: room.code, room, log, fresh, seq: s.seq + 1, resynced: logFrom === 0, needSync, skew, clockAt: now, pins };
     }
     default: return s; // 모르는 메시지(새 서버 판 등)는 무시
   }

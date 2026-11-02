@@ -32,7 +32,7 @@ export function createGame(o: { seed: number; settings?: Partial<Settings>; bots
     settings,
     seats: bots.map((isBot) => ({ isBot, connected: true })),
     phase: 'playing',
-    clock: { remainingMs, pauseBy: null },
+    clock: { remainingMs, pausedAt: null },
     tiles: BOARD.map(() => ({ owner: null, level: 0, festivalTarget: false })),
     players: bots.map(() => ({ coin: START_COIN, pos: 0, items: [], islandTurns: 0, bankrupt: false, doubles: 0, travelPending: false, laps: 0 })),
     turn: freshTurn(0),
@@ -97,15 +97,13 @@ function handle(s: S, a: Action, c: C): boolean {
   if (a.type === 'setConnected') {
     if (!isSeat(s, a.seat) || s.seats[a.seat].connected === !!a.connected) return false;
     s.seats[a.seat].connected = !!a.connected;
-    // 자동 멈춤(전원 끊김) 대기 중에 사람이 돌아오면 취소한다. 방장 멈춤은 그대로(U123 L2)
-    if (a.connected && s.phase === 'playing' && s.clock.pauseBy === 'auto') s.clock.pauseBy = null;
     return true;
   }
   if (a.type === 'resume') {
-    // 이어 하기: 남은 시간 그대로 시계를 다시 돌린다(옛 시계처럼 다시 채우지 않음)
+    // 이어 하기: 남은 시간 그대로 시계를 다시 돌린다(옛 시계처럼 다시 채우지 않음). 턴은 멈춘 단계 그대로 이어진다(U14)
     if (s.phase !== 'paused') return false;
     s.phase = 'playing';
-    s.clock.pauseBy = null;
+    s.clock.pausedAt = null;
     // 남은 시간이 없으면 멈춘 채 갇히지 않게 바로 시간 끝(자산승)으로 마친다(U123 L1)
     if (s.clock.remainingMs <= 0) { s.clock.remainingMs = 0; timeUp(s); return true; }
     push(s, { ev: 'clock', kind: 'resume', remainingMs: s.clock.remainingMs, by: 'host' });
@@ -119,11 +117,11 @@ function handle(s: S, a: Action, c: C): boolean {
     return true;
   }
   if (a.type === 'pause') {
-    if (s.clock.pauseBy || (a.by !== 'host' && a.by !== 'auto')) return false;
-    s.clock.pauseBy = a.by;
-    // 턴 시작 전이면 바로, 아니면 이 턴을 마친 뒤(endTurn). 그 사이(대기 중)에는 시계가 계속 줄어든다(tick 은 playing 이면 받는다).
-    // 대기 중에 시간이 다 되면 endTurn 에서 시간 끝이 멈춤보다 먼저다
-    if (atTurnStart(s)) pauseNow(s);
+    if (a.by !== 'host' && a.by !== 'auto') return false;
+    // U14: 어느 단계든 그 자리에서 멈춘다. 턴 상태(단계·문항·고른 칸)는 그대로 두고 재개 때 그 단계부터 잇는다
+    s.phase = 'paused';
+    s.clock.pausedAt = typeof a.at === 'number' && Number.isFinite(a.at) ? a.at : null;
+    push(s, { ev: 'clock', kind: 'pause', remainingMs: s.clock.remainingMs, by: a.by });
     return true;
   }
   if (a.type === 'timeout') return onTimeout(s, c, a.shown ?? []);
@@ -713,7 +711,7 @@ function ranks(s: S): Seat[] {
 function finish(s: S, seat: Seat, kind: 'bankruptcy' | 'monopoly' | 'assets') {
   s.winner = { seat, kind };
   s.phase = 'finished';
-  s.clock.pauseBy = null;
+  s.clock.pausedAt = null;
   push(s, { ev: 'clock', kind: 'end', remainingMs: s.clock.remainingMs, by: kind === 'assets' ? 'timeout' : 'auto' });
   // 1위 = 실제 승자(파산승·독점승은 자산 순위와 다를 수 있다 — PRD §3.7). 나머지는 자산순
   push(s, { ev: 'result', finalRanks: [seat, ...ranks(s).filter((x) => x !== seat)], assets: s.players.map((_, i) => assetsOf(s, i)) });
@@ -724,14 +722,6 @@ const atTurnStart = (s: S) => s.turn.step === 'roll' || s.turn.step === 'travel'
 /** 놀이 시간이 다 됨 → 자산승(PRD §3.7) */
 function timeUp(s: S) {
   finish(s, ranks(s)[0], 'assets');
-}
-
-/** 멈춤: 시계 정지, 턴은 다음 사람 시작 단계에서 기다린다 */
-function pauseNow(s: S) {
-  const by = s.clock.pauseBy ?? 'host';
-  s.phase = 'paused';
-  s.clock.pauseBy = null;
-  push(s, { ev: 'clock', kind: 'pause', remainingMs: s.clock.remainingMs, by });
 }
 
 // ── 턴 넘김 ──────────────────────────────────────────────
@@ -753,7 +743,6 @@ function endTurn(s: S) {
   s.turn = freshTurn(next); // 할인 플래그 등 이 도착의 상태는 여기서 사라진다
   if (!again && s.players[next].travelPending) s.turn.step = 'travel';
   if (s.clock.remainingMs === 0) timeUp(s);
-  else if (s.clock.pauseBy) pauseNow(s);
 }
 
 /** 기후 위기: 일으킨 자리 차례가 돌아올 때마다(=한 바퀴) 1 줄어든다 */

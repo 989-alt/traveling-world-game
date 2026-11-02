@@ -1,6 +1,6 @@
 // 게임 화면: T06 보드 + 지금 단계 오버레이 + 새 로그 알림(이벤트 카드·통행료·컷씬). 보드·미션 컴포넌트는 props 로만 쓴다.
 import { Fragment } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { hasAsset, tileLazyKeys } from '../../assets/manifest';
 import { preload } from '../../assets/preload';
 import { buildCost, landPrice, tollQuote } from '../../engine/pay';
@@ -11,6 +11,7 @@ import type { GameState, LogEvent } from '../../shared/types';
 import type { GameClient } from '../../state/client';
 import { cardIn, cultureOf, materialOf, missionOf, questionOf, tfOf } from '../../state/content';
 import { josa } from '../../state/nick';
+import { freezeScreenClock } from '../../state/clock';
 import { localDeadline, stepKeyOf, type ClientState } from '../../state/store';
 import { lastOf, noticeShowMs, noticesFrom, seatViews, stepView, type Notice } from '../../state/view';
 import { Board, type BoardGame } from '../board/Board';
@@ -28,6 +29,8 @@ import { ExplainCard, type TfResult } from '../overlays/ExplainCard';
 import { IslandPanel, ShieldPopup } from '../overlays/Pickers';
 import { Stage, won } from '../overlays/parts';
 import { QuestionScroll } from '../overlays/QuestionScroll';
+import { PauseModal, useInertSiblings, type PauseKind } from '../overlays/PauseModal';
+import { SaveScreen } from './Pause';
 import { Rules } from './Rules';
 import { stakeLine } from './stake';
 
@@ -38,6 +41,11 @@ const NO_CAM_HOLD = new Set<string>(['explanation', 'tf', 'tfResult', 'reward'])
 export function Game({ client, s, ending = false }: { client: GameClient; s: ClientState; ending?: boolean }) {
   const room = s.room!;
   const g = room.game!;
+  /** 멈춘 판(U14, DESIGN §20.1): 판은 멈춘 프레임 그대로 그리고(단계 오버레이 유지) 그 위에 멈춤 모달 */
+  const paused = room.phase === 'paused';
+  // 화면 타이머(링·막대·고르기 간판)를 멈춘 순간에 묶는다. 렌더에서 바로: 재개 상태(밀린 마감)와 같은 렌더에 풀려야 링이 튀지 않는다
+  freezeScreenClock(paused ? (g.clock.pausedAt !== null ? g.clock.pausedAt - s.skew : s.clockAt) : null);
+  useEffect(() => () => freezeScreenClock(null), []);
   const t = g.turn;
   const me = s.seat;
   const seats = useMemo(() => seatViews(room), [room.seats]);
@@ -69,6 +77,7 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   const setCam = (on: boolean) => { camSoon.current = false; setCamOn(on); };
   const cam = camOn || camSoon.current;
   const [mtf, setMtf] = useState<{ id: string; v: boolean } | null>(null); // 미션 관전 참/거짓: 고른 값(잠금 표시)
+  const gameRef = useRef<HTMLDivElement>(null);
 
   // ── 새 로그 → 알림 줄. 알림마다 고유 id(같은 칸 컷씬이 연달아 와도 새로 마운트) ──
   // afterMove: 같은 묶음에 이동이 있었던 알림 = 그 이동의 줌이 풀린 뒤에 연다(서버가 이동 연출 + 알림 시간을 마감에 더한다, PRD §4.3 U10)
@@ -118,22 +127,27 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   // 아직 안 연 알림만 제 이동의 줌이 풀리길 기다린다. 이미 재생 중인 컷씬은 끊지 않는다
   const noticeWait = !!head && opened.current !== head.id && head.afterMove && cam && head.n.kind !== 'cutscene';
   if (head && !noticeWait && !ending) opened.current = head.id;
-  const pop = (id: number) => setQueue((q) => q.filter((x) => x.id !== id));
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  // 멈춘 동안 컷씬이 제 타이머로 끝나도 줄에서 빼지 않는다(재개 때 서버 t0 로 남은 부분부터 다시 붙인다)
+  const pop = (id: number) => { if (!pausedRef.current) setQueue((q) => q.filter((x) => x.id !== id)); };
 
-  const view = stepView(g, s.log, me);
+  const view = stepView(paused ? { ...g, phase: 'playing' } : g, s.log, me);
   // 알림이 남아 있으면 문화 카드·문항은 알림이 다 끝난 뒤에 띄운다(겹침 방지). 알림은 줄이지 않는다 — 서버가 알림 시간을 마감에 더했다
   const holding = !!head && (view.kind === 'culture' || view.kind === 'question');
   const headOpen = !!head && opened.current === head.id;
+  /** 멈춤으로 끊긴 알림의 남은 표시 시간(U14: 알림 카드도 멈춘 채, 재개 뒤 남은 만큼) */
+  const noticeLeft = useRef<{ id: number; ms: number } | null>(null);
   useEffect(() => {
-    if (!head || !headOpen) return;
-    const ms = head.ms ?? noticeShowMs(head.n);
-    if (ms <= 0) return; // 컷씬은 제 길이
-    const h = setTimeout(() => pop(head.id), ms);
-    return () => clearTimeout(h);
-  }, [head?.id, headOpen]);
+    if (!head || !headOpen || paused || head.n.kind === 'cutscene') return; // 컷씬은 제 길이
+    const ms = noticeLeft.current?.id === head.id ? noticeLeft.current.ms : head.ms ?? noticeShowMs(head.n);
+    const t0 = Date.now();
+    const h = setTimeout(() => pop(head.id), Math.max(0, ms));
+    return () => { clearTimeout(h); noticeLeft.current = { id: head.id, ms: ms - (Date.now() - t0) }; };
+  }, [head?.id, headOpen, paused]);
   const picking = view.kind === 'travel' || view.kind === 'pickTile' || view.kind === 'festival';
   const overlay = holding || ending || camHold || picking ? null : renderStep();
-  const covered = !!overlay || !!head;
+  const covered = !!overlay || !!head || paused;
 
   function waiting(text: string) {
     return <Stage><p class="ov-wait" role="status">{text}</p></Stage>;
@@ -174,7 +188,7 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
         return <Stage dim label="해설 카드"><ExplainCard key={q.qid} card={card} countryName={tile ? countryLabel(tile) : ''} continent={tile?.continent}
           tile={t.tile ?? 0} variant={q.variant} correct={t.correct} charId={arriver.charId}
           timedOut={s.log.some((e) => e.ev === 'answer' && e.qid === q.qid && e.choice === null && e.seat === t.seat)} arriverName={arriver.name} mine={mine} deadline={deadline}
-          onShown={view.kind === 'explanation' && me !== null ? () => client.send({ t: 'shown', stepKey: shownKey }) : undefined} covered={!!head || portrait || rules}
+          onShown={view.kind === 'explanation' && me !== null ? () => client.send({ t: 'shown', stepKey: shownKey }) : undefined} covered={!!head || portrait || rules || paused}
           tf={stmt ? { text: stmt.text, canAnswer: eligible && t.step === 'tf', deadline, onPick: (value) => act({ type: 'tfAnswer', value }), result: tfResult() } : null} /></Stage>;
       }
       case 'mission':
@@ -299,19 +313,36 @@ export function Game({ client, s, ending = false }: { client: GameClient; s: Cli
   }
 
   const host = me === room.hostSeat;
+  const pm = usePauseUi(client, s, host, paused, gameRef);
+  const resumeFix = useRef(paused);
+  useEffect(() => {
+    // 재개(U14): 멈출 때 떠 있던 컷씬은 서버가 민 t0 로 남은 샷부터 다시(재접속 복구와 같은 길). 끝난 컷씬은 뺀다
+    if (resumeFix.current && !paused) {
+      setQueue((q) => {
+        const h = q[0];
+        if (!h || h.n.kind !== 'cutscene' || opened.current !== h.id) return q;
+        const c = room.cutscene;
+        return c ? [{ id: ++nextId.current, n: { kind: 'cutscene', seat: c.builder, tile: c.tile, t0: c.t0 }, afterMove: false }, ...q.slice(1)] : q.slice(1);
+      });
+    }
+    resumeFix.current = paused;
+  }, [paused]);
   return (
-    <div class="game" data-ending={ending ? '1' : undefined} data-step={t.step} data-seat={me ?? ''} data-turn={t.seat}>
+    <div ref={gameRef} class={`game${paused ? ' is-paused' : ''}`} data-ending={ending ? '1' : undefined} data-step={t.step} data-seat={me ?? ''} data-turn={t.seat}
+      data-paused={paused ? '1' : undefined}>
       <Board game={g as unknown as BoardGame} players={players} mySeat={me} log={s.log} covered={covered}
         onRoll={(gauge) => act({ type: 'roll', gauge })} noZoom={s.resynced} onCamera={setCam} clockAt={s.clockAt}
-        pick={boardPick()} locked={!!head && !ending} />
+        pick={boardPick()} locked={(!!head && !ending) || paused} />
       {/* 단계가 바뀌면 오버레이를 새로 마운트(같은 컴포넌트의 잠금 상태가 다음 단계로 새지 않게).
           단 미션 → 관전 참/거짓(tf) → 결과(tfResult)는 같은 패널: 푼 사람의 선·블록이 남아 있어야 실패 해설이 그 위에 겹친다(QA r3).
           해설 참/거짓 → 결과도 같은 창(선지가 결과로 바뀐다, DESIGN §18.5) */}
       <Fragment key={`${t.seat}|${overlayStep()}|${t.tile}`}>{overlay}</Fragment>
       {/* 알림 카드: 게임 루트 고정 레이어(z.notice — HUD·오버레이 위, 세로 안내 아래). 한 번 열리면 제 시간을 다 채운다 */}
       {head && !ending && headOpen && <Fragment key={head.id}>{renderNotice(head)}</Fragment>}
-      {!ending && <GameMenu host={host} pending={!!g.clock.pauseBy} onRules={() => setRules(true)} onPause={() => client.send({ t: 'pause' })} />}
-      {rules && <Rules onClose={() => setRules(false)} />}
+      {!ending && <GameMenu host={host} paused={paused} onRules={() => setRules(true)} onPause={() => client.send({ t: 'pause' })} onLeave={pm.openLeave} />}
+      {rules && !pm.open && <Rules onClose={() => setRules(false)} />}
+      {/* 멈춤 모달·확인 창·자리 번호 화면(z 50, DESIGN §20). 형제는 inert, 세로 안내(아래 RotateGuard)만 그 위 */}
+      {!ending && pm.node}
       {/* 세로 안내: 마지막 자식 + fixed 전용 z → 모든 레이어 위, 형제는 inert(DESIGN §4.2, QA6) */}
       <RotateGuard />
     </div>
@@ -327,29 +358,85 @@ function whyNoTakeover(log: LogEvent[], e: Extract<LogEvent, { ev: 'toll' }>, le
   return 'coin';
 }
 
-/** 규칙 · 멈춤 = 광장 뒤쪽 매달린 간판 2개(DESIGN §16.4, 타이머 양옆). 윗줄 칸·패널을 가리지 않는다.
- *  멈춤은 방장만, 확인 1탭("잠깐 쉴까요?"). 누르면 지금 턴을 마친 뒤 멈춘다(pending = 서버가 멈춤 요청을 받음) */
-export function GameMenu({ host, pending = false, onRules, onPause }: { host: boolean; pending?: boolean; onRules: () => void; onPause: () => void }) {
-  const [ask, setAsk] = useState(false);
-  useEffect(() => { if (!ask) return; const h = setTimeout(() => setAsk(false), 4000); return () => clearTimeout(h); }, [ask]);
+/** 규칙 · 멈춤/나가기 = 광장 뒤쪽 매달린 간판 2개(DESIGN §16.4·§20.5, 타이머 양옆). 윗줄 칸·패널을 가리지 않는다.
+ *  방장 = 멈춤(1탭 즉시, 멈춘 동안 disabled). 학생 = 나가기(문 아이콘) → 내 화면만 나가기 확인 창(C-L) */
+export function GameMenu({ host, paused = false, onRules, onPause, onLeave }: {
+  host: boolean; paused?: boolean; onRules: () => void; onPause: () => void; onLeave?: () => void;
+}) {
   return (
     <Stage class="ov-layer--menu">
       <nav class="gm" aria-label="게임 메뉴">
         <HangSign at={HUD.rules} class="gm-sign">
           <button type="button" class="hang-plate gm-btn" aria-label="규칙 보기" title="규칙" onClick={onRules}>규칙</button>
         </HangSign>
-        {host && (
-          <HangSign at={HUD.save} class={`gm-sign${ask ? ' is-ask' : ''}${pending ? ' is-pending' : ''}`}>
-            <button type="button" class="hang-plate gm-btn" data-act="pause" disabled={pending}
-              aria-label={pending ? '이 차례가 끝나면 멈춰요' : ask ? '한 번 더 누르면 멈춰요' : '멈춤'} title="멈춤"
-              onClick={() => (ask ? (setAsk(false), onPause()) : setAsk(true))}><PauseIcon /></button>
-            {ask && !pending && <p class="gm-ask" role="status">잠깐 쉴까요? 한 번 더 누르면 멈춰요</p>}
-            {pending && <p class="gm-ask" role="status">이 차례가 끝나면 멈춰요</p>}
+        {host ? (
+          <HangSign at={HUD.save} class="gm-sign">
+            <button type="button" class="hang-plate gm-btn" data-act="pause" disabled={paused} aria-label="멈춤" title="멈춤" onClick={onPause}><PauseIcon /></button>
+          </HangSign>
+        ) : onLeave && (
+          <HangSign at={HUD.save} class="gm-sign">
+            <button type="button" class="hang-plate gm-btn" data-act="leave-sign" disabled={paused} aria-label="게임 나가기" title="게임 나가기" onClick={onLeave}><DoorIcon /></button>
           </HangSign>
         )}
       </nav>
     </Stage>
   );
+}
+
+/** 학생 나가기 간판: 문 + 화살표(간판 글자색, DESIGN §20.5) */
+function DoorIcon() {
+  return (
+    <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.5 2.5H4.2c-.6 0-1 .4-1 1v11c0 .6.4 1 1 1h6.3" />
+      <path d="M7.5 9h8M13 6.2 15.8 9 13 11.8" />
+      <circle cx="8.2" cy="9.6" r=".6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** 멈춤 UI(DESIGN §20): 상태 4(P-H·P-S·C-E·C-L) + 자리 번호 화면, 잠금·정지·되돌리기 */
+function usePauseUi(client: GameClient, s: ClientState, host: boolean, paused: boolean, gameRef: { current: HTMLDivElement | null }) {
+  const [ask, setAsk] = useState<null | 'end' | 'leave'>(null); // 멈춘 동안 열린 확인 창
+  const [signLeave, setSignLeave] = useState(false); // 학생 간판으로 연 C-L(판은 계속)
+  const [seat, setSeat] = useState(false); // 자리 번호 화면
+  const [busy, setBusy] = useState(false); // 계속하기·끝내기·나가기를 보내고 답 기다림
+  const layer = useRef<HTMLDivElement>(null);
+  // 멈춤이 오면 간판 C-L 을 닫고 P-S(멈춤 우선), 재개되면 창을 전부 닫는다(C-L 복원 안 함). 그리기 전에
+  useLayoutEffect(() => { setSignLeave(false); setAsk(null); setSeat(false); setBusy(false); }, [paused]);
+  // 판 정지: 게임 루트 안의 WAAPI·CSS 애니메이션(주사위 컵·말 이동·대기 모션·컷씬 타임라인)을 그 프레임에서 멈추고, 재개 때 잇는다.
+  // 모달 레이어·세로 안내는 제외(모달 pop·세로 안내 그림은 돈다)
+  useLayoutEffect(() => {
+    const root = gameRef.current;
+    if (!paused || !root || typeof root.getAnimations !== 'function') return;
+    const held = root.getAnimations({ subtree: true }).filter((a) => {
+      const el = (a.effect as KeyframeEffect | null)?.target as Element | null;
+      return a.playState === 'running' && !(el && el.closest('.pm-host, .board-rotate'));
+    });
+    for (const a of held) a.pause();
+    return () => { for (const a of held) if (a.playState === 'paused') a.play(); };
+  }, [paused]);
+  const kind: PauseKind | null = paused ? (ask === 'end' ? 'C-E' : ask === 'leave' ? 'C-L' : host ? 'P-H' : 'P-S') : signLeave ? 'C-L' : null;
+  const open = kind !== null || (paused && seat);
+  useInertSiblings(open, layer);
+  const g = s.room!.game!;
+  // 같은 상자(.pm-host) 안에서 모달 ↔ 자리 번호 화면을 바꾼다: 형제 inert 표시가 이 상자 하나를 기준으로 남는다
+  const node = !open ? null : (
+    <div ref={layer} class="pm-host">
+      {paused && seat && s.pins ? <SaveScreen s={s} onDone={() => setSeat(false)} /> : (
+        <Stage dim class="ov-layer--pause">
+          <PauseModal kind={kind!} remainingMs={g.clock.remainingMs} busy={busy} fromSign={!paused}
+            onResume={() => { if (client.send({ t: 'resume' })) setBusy(true); }}
+            onAskEnd={() => setAsk('end')}
+            onAskLeave={() => setAsk('leave')}
+            onBack={() => { if (paused) setAsk(null); else setSignLeave(false); }}
+            onEnd={() => { if (client.endGame()) setBusy(true); }}
+            onLeave={() => { setBusy(true); client.leaveGame(); }}
+            onSeat={() => setSeat(true)} />
+        </Stage>
+      )}
+    </div>
+  );
+  return { node, open, openLeave: () => setSignLeave(true) };
 }
 
 function PauseIcon() {

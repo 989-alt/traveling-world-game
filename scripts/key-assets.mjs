@@ -47,7 +47,8 @@ function hiK(id, n) {
   if (/^(DICE|FLAG-tall|PENNANT|BALCONY)-/.test(id)) return 0; // U8: 기본으로 충분(컵 309/512 · 주사위 169/256 · 쟁반 562/800 · 깃발 줌 222/256 · 발코니 줌 121/128)
   if (id === 'UI-signpost') return 2.25; // 256 → 576 (줌 551)
   if (/^CH\d-P19$/.test(id)) return 1.25; // 512 → 640 (문화 카드 빼꼼 611)
-  if (/^CH\d-P\d\d$/.test(id)) return 2; // 보드 256 → 512(줌 498) · @1024 → 2048(문항 옆 고민 포즈 2530, 상한)
+  if (/^CH\d-P\d\d$/.test(id)) return 2;
+  if (POSE13.test(id)) return CAP / n; // U13 §19.9.5 메달 포즈 1024 → hi 2048 // 보드 256 → 512(줌 498) · @1024 → 2048(문항 옆 고민 포즈 2530, 상한)
   if (/^LM-/.test(id)) return n >= 1024 ? 1.25 : 2; // 컷씬 @1024 → 1280(1253) · 판 256 → 512
   if (/^(BG|CUT)-/.test(id)) return CAP / 1536; // 1536×864 → 2048×1152 (화면 가득 3840 — 상한, 예외)
   if (/^(CC|EV)-/.test(id) || /^[a-z]{2}_/.test(id)) return CAP / 1440; // 1440×576 → 2048×819 (문화·해설 2319 — 상한)
@@ -66,9 +67,9 @@ const ids = Object.keys(latest).sort().filter(id => (!only || only.test(id)) && 
 
 const PHOTO_UI = new Set(['UI-rotate', 'UI-rotate-wide']); // U1·U4: 하늘까지 꽉 찬 일러스트(키잉 없음)
 const keyed = id => !PHOTO_UI.has(id) && id !== 'END-photo-bg' && /^(CH\d|ISL|BLD|LM|UI|IT|TB|LOGO|TILE|PLAZA|RS|DICE|FLAG-tall|PENNANT|BALCONY|END)/.test(id);
-const tight = id => /^(CH4|CH6)-/.test(id) || id === 'UI-flag-4' || /^(FLAG-tall|PENNANT|BALCONY)-4$/.test(id) || isPlaza(id) || /^END-.+-4$/.test(id); // U8 자리 4 분홍 // U12 END 자리 4(분홍 표지·테이프·하트) // PLAZA: 남아메리카 보라 // 임계 70/110 (보라·분홍이 마젠타에 가까움)
+const tight = id => /^(CH4|CH6)-/.test(id) || /^CH7-P2[01]-\w+-s4$/.test(id) || id === 'UI-flag-4' || /^(FLAG-tall|PENNANT|BALCONY)-4$/.test(id) || isPlaza(id) || /^END-.+-4$/.test(id); // U8 자리 4 분홍 // U12 END 자리 4(분홍 표지·테이프·하트) // PLAZA: 남아메리카 보라 // 임계 70/110 (보라·분홍이 마젠타에 가까움)
 const icon = id => (/^(UI|IT|TB)/.test(id) && !FREE[id] && id !== 'UI-signpost') || /^RS-(medal|stamp|dot|tab-ring)/.test(id)
-  || /^(DICE-(top|sum)|FLAG-tall|PENNANT|BALCONY)/.test(id) || /^END-(heart|stamp)-ring-/.test(id); // U8: 가운데 패딩. 컵 3장(DICE-cup-*)만 바닥 중앙 앵커(§17.1.1)
+  || /^(DICE-(top|sum)|FLAG-tall|PENNANT|BALCONY)/.test(id) || /^END-(heart|stamp)-ring-/.test(id) || /^END-rosette-/.test(id); // U8: 가운데 패딩. 컵 3장(DICE-cup-*)만 바닥 중앙 앵커(§17.1.1)
 // U6(DESIGN §16.7.3): 결과 화면 그림 RS-*. [모양, 크기, quality] — sq = 정사각 패딩(섬·트로피·핀은 바닥 중앙, 메달·도장·점·탭 고리는 가운데),
 // w = 트림 뒤 폭 N(배너·이름표·칩·버튼·지도판·받침), box = 트림 뒤 정확히 W×H 로 늘림(두루마리 3:4), frame = 트림 없이 프레임 그대로(색종이 4×2 격자)
 const RS = {
@@ -84,9 +85,17 @@ const rsSpec = id => RS[id] ?? (/^RS-isle-/.test(id) ? ['sq', 512, 85] : /^RS-pl
 const END = {
   'END-photo-bg': ['bg', [1560, 1040], 85], 'END-photo-frame': ['frame9', [1640, 1380], 88], 'END-passport-wide': ['long', 1536, 85],
 };
-const endSpec = id => END[id] ?? (/^END-passport-open-/.test(id) ? ['long', 1000, 85] : /^END-passport-closed-/.test(id) ? ['long', 320, 88]
+const endSpec = id => (V2.test(id) && latest[id]?.v >= 2 ? END_V2[id.replace(/-\d$/, '')] : null) ?? END[id] ?? (/^END-passport-open-/.test(id) ? ['long', 1000, 85] : /^END-passport-closed-/.test(id) ? ['long', 320, 88]
   : /^END-medal-neck-/.test(id) ? ['long', 192, 90] : /^END-tape-/.test(id) ? ['fill', [600, 136], 88]
-  : /^END-heart-ring-/.test(id) ? ['sq', 336, 90] : /^END-stamp-ring-/.test(id) ? ['sq', 192, 90] : null);
+  : /^END-heart-ring-/.test(id) ? ['sq', 336, 90] : /^END-stamp-ring-/.test(id) ? ['sq', 192, 90]
+  // U13 §19.9.5: 로제트 240(숫자 새김) · 세운 여권 긴 변 272(100×136 ×2) · 책갈피 탭 긴 변 300(40×150 ×2) · 열기구 880 바닥 중앙
+  : /^END-rosette-\d$/.test(id) ? ['sq', 240, 90] : /^END-passport-stand-\d$/.test(id) ? ['long', 272, 90] : /^END-tab-(more|back)$/.test(id) ? ['long', 300, 90]
+  : id === 'END-balloon' ? ['sqb', 880, 88] : null);
+// U13 v2(글자가 그림에 든 판): 틀 = 9 조각 + 제목 재배치(아래 테 160), 펼친 여권 = 트림 뒤 긴 변 1024(생성본이 0.9 비율이라 늘리지 않음)
+const V2 = /^END-(photo-frame|passport-open-\d)$/;
+const END_V2 = { 'END-photo-frame': ['frame9t', [1560, 1400], 88], 'END-passport-open': ['long', 1160, 85] };
+/** U13 메달 포즈: CHn-P20-gold · CHn-P21-{silver,bronze,plain}, 로봇 -s<자리> */
+const POSE13 = /^CH\d-P2[01]-(gold|silver|bronze|plain)(-s\d)?$/;
 const END_BIG = /^END-(photo-(bg|frame)|passport-(open-\d|wide))$/;
 // 틀 창(트림 상자 기준, 생성본 실측 END-photo-frame: 창 x 3.67~96.28%·y 5.09~76.67%) → 820×690 에서 창 (20,20,780,520)
 const FRAME_WIN = { l: 0.0367, t: 0.0509, r: 1 - 0.0367 - 0.9261, b: 1 - 0.0509 - 0.7158 };
@@ -106,6 +115,58 @@ async function frame9(buf, W, H) {
   }
   return sharp({ create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite(parts);
 }
+/** U13: END-photo-frame-v2 → 780×700(옆·위 테 28, 아래 테 148, 창 724×524). 2026-11-01 사용자 "시안(MOCK-end-C2)이 훨씬 나아" → 틀 비율·제목 크기를
+ *  시안에서 잰 값(1366 환산)으로. 생성본의 제목은 아래 테 가운데(테 높이 42~82%)에 들어 있어 9 조각으로 줄이면 글자가 세로로 눌린다. 그래서
+ *  ① 창 위치를 알파에서 재고 ② 제목 줄(잉크 bbox)을 잘라 낸 깨끗한 틀을 9 조각으로 맞춘 뒤 ③ 제목 잉크만(종이 → 알파) 같은 비율로 줄여
+ *  시안 자리(아래 테 아래쪽, 중심 y 667, 표시표 높이 60 → 폭 ≈ 383, 시안 ≈ 400)에 다시 얹는다 */
+const FRAME2_OUT = { w: 780, h: 700, l: 28, t: 28, r: 28, b: 148 };
+const TITLE_H = 60, TITLE_CY = 667; // 그룹(틀) 좌표 px — 테이프 아래변 625 아래, 틀 아래변 700 안
+async function frame9t(buf, W, H) {
+  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const sw = info.width, sh = info.height, A = (x, y) => data[(y * sw + x) * 4 + 3];
+  const run = (n, f) => { let a = -1, b = -1, best = [0, 0]; for (let i = 0; i <= n; i++) { const t = i < n && f(i) < 16; if (t && a < 0) a = i; if (!t && a >= 0) { if (i - a > best[1] - best[0]) best = [a, i]; a = -1; } } return best; };
+  const [wy0, wy1] = run(sh, (y) => A(sw >> 1, y)); // 창(가장 긴 투명 구간)
+  const [wx0, wx1] = run(sw, (x) => A(x, Math.round((wy0 + wy1) / 2)));
+  // 아래 테 안 잉크(밝기 < 140) bbox
+  const lum = (x, y) => { const i = (y * sw + x) * 4; return 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2]; };
+  let tx0 = sw, ty0 = sh, tx1 = -1, ty1 = -1;
+  for (let y = wy1 + 8; y < sh - 8; y++) for (let x = wx0; x < wx1; x++) if (A(x, y) > 200 && lum(x, y) < 140) { if (x < tx0) tx0 = x; if (x > tx1) tx1 = x; if (y < ty0) ty0 = y; if (y > ty1) ty1 = y; }
+  const pad = Math.round(sh * 0.006);
+  tx0 -= pad; ty0 -= pad; tx1 += pad; ty1 += pad;
+  // ② 제목 줄을 뺀 깨끗한 틀(행 ty0~ty1 삭제)
+  const top = await sharp(buf).extract({ left: 0, top: 0, width: sw, height: ty0 }).png().toBuffer();
+  const bot = await sharp(buf).extract({ left: 0, top: ty1, width: sw, height: sh - ty1 }).png().toBuffer();
+  const ch = sh - (ty1 - ty0);
+  const clean = await sharp({ create: { width: sw, height: ch, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: top, left: 0, top: 0 }, { input: bot, left: 0, top: ty0 }]).png().toBuffer();
+  const sx = [0, wx0, wx1, sw], sy = [0, wy0, wy1, ch];
+  const k = W / FRAME2_OUT.w;
+  const dx = [0, Math.round(FRAME2_OUT.l * k), W - Math.round(FRAME2_OUT.r * k), W];
+  const dy = [0, Math.round(FRAME2_OUT.t * k), H - Math.round(FRAME2_OUT.b * k), H];
+  const parts = [];
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+    const input = await sharp(clean).extract({ left: sx[j], top: sy[i], width: sx[j + 1] - sx[j], height: sy[i + 1] - sy[i] })
+      .resize(dx[j + 1] - dx[j], dy[i + 1] - dy[i], { fit: 'fill' }).png().toBuffer();
+    parts.push({ input, left: dx[j], top: dy[i] });
+  }
+  // ③ 제목 잉크 → 알파(종이 밝기 = 영역 90 백분위, 잉크 = 2 백분위)
+  const tw = tx1 - tx0 + 1, th = ty1 - ty0 + 1;
+  const ink = Buffer.alloc(tw * th * 4);
+  const Ls = [];
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) Ls.push(lum(tx0 + x, ty0 + y));
+  const sorted = [...Ls].sort((p, q) => p - q), Lp = sorted[Math.floor(sorted.length * 0.9)], Li = sorted[Math.floor(sorted.length * 0.02)];
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
+    const i = ((ty0 + y) * sw + tx0 + x) * 4, o = (y * tw + x) * 4;
+    const a = Math.max(0, Math.min(1, (Lp - Ls[y * tw + x]) / (Lp - Li)));
+    for (let c = 0; c < 3; c++) ink[o + c] = a > 0.02 ? Math.max(0, Math.min(255, Math.round((data[i + c] - (1 - a) * Lp) / a))) : 0;
+    ink[o + 3] = Math.round(a * 255);
+  }
+  const outH = Math.round(TITLE_H * k), outW = Math.round((tw * outH) / th);
+  const title = await sharp(ink, { raw: { width: tw, height: th, channels: 4 } }).resize(outW, outH).png().toBuffer();
+  parts.push({ input: title, left: Math.round(W / 2 - outW / 2), top: Math.round(TITLE_CY * k - outH / 2) });
+  console.log(`frame9t ${W}x${H}: 창 src x ${wx0}~${wx1} y ${wy0}~${wy1} / ${sw}x${sh}, 제목 src ${tw}x${th} → ${outW}x${outH} (표시 ${(outW / k).toFixed(0)}x${TITLE_H})`);
+  return sharp({ create: { width: W, height: H, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite(parts);
+}
 /** U12 포즈 P20·P21 실측(정사각 패딩 뒤): 트림 높이 ÷ 한 변 · 트림 폭 ÷ 한 변. key() 가 채운다 → OUT/poses.json */
 const POSES = {};
 
@@ -117,7 +178,7 @@ const isTile = id => /^TILE-(\d\d|M)[de]$/.test(id); // e = 좌우 열 이름표
 // R2 T-A A3: 정사각이 아닌 UI 그림(트림 뒤 긴 변 N). [긴 변, quality]
 const FREE = { LOGO: [1024, 90], 'UI-stage': [1536, 85], 'UI-plank-panel': [1024, 90], 'DICE-tray': [800, 88] }; // U8 쟁반: 트림 뒤 폭 800
 // 버전이 이름에 남는 출력(옛 v1 WebP 와 나란히 둔다): ISL-center-v2 → result.podium, LOGO-v2 → logo.v2
-const outName = id => (/^(ISL-center|LOGO)$/.test(id) && latest[id].v > 1 ? `${id}-v${latest[id].v}` : id);
+const outName = id => ((/^(ISL-center|LOGO)$/.test(id) || V2.test(id)) && latest[id].v > 1 ? `${id}-v${latest[id].v}` : id);
 
 if (dry) {
   for (const id of ids) console.log(`${id}\t${latest[id].file}\t${keyed(id) ? (tight(id) ? 'key-tight' : 'key') : 'no-key'}`);
@@ -128,14 +189,24 @@ if (dry) {
 const sharp = createRequire(import.meta.url)(arg('--sharp') ?? process.env.SHARP_PATH ?? join(homedir(), 'Desktop/math-baseball/node_modules/sharp'));
 mkdirSync(OUT, { recursive: true });
 
+/** U13: 바탕 키 색 = 테두리 픽셀(위·아래 3줄, 좌·우 3열) 채널별 중앙값 */
+function keyColor(data, W, H) {
+  const ch = [[], [], []];
+  const add = (x, y) => { const i = (y * W + x) * 4; for (let c = 0; c < 3; c++) ch[c].push(data[i + c]); };
+  for (let x = 0; x < W; x += 2) for (const y of [0, 1, 2, H - 3, H - 2, H - 1]) add(x, y);
+  for (let y = 0; y < H; y += 2) for (const x of [0, 1, 2, W - 3, W - 2, W - 1]) add(x, y);
+  return ch.map((a) => a.sort((p, q) => p - q)[a.length >> 1]);
+}
+
 /** U12 사용자 지적(2026-10-31): 전역 거리 키잉은 그림 안의 분홍·보라(로봇 입·분홍 재킷·보라 후드)까지 반투명으로 뚫었다.
  *  엔딩 그림·포즈는 '바탕'만 지운다: 거의 순수한 마젠타(d < 45) 덩어리 중 테두리에 닿거나 충분히 큰 것(팔과 몸 사이·여권 틀 창·하트 가운데)
  *  = 바탕(2), 그 둘레 r px = 경계 띠(1, 기존 거리 램프·디스필), 나머지(0) = 불투명 그대로 */
 const CONNECTED = /^(END-|CH\d-P2[01]$)/;
-function bgZone(data, W, H) {
+const connected = id => CONNECTED.test(id) || POSE13.test(id);
+function bgZone(data, W, H, kc = [255, 0, 255]) {
   const N = W * H, core = new Uint8Array(N);
   const dd = new Float32Array(N);
-  for (let p = 0; p < N; p++) { const R = data[p * 4], G = data[p * 4 + 1], B = data[p * 4 + 2]; dd[p] = Math.sqrt((R - 255) ** 2 + G ** 2 + (B - 255) ** 2); core[p] = dd[p] < 45 ? 1 : 0; }
+  for (let p = 0; p < N; p++) { const R = data[p * 4], G = data[p * 4 + 1], B = data[p * 4 + 2]; dd[p] = Math.sqrt((R - kc[0]) ** 2 + (G - kc[1]) ** 2 + (B - kc[2]) ** 2); core[p] = dd[p] < 45 ? 1 : 0; }
   // 마젠타 색조(R·B ≫ G, R≈B): 바탕 위에 그려진 어두운 마젠타 그림자도 바탕. 분홍(R ≫ B)·보라(B ≫ R)는 아님
   const hue = (p) => { const R = data[p * 4], G = data[p * 4 + 1], B = data[p * 4 + 2]; return R - G > 40 && B - G > 40 && Math.abs(R - B) < 50; };
   const lab = new Int32Array(N), zone = new Uint8Array(N), minN = Math.round(N * 0.00015);
@@ -177,11 +248,13 @@ const UNSQUASH = { 'CH4-P21': 0.8, 'CH4-P20': 0.85 };
 async function key(file, id) {
   const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const [lo, hi] = tight(id) ? [70, 110] : [90, 140];
-  const near = CONNECTED.test(id) ? bgZone(data, info.width, info.height) : null;
+  // U13: kie 생성본은 바탕이 #FF00FF 가 아니라 ≈ (247,7,236) — 테두리 중앙값을 키 색으로(옛 그림은 ≈ #FF00FF 라 결과 같음)
+  const kc = connected(id) ? keyColor(data, info.width, info.height) : [255, 0, 255];
+  const near = connected(id) ? bgZone(data, info.width, info.height, kc) : null;
   let x0 = info.width, y0 = info.height, x1 = -1, y1 = -1;
   for (let i = 0, p = 0; i < data.length; i += 4, p++) {
     const R = data[i], G = data[i + 1], B = data[i + 2];
-    const d = Math.sqrt((R - 255) ** 2 + G ** 2 + (B - 255) ** 2);
+    const d = Math.sqrt((R - kc[0]) ** 2 + (G - kc[1]) ** 2 + (B - kc[2]) ** 2);
     const a = near && !near[p] ? 1 : near && near[p] === 2 ? 0 : d < lo ? 0 : d < hi ? (d - lo) / (hi - lo) : 1;
     if (a > 0 && a < 1) { // 디스필
       data[i] = Math.min(R, (G + B) / 2 + 40);
@@ -193,13 +266,13 @@ async function key(file, id) {
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
   }
-  if (/^(END-|CH\d-P2[01]$)/.test(id)) unfringe(data, info.width, info.height);
+  if (connected(id)) unfringe(data, info.width, info.height);
   if (isTile(id) || id === 'UI-signpost' || rsSpec(id)?.[0] === 'frame') return sharp(data, { raw: info }).png().toBuffer(); // 프레임 유지
   let w = x1 - x0 + 1; const h = y1 - y0 + 1, side = Math.round(Math.max(w, h) * 1.04);
   let crop = await sharp(data, { raw: info }).extract({ left: x0, top: y0, width: w, height: h }).png().toBuffer();
   if (UNSQUASH[id]) { w = Math.round(w * UNSQUASH[id]); crop = await sharp(crop).resize(w, h, { fit: 'fill' }).png().toBuffer(); }
-  if (FREE[id] || isPlaza(id) || ['w', 'box'].includes(rsSpec(id)?.[0]) || ['frame9', 'long', 'fill'].includes(endSpec(id)?.[0])) return crop; // 트림만(정사각 패딩 없음)
-  if (/^CH\d-P2[01]$/.test(id)) POSES[id] = { h: +(h / side).toFixed(4), w: +(w / side).toFixed(4) };
+  if (FREE[id] || isPlaza(id) || ['w', 'box'].includes(rsSpec(id)?.[0]) || ['frame9', 'frame9t', 'long', 'fill'].includes(endSpec(id)?.[0])) return crop; // 트림만(정사각 패딩 없음)
+  if (/^CH\d-P2[01]$/.test(id) || POSE13.test(id)) POSES[id] = { h: +(h / side).toFixed(4), w: +(w / side).toFixed(4) };
   // 발 앵커: 바닥 중앙에 붙임. 아이콘은 가운데.
   const top = icon(id) ? Math.round((side - h) / 2) : side - h;
   return sharp({ create: { width: side, height: side, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
@@ -318,9 +391,10 @@ async function run(id, file) {
       const [kind, n, q] = es;
       const k = kOf(id, Array.isArray(n) ? Math.max(...n) : n);
       if (!k) return false;
-      const img = kind === 'frame9' ? await frame9(buf, R(n[0], k), R(n[1], k)) : kind === 'long' ? sharp(buf).resize(R(n, k), R(n, k), { fit: 'inside' })
+      const img = kind === 'frame9' ? await frame9(buf, R(n[0], k), R(n[1], k)) : kind === 'frame9t' ? await frame9t(buf, R(n[0], k), R(n[1], k))
+        : kind === 'long' ? sharp(buf).resize(R(n, k), R(n, k), { fit: 'inside' })
         : kind === 'fill' ? sharp(buf).resize(R(n[0], k), R(n[1], k), { fit: 'fill' }) : sq(n, k);
-      return webp(img, q, id + '.webp');
+      return webp(img, q, outName(id) + '.webp');
     }
     if (isTile(id)) { const k = kOf(id, 512); return k ? webp(sq(512, k), 85, id + '.webp') : false; } // R5d 칸: 512(줌 1.8 × 128 = 230)
     if (id === 'PLAZA') { if (HI) return false; await plazaMasks(buf, 1944); return webp(sharp(buf).resize(1944, null), 85, 'PLAZA.webp'); } // 원본 1877 → 1944(×1.036). 옛 광장(매니페스트 밖) — hi 없음
@@ -328,6 +402,7 @@ async function run(id, file) {
     if (id === 'UI-signpost') { const k = kOf(id, 256); return k ? webp(await signpost(buf, R(256, k)), 90, id + '.webp') : false; }
     // P01 1024: 인트로 200px·로비 슬롯 330px (R2 A4). P13 1024: 문항 옆 고민 포즈(R2 D6, P10 과 교대)
     if (/^CH\d-P(01|10|11|12|13|18|20|21)$/.test(id) || /^LM-/.test(id)) { const k = kOf(id, 1024); if (k) await webp(sq(1024, k), 85, id + '@1024.webp'); }
+    if (POSE13.test(id)) { const k = kOf(id, 1024); return k ? webp(sq(1024, k), 88, id + '.webp') : false; } // U13 메달 포즈: 1024 / hi 2048(표시 280)
     if (/^CH\d-P19$/.test(id)) { const k = kOf(id, 512); return k ? webp(sq(512, k), 88, id + '.webp') : false; } // 빼꼼 반신(R2 A2): 하단 중앙 = 허리선 중앙
     const one = (n, q, name = id) => { const k = kOf(id, n); return k ? webp(sq(n, k), q, name + '.webp') : false; };
     if (id === 'UI-sign-small') return one(256, 90);

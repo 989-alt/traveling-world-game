@@ -1,6 +1,7 @@
 /* 최종 결과 = 엔딩(DESIGN §19, 2026-10-31 U12 확정 · 승인 시안 MOCK-end-C2). 1366×768 판을 화면에 맞춰 줄인다 — 한 화면, 스크롤 없음.
  * 그림은 전부 end.*·result.* 에셋. 여기 남는 코드 도형은 발밑 그림자 타원·drop-shadow 효과·둘째 장 글자 그릇(표·알약·상자)·독점 칩·범례 색 띠뿐.
- * 그림을 못 받으면 .end-fb-*(단색 대체 판, 그림 요소 0). 배치 px 는 §19.2(src/ui/results/end-geom.ts). gradient 0. */
+ * 그림을 못 받으면 .end-fb-*(단색 대체 판, 그림 요소 0). 배치 px 는 §19.2(src/ui/results/end-geom.ts). gradient 0.
+ * U13(§19.9): 제목·순위 숫자·여권 항목 이름·탭 글자는 그림 안. 가변 글자는 .end-hand(Gaegu 700 ≥ 16px, 잉크색, 기울기, multiply) — 종이·테이프 그레인이 비친다 */
 .sc.rs { display: block; padding: 0; overflow: hidden; }
 .sc.rs > .rs-stage { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; }
 .rs-stage [hidden] { display: none !important; }
@@ -9,51 +10,56 @@
 
 /* ── 그림 미로드 대체(단색) ── */
 .end-fb-sky { background: #BFE3F7; }
-.end-fb-frame { display: block; box-sizing: border-box; border: 20px solid #FFFFFF; border-bottom-width: 150px; border-radius: 4px; }
+.end-fb-frame { display: block; box-sizing: border-box; border: 28px solid #FFFFFF; border-bottom-width: 148px; border-radius: 4px; }
 .end-fb-paper, .end-fb-book { display: block; border-radius: 14px; background: var(--scroll-paper); box-shadow: inset 0 0 0 10px var(--seat, #1E3A6B); }
 .end-fb-cover { display: block; border-radius: 8px; background: var(--seat); }
 .end-fb-tape { display: block; border-radius: 3px; background: var(--seat); opacity: 0.85; }
 .end-fb-ring { display: block; border-radius: 50%; box-shadow: inset 0 0 0 4px var(--seat, var(--gold-rim)); }
-.end-fb-coin { display: block; border-radius: 50%; background: var(--gold-shine); }
 /* 여권 그림이 없으면 뚫린 틀도 없다: 초상·스티커·표지 창 얼굴을 대체 판 위로 */
 .end-book:has(.end-fb-book) :is(.end-portrait, .end-sticker), .end-cp:has(.end-fb-cover) .end-cp-win { z-index: 3; box-shadow: 0 0 0 3px #FFFFFF; }
-.end-fb-btn { display: block; border-radius: 999px; background: var(--accent-light); box-shadow: inset 0 0 0 2px #0F3F86; }
 
-/* ── 기념사진: 그룹 상자(§19.2) −3° ── */
-.end-photo { position: absolute; margin: 0; z-index: 2; transform: rotate(-3deg); transform-origin: 50% 50%; }
+/* 그림 글자 대체(그림을 못 받을 때만, §19.9.2): 제목 · 순위 숫자 · 여권 항목 이름 · 탭 글자 */
+.end-fb-title { position: absolute; left: 0; width: 780px; top: 640px; margin: 0; z-index: 7; color: #142038; font: 700 40px / 1 var(--font-hand); text-align: center; }
+.end-fb-n { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #142038; font: 700 28px / 1 var(--font-hand); }
+.end-fb-label { display: none; }
+.end-book:has(.end-fb-book) .end-fb-label { position: absolute; left: 50%; bottom: 100%; display: block; color: #142038; font: 700 16px / 1 var(--font-hand); white-space: nowrap; transform: translate(-50%, -70px); }
+.end-fb-tab { display: flex; align-items: center; justify-content: center; width: 40px; height: 100%; border-radius: 2px; background: #1E3A6B; }
+.end-fb-tab-t { color: #FFFFFF; font: 700 18px / 1.1 var(--font-hand); writing-mode: vertical-rl; }
+
+/* ── 손글씨(§19.9.2): Gaegu 700, 잉크색·기울기는 자리마다, multiply 로 아래 그림 결이 비친다. text-shadow 0 ── */
+.rs-stage .end-hand, .rs-stage .end-grid .end-stamp-t { font-family: var(--font-hand); font-weight: 700; mix-blend-mode: multiply; text-shadow: none; }
+/* 마커로 쓴 자리(테이프 이름·수치·주인 이름)는 획을 0.4px 더 두껍게 — 그림 속 마커 제목·항목 이름과 굵기를 맞춤(그림자·필터 아님, 잉크색 그대로) */
+.end-name, .rs-stage .end-coin-v, .rs-stage .end-owner { -webkit-text-stroke: 0.4px currentColor; }
+
+/* ── 기념사진: 시안 실측 그룹 (33,34,780,700) −4.4° (src/ui/results/end-geom.ts) ── */
+.end-photo { position: absolute; margin: 0; z-index: 2; transform: rotate(-4.4deg); transform-origin: 50% 50%; }
 .end-window { position: absolute; z-index: 1; overflow: hidden; background: #BFE3F7; }
 .end-bg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
 .end-lm { position: absolute; object-fit: contain; object-position: 50% 100%; }
+.end-balloon { filter: drop-shadow(4px 6px 4px rgb(60 40 20 / 0.18)); }
 .end-people { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
 .end-person { display: contents; }
-/* 발밑 그림자: 해가 왼쪽 위 → 그림자는 오른쪽 아래로 짧게(§19.3). 그림 아님 */
-.end-shadow { position: absolute; z-index: 2; width: 110px; height: 22px; margin: -11px 0 0 -48px; border-radius: 50%; background: rgb(40 52 20 / 0.38); filter: blur(4px); }
-.end-person.is-first .end-shadow { width: 120px; height: 24px; margin: -12px 0 0 -52px; }
+/* 발밑 그림자: 해가 왼쪽 위 → 그림자는 오른쪽 아래로 짧게(§19.3). 그림 아님. 폭 = 표시 키 × 0.40(인라인) */
+.end-shadow { position: absolute; z-index: 2; height: 22px; margin-top: -11px; border-radius: 50%; background: rgb(40 52 20 / 0.38); filter: blur(4px); }
 .end-hero { position: absolute; z-index: 3; display: block; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 1px 1px rgb(40 30 10 / 0.25)); }
 .end-person.is-first .end-hero { z-index: 4; }
 .end-face { position: absolute; z-index: 3; width: 110px; height: 110px; margin-left: -55px; }
 .end-face-img { display: block; width: 100%; height: 100%; border-radius: 50%; }
-.end-chest, .end-foot { position: absolute; width: 0; height: 0; } /* 앵커 점(시험이 회전 뒤 위치를 잰다) */
-.end-neck { position: absolute; z-index: 3; object-fit: contain; transform: translate(-50%, -50%); filter: drop-shadow(0 2px 1px rgb(40 30 10 / 0.3)); }
-.end-person.is-first .end-neck { z-index: 4; }
+.end-foot { position: absolute; width: 0; height: 0; } /* 발 앵커 점(시험이 회전 뒤 위치를 잰다) */
 .end-spark { position: absolute; z-index: 5; width: 28px; height: 28px; opacity: 0; pointer-events: none; }
 /* 사진이 흰색에서 떠오름(인화) */
 .end-develop { position: absolute; z-index: 5; background: #FFFFFF; opacity: 0; pointer-events: none; }
 .end-frame { position: absolute; inset: 0; z-index: 6; display: block; width: 100%; height: 100%; filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.32)); }
-/* 로제트(발 x, 574) · 하트 링 · 테이프 이름표(발 x, 622) · 제목(410, 664) — 틀 아래 흰 테 */
-.end-rosette { position: absolute; z-index: 8; width: 64px; height: 64px; margin: -32px 0 0 -32px; }
-.end-ro-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 3px rgb(0 0 0 / 0.3)); }
-.end-ro-n { position: absolute; left: 0; right: 0; top: 60%; transform: translateY(-50%); color: var(--foreground); font: var(--weight-regular) 30px / 1 var(--font-display); text-align: center; text-shadow: 0 1px 0 rgb(255 255 255 / 0.7); }
-.end-heart { position: absolute; left: -16px; top: -18px; width: 96px; height: 96px; object-fit: contain; } /* 하트 안쪽 칸 가운데 = 로제트 가운데, 끝은 테이프 위 층 */
-.end-heart.end-fb-ring { --seat: var(--seat-1); }
-.end-tape { position: absolute; z-index: 7; width: 150px; height: 34px; margin: -17px 0 0 -75px; }
-.end-person.is-me .end-tape { width: 180px; height: 40px; margin: -20px 0 0 -90px; }
+/* 아래 테(시안): 로제트(상장형, 숫자가 그림에 듦 — 원판이 창 아래변에 걸침) · 테이프 124×30 · 제목은 틀 그림. '나' 하트 링 없음(2026-11-01 사용자) */
+.end-rosette { position: absolute; z-index: 8; }
+.end-ro-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.28)); }
+.end-tape { position: absolute; z-index: 7; rotate: var(--rot, 0deg); } /* 크기·자리 인라인(TAPE) */
 .end-tape-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
-.end-name { position: absolute; left: 12px; right: 12px; top: 50%; transform: translateY(-50%); overflow: hidden; color: var(--foreground); font: var(--weight-regular) 18px / 1.15 var(--font-display); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.end-person.is-me .end-name { font-size: 20px; }
-.end-title { position: absolute; left: 0; width: 820px; margin: -20px 0 0; z-index: 7; color: var(--foreground); font: var(--weight-regular) 36px / 1.1 var(--font-display); letter-spacing: 0.06em; text-align: center; }
+/* 테이프 이름: 마커 손글씨(Gaegu 700 22px) 외곽선 남색, 넘치면 20px 한 번(말줄임 0) */
+.end-name { position: absolute; left: 6px; right: 6px; top: 50%; transform: translateY(-52%); overflow: hidden; color: #142038; font: 700 22px / 1.1 var(--font-hand); text-align: center; white-space: nowrap; mix-blend-mode: multiply; opacity: 0.92; }
+.end-name.is-small { font-size: 20px; }
 
-/* ── 펼친 여권(§19.2 오른쪽 띠): 그림 뒤 = 초상·스티커(틀이 뚫림), 그림 위 = 글자·도장 ── */
+/* ── 펼친 여권(가로형 v2, 시안 자리): 그림 뒤 = 초상·스티커(틀이 뚫림), 그림 위 = 손글씨 값(항목 이름·학습 도장은 그림) ── */
 .end-book { position: absolute; z-index: 4; color: var(--card-foreground); }
 .end-book-img { position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%; object-fit: fill; filter: drop-shadow(0 12px 14px rgb(0 0 0 / 0.3)); pointer-events: none; }
 .end-portrait { position: absolute; z-index: 1; overflow: hidden; background: #BFE3F7; }
@@ -61,43 +67,41 @@
 .end-sticker { position: absolute; z-index: 1; display: flex; align-items: flex-end; justify-content: center; background: #FFF6DC; }
 .end-sticker-lm { display: block; width: 92%; height: 92%; object-fit: contain; object-position: 50% 100%; }
 .end-book-in { position: absolute; inset: 0; z-index: 3; }
-.end-owner { position: absolute; left: 6%; width: 41%; overflow: hidden; color: var(--foreground); font: var(--weight-regular) 17px / 1.2 var(--font-display); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-.end-mono { position: absolute; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; margin: 0; transform: rotate(-5deg); }
-.rs-mono-chip { padding: 1px 9px; border-radius: var(--radius-full); background: var(--seat); color: var(--foreground); font: var(--weight-regular) 14px / 1.4 var(--font-display); white-space: nowrap; box-shadow: 0 0 0 2px #FFFFFF, 0 2px 3px rgb(0 0 0 / 0.3); }
-/* 학습 도장 4: 왼쪽 면 2×2 */
-.end-coins { position: absolute; left: 6%; width: 41%; bottom: 7%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px 4px; margin: 0; padding: 0; list-style: none; }
-.end-coin { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
-.end-coin-img { display: block; width: calc(var(--H) * 0.105px); height: calc(var(--H) * 0.105px); max-width: 52px; max-height: 52px; object-fit: contain; filter: drop-shadow(0 3px 3px rgb(0 0 0 / 0.25)); }
-.end-coin-v { color: var(--foreground); font: var(--weight-regular) 18px / 1.05 var(--font-display); }
-.end-coin-l { color: var(--muted-foreground); font-size: 14px; font-weight: var(--weight-bold); line-height: 1.15; white-space: nowrap; }
-/* 나라 도장 격자 3×3: 오른쪽 면 위 */
-.end-grid { position: absolute; left: 54%; width: 40%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
+/* 주인 이름(만년필 청남 20px −1°) · 학습 수치 4(밑줄 위, 22px) · 독점 한 줄(자리 글자색, 물결 밑줄) · 스티커 '+n' */
+.end-owner { position: absolute; transform: translateY(-50%) rotate(-1deg); color: #1F3A5F; font-size: 20px; line-height: 1.1; text-align: center; white-space: nowrap; }
+.end-vals { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
+.end-coin { position: absolute; display: block; transform: translate(-50%, -100%); }
+.end-coin-v { display: block; margin-bottom: -4px; color: #1F3A5F; font-size: 22px; line-height: 1; white-space: nowrap; } /* 글자 밑이 그림 밑줄에 앉음(획 끝이 줄에 살짝 걸림) */
+.end-mono { position: absolute; display: flex; flex-direction: row; justify-content: center; gap: 8px; margin: 0; transform: translateY(-50%) rotate(-1deg); }
+.end-mono-t { color: var(--seat-text, #0369A1); font-size: 16px; line-height: 1.2; text-decoration: underline wavy 1px; text-underline-offset: 3px; white-space: nowrap; }
+.end-sticker-more { position: absolute; color: #A86A00; font-size: 16px; transform: rotate(-6deg); }
+/* 나라 도장 격자 3×3: 오른쪽 면 위(나라 이름 Gaegu 16 도장 잉크 −8°) */
+.end-grid { position: absolute; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
 .end-stamp { position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; }
 .end-stamp-ring { position: absolute; left: 50%; top: 50%; width: min(54px, 100%); aspect-ratio: 1; height: auto; transform: translate(-50%, -50%); object-fit: contain; opacity: 0.45; }
 .end-stamp.is-on .end-stamp-ring, .end-stamp.is-more .end-stamp-ring { opacity: 1; }
 .end-stamp:not(.is-on):not(.is-more) .end-stamp-ring { width: min(48px, 100%); }
-.end-stamp-t { position: relative; color: #C2272D; font: var(--weight-bold) 14px / 1.05 var(--font-body); letter-spacing: -0.04em; text-align: center; white-space: nowrap; transform: rotate(-8deg); }
+.end-stamp-t { position: relative; color: #C2272D; font-size: 16px; line-height: 1; letter-spacing: 0; text-align: center; white-space: nowrap; transform: rotate(-8deg); opacity: 0.9; }
 .end-stamp--blue .end-stamp-t { color: #1D4FB8; }
-/* 스티커 '+n' · 3줄(잉크) */
-.end-sticker-more { position: absolute; color: #A86A00; font: normal 15px / 1 var(--font-display); }
+/* 3줄(만년필 16px −0.5°) + 코드 연필선: 글줄 기준선 + 3px(여권 그림에 인쇄 줄 없음) */
 .end-lines { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; }
-/* 한 줄 = 줄 선 하나: 줄 상자(18px) 아래끝을 줄 선 2px 아래에(한글 글자 밑이 줄 선에 앉음), 줄바꿈 0 */
-.end-lines li { position: absolute; left: 56%; width: 38%; margin-top: 2px; transform: translateY(-100%); overflow: hidden; color: #1C2B4A; font: var(--weight-bold) 14px / 18px var(--font-body); letter-spacing: -0.04em; text-overflow: ellipsis; white-space: nowrap; }
+.end-lines li { position: absolute; height: 22px; margin: 0; transform: translateY(-17px) rotate(-0.5deg); color: #1F3A5F; font: 700 16px / 22px var(--font-hand); white-space: nowrap; }
+.end-lines li::after { content: ""; position: absolute; left: 0; right: 0; top: 20px; height: 1px; background: rgb(185 169 138 / 0.6); }
 
-/* ── 닫힌 여권 3: 부채꼴, 표지 창에 얼굴 ── */
-.end-closed { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+/* ── 세운 닫힌 여권 3: 시안 부채꼴(바닥 중앙 기준 회전), 표지 창에 얼굴, 판 아래로 조금 나감 ── */
+.end-closed { position: absolute; inset: 0; z-index: 5; pointer-events: none; } /* 판 아래로 나간 부분은 자르지 않는다 — 1366 은 화면 끝에서, 태블릿은 판 아래 하늘에서 자연스럽게 끝남(판 경계 직선 자국 0) */
 .end-cp { position: absolute; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; pointer-events: auto; transform: rotate(var(--rot)); transform-origin: 50% 100%; transition: transform 0.15s ease; }
 .end-cp:hover { transform: rotate(var(--rot)) translateY(-6px); }
-.end-cp:focus-visible, .end-more:focus-visible, .rs-tab:focus-visible { outline: 3px solid var(--ring); outline-offset: 4px; }
-.end-cp-img { position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%; object-fit: fill; filter: drop-shadow(0 8px 8px rgb(0 0 0 / 0.3)); }
+.end-cp:focus-visible, .end-tab:focus-visible, .rs-tab:focus-visible { outline: 3px solid var(--ring); outline-offset: 4px; }
+.end-cp-img { position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 6px rgb(0 0 0 / 0.32)); }
 .end-cp-win { position: absolute; z-index: 1; overflow: hidden; background: color-mix(in srgb, var(--seat) 30%, #FFFFFF); }
 .end-cp-face { position: absolute; left: 50%; bottom: 0; width: 92%; height: auto; aspect-ratio: 1; transform: translateX(-50%); }
 
-/* ── '자세히 보기' / '돌아가기' (하나의 버튼, 자리만 바뀜) ── */
-.end-more { position: absolute; z-index: 6; left: 1067px; top: 524px; width: 110px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; }
-.end-stage[data-page="detail"] .end-more { left: 1196px; top: 80px; z-index: 9; }
-.end-more-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.25)); }
-.end-more-t { position: relative; display: block; padding-bottom: 3px; color: #FFFFFF; font: var(--weight-regular) 16px / 1 var(--font-display); text-shadow: 0 1px 0 #0F3F86, 0 0 3px #0F3F86; white-space: nowrap; }
+/* ── '자세히 보기' / '돌아가기' 책갈피 탭(그림 글자, 하나의 버튼 — 자리·그림만 바뀜) ── */
+.end-tab { position: absolute; z-index: 6; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; transition: transform 0.15s ease; }
+.end-stage[data-page="detail"] .end-tab { z-index: 9; }
+.end-tab:hover { transform: translateY(4px); }
+.end-tab-img { display: block; width: auto; height: 100%; filter: drop-shadow(0 3px 2px rgb(0 0 0 / 0.3)); }
 
 /* ── 둘째 장(S9): END-passport-wide 그릇 (33,64,1300,640) ── */
 .end-wide { position: absolute; left: 33px; top: 64px; width: 1300px; height: 640px; z-index: 8; color: var(--card-foreground); }
@@ -168,14 +172,12 @@
 .end-intro .end-flash { animation: end-flash 0.25s ease-out both; }
 .end-intro .end-develop { animation: end-develop 1.2s ease-in 0.2s both; }
 .end-intro .end-photo { animation: end-drop 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) 1.3s both; }
-.end-intro .end-title { animation: end-fade 0.6s ease-out 0.8s both; }
 .end-intro .end-rosette { animation: end-pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
-.end-intro .end-ro-n { animation: end-bounce 0.35s ease-out both; }
 .end-intro .end-spark--0 { animation: end-spark 0.28s ease-in-out 2.85s 2 both; }
 .end-intro .end-spark--1 { animation: end-spark 0.28s ease-in-out 3.0s 2 both; }
 .end-intro .end-tape { animation: end-tape 0.4s ease-out both; }
 .end-intro .end-book { animation: end-slide 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) 3.5s both; }
-.end-intro .end-more { animation: end-fade 0.4s ease-out 4.0s both; }
+.end-intro .end-tab { animation: end-fade 0.4s ease-out 4.0s both; }
 .end-intro .end-portrait, .end-intro .end-owner { animation: end-fade 0.25s ease-out 4.1s both; }
 .end-intro .end-coin { animation: end-thump 0.25s ease-out both; }
 .end-intro .end-stamp { animation: end-thump 0.22s ease-out both; }
@@ -183,20 +185,16 @@
 .end-intro .end-lines li { animation: end-ink 0.4s ease-out both; }
 .end-intro .end-mono { animation: end-fade 0.3s ease-out 5.6s both; }
 .end-intro .end-cp { animation: end-fan 0.4s cubic-bezier(0.3, 1.3, 0.5, 1) both; }
-.end-intro .end-heart { animation: end-fade 0.3s ease-out 6.2s both, end-pulse 1.6s ease-in-out 6.5s infinite; }
-.end-done:not(.end-calm) .end-heart { animation: end-pulse 1.6s ease-in-out infinite; }
 .end-book.is-swap { animation: end-swap 0.35s ease-out both; }
 @keyframes end-flash { 0% { opacity: 0; } 30% { opacity: 0.95; } 100% { opacity: 0; } }
 @keyframes end-develop { from { opacity: 1; } to { opacity: 0; } }
-@keyframes end-drop { from { transform: translateY(-18px) rotate(0deg) scale(1.02); } to { transform: rotate(-3deg); } }
+@keyframes end-drop { from { transform: translateY(-18px) rotate(0deg) scale(1.02); } to { transform: rotate(-4.4deg); } }
 @keyframes end-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes end-pop { 0% { opacity: 0; transform: scale(0.2); } 70% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
-@keyframes end-bounce { 0% { transform: translateY(-50%) scale(0.4); } 60% { transform: translateY(-75%) scale(1.25); } 100% { transform: translateY(-50%) scale(1); } }
 @keyframes end-spark { 0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); } 50% { opacity: 1; transform: scale(1.1) rotate(25deg); } }
 @keyframes end-tape { from { opacity: 0; transform: translateY(-8px) rotate(-6deg) scale(1.1); } to { opacity: 1; transform: none; } }
 @keyframes end-slide { from { opacity: 0; transform: translateX(520px) rotate(6deg); } to { opacity: 1; transform: none; } }
 @keyframes end-thump { 0% { opacity: 0; transform: scale(1.5); } 70% { opacity: 1; transform: scale(0.94); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes end-ink { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes end-fan { from { opacity: 0; transform: translateY(40px) rotate(0deg); } to { opacity: 1; transform: rotate(var(--rot)); } }
-@keyframes end-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 @keyframes end-swap { from { opacity: 0; transform: translateY(14px) rotate(1.5deg); } to { opacity: 1; transform: none; } }

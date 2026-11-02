@@ -56,3 +56,65 @@ describe('GameClient 저장된 자리', () => {
     expect(loadSeat()).toBeNull();
   });
 });
+
+describe('GameClient 끝내기·나가기 (U14, PRD §9.4)', () => {
+  const st = (phase: string) => ({ t: 'state', code: 'ABCDEF', phase, settings: { totalMinutes: 40, touristQuiz: false }, hostSeat: 0, seats: [], game: null, deadlineAt: null, stepAt: 0, now: 0, cards: [], notice: null, cutscene: null, logFrom: 0, log: [] });
+
+  it('ended 를 받으면(방장 아닌 기기) 저장 자리 삭제 → 첫 화면 + 안내 띠, 다시 잇지 않는다', () => {
+    vi.useFakeTimers();
+    const { c, sock } = rig();
+    sock.msg(st('playing'));
+    expect(c.state.room).not.toBeNull();
+    sock.msg({ t: 'ended', by: 'host' });
+    expect(c.state.code).toBeNull();
+    expect(c.state.room).toBeNull();
+    expect(c.state.bye).toBe('ended');
+    expect(loadSeat()).toBeNull();
+    sock.onclose?.({ code: 4001 }); // 뒤이은 닫힘은 이미 버린 소켓
+    vi.advanceTimersByTime(20_000);
+    expect(c.state.code).toBeNull();
+    c.dismissBye();
+    expect(c.state.bye).toBeNull();
+  });
+
+  it('메시지 없이 4001 로 닫혀도 같은 길. 방장이 끝내기를 보낸 기기는 띠 없음', () => {
+    const a = rig();
+    a.sock.onclose?.({ code: 4001 });
+    expect(a.c.state.code).toBeNull();
+    expect(a.c.state.bye).toBe('ended');
+    expect(loadSeat()).toBeNull();
+    const b = rig();
+    expect(b.c.endGame()).toBe(true);
+    expect(b.sock.sent.at(-1)).toEqual({ t: 'end' });
+    b.sock.msg({ t: 'ended', by: 'host' });
+    expect(b.c.state.code).toBeNull();
+    expect(b.c.state.bye).toBeNull();
+  });
+
+  it('나가기: leave 를 보내고 바로 첫 화면·저장 자리 삭제. 그 소켓의 늦은 상태·4002 닫힘은 무시', () => {
+    vi.useFakeTimers();
+    const { c, sock } = rig();
+    sock.msg(st('playing'));
+    c.leaveGame();
+    expect(sock.sent.at(-1)).toEqual({ t: 'leave' });
+    expect(c.state.code).toBeNull();
+    expect(c.state.bye).toBeNull();
+    expect(loadSeat()).toBeNull();
+    sock.msg(st('playing')); // 서버가 닫기 전 방송
+    expect(c.state.room).toBeNull();
+    vi.advanceTimersByTime(3_000);
+    expect(sock.readyState).toBe(3); // 3초 안에 서버가 안 닫으면 이쪽에서
+    sock.onclose?.({ code: 4002 });
+    expect(c.state.code).toBeNull();
+  });
+
+  it('멈춤 PIN 은 판이 다시 돌면 버린다(멈춤 모달 ↔ 이어 하기 화면 가름)', () => {
+    const { c, sock } = rig();
+    sock.msg(st('playing'));
+    sock.msg({ t: 'pins', pins: [{ seat: 2, pin: '0420' }] });
+    sock.msg(st('paused'));
+    expect(c.state.pins).toEqual([{ seat: 2, pin: '0420' }]);
+    sock.msg(st('playing'));
+    expect(c.state.pins).toBeNull();
+  });
+});

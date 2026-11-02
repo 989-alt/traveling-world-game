@@ -3,7 +3,7 @@
 // 시간: 알람은 하나뿐이라 턴 마감·봇 뜸·끊김 30초·전원 끊김 60초 멈춤·놀이 시간 끝·14일 만료 중 가장 이른 것에 건다.
 import { apply, createGame, stepMs } from '../src/engine/engine';
 import {
-  CHAR_COUNT, CODE_RE, CUT_RESUME_MS, CUTSCENE_MS, NICK_ADJ_COUNT, NICK_ANIMAL_COUNT, parseClient, parseSettings, PIN_TRY_MS, stepKey,
+  CHAR_COUNT, CODE_RE, CUT_RESUME_MS, CUTSCENE_MS, ENDED_CLOSE, LEFT_CLOSE, NICK_ADJ_COUNT, NICK_ANIMAL_COUNT, parseClient, parseSettings, PIN_TRY_MS, stepKey,
 } from '../src/shared/protocol';
 import type { ClientAct, ClientMsg, ErrorCode, MissionReveal, MissionShown, PublicCard, PublicGame, ServerMsg } from '../src/shared/protocol';
 import { TOTAL_MINUTES } from '../src/shared/types';
@@ -102,8 +102,9 @@ type Notice = 'oldBoard' | 'oldTime' | 'newTime' | null;
 /** 4 = 2026-10-26 판 재설계(30칸). 5 = 2026-10-28 U1 놀이 시간(settings.totalMinutes·clock).
  *  4 이하 저장본의 게임은 옛 시계(lesson)라 이어 할 수 없다(migrate 없음, PRD §9.1).
  *  6 = 2026-10-28 U3 20분 삭제: 5 저장본도 migrateSettings 를 다시 거친다(대기실 20 → 40, 20분 게임은 dropOldBoard)
- *  7 = 2026-10-29 QA6 players.laps(바퀴 하한). 옛 저장본은 0 으로 복원(PRD §9.1) */
-export const REC_V = 7;
+ *  7 = 2026-10-29 QA6 players.laps(바퀴 하한). 옛 저장본은 0 으로 복원(PRD §9.1)
+ *  8 = 2026-11-02 U14 game.clock.pausedAt(즉시 멈춤). 옛 '턴 끝 멈춤 대기' 필드는 버리고 pausedAt=null — 재개 때 Δ=0 */
+export const REC_V = 8;
 /** 이 판 이전 저장본의 게임은 버린다(보드·시계 꼴이 다름) */
 export const BOARD_REC_V = 5;
 /** 옛 설정(lessons·minutesPerLesson) → 놀이 시간. 대기실 저장본만 여기까지 온다(게임은 dropOldBoard 가 버림) */
@@ -144,6 +145,11 @@ export function migrate(rec: RoomRec): RoomRec {
   // claimed 없는 저장본: 사람이 한 번이라도 앉았으면(lastSeen 이 찍힘) true. 시작부터 봇·빈자리는 false(PRD §9.1 QA8)
   for (const s of r.seats) { s.badPins ??= 0; s.lockedUntil ??= 0; s.tryAt ??= 0; s.claimed ??= s.lastSeen > 0; }
   for (const p of r.game?.players ?? []) p.laps ??= 0;
+  if (r.game) {
+    // U14: 시계는 두 필드만 남긴다 — 옛 '이 턴이 끝나면 멈춤' 대기 필드는 폐기(진행 중이던 판은 그대로 진행), 멈춰 있던 판은 pausedAt=null → 재개 때 Δ=0
+    const c = r.game.clock as Partial<GameState['clock']>;
+    r.game.clock = { remainingMs: c.remainingMs ?? 0, pausedAt: typeof c.pausedAt === 'number' ? c.pausedAt : null };
+  }
   r.v = REC_V;
   return r;
 }
@@ -299,6 +305,7 @@ export class Room {
 
   accept(ws: WebSocket) {
     this.ctx.acceptWebSocket(ws);
+    if (!this.rec) return void ws.close(1008, 'gone'); // 끝낸 방(U14): fetch 가 404 로 막지만 경합에 대비
     ws.serializeAttachment({ seat: null } satisfies Att);
     this.run(ws, () => {}); // 구경 연결은 활동이 아니다(만료 갱신·저장 없음)
   }
@@ -307,6 +314,9 @@ export class Room {
     if (!this.rec) return void ws.close(1008, 'gone');
     const msg = parseClient(raw);
     if (!msg) return this.send(ws, { t: 'error', code: 'bad' });
+    // 끝내기: 방을 지우므로 한 번의 처리(run) 밖에서. 방장의 나가기도 끝내기다(PRD §9.4 U14)
+    const seat = this.seatOf(ws);
+    if ((msg.t === 'end' || msg.t === 'leave') && seat !== null && seat === this.rec.hostSeat) return this.end();
     this.run(ws, () => {
       if (msg.t !== 'sync') this.touch(); // sync 는 다시 받기일 뿐 활동이 아니다
       return this.onMessage(ws, msg);
@@ -320,6 +330,18 @@ export class Room {
 
   webSocketError(ws: WebSocket) {
     this.disconnect(ws);
+  }
+
+  /** 방장 끝내기(PRD §9.4 U14): 전원 ended → 4001 → 저장본·알람 삭제. 기록(로그)도 함께 사라진다(결과 화면 없음) */
+  private end() {
+    for (const ws of this.ctx.getWebSockets()) {
+      this.send(ws, { t: 'ended', by: 'host' });
+      try { ws.close(ENDED_CLOSE, 'ended'); } catch { /* 이미 닫힘 */ }
+    }
+    this.rec = null;
+    this.game = null;
+    void this.ctx.storage.deleteAlarm();
+    void this.ctx.storage.deleteAll();
   }
 
   async alarm() {
@@ -396,10 +418,7 @@ export class Room {
     r.lastTickAt = now;
     this.settle(now);
     const off = this.allOffSince();
-    if (off !== null && now - off >= AUTO_PAUSE_MS && this.game?.phase === 'playing' && !this.game.clock.pauseBy) {
-      this.act({ type: 'pause', by: 'auto' });
-      this.settle(now);
-    }
+    if (off !== null && now - off >= AUTO_PAUSE_MS && this.game?.phase === 'playing') this.pauseNow('auto', now);
     if (this.game?.phase !== 'playing') return;
     r.seats.forEach((s, i) => {
       if (s.offSince === null || now - s.offSince < OFFLINE_BOT_MS || !this.game) return;
@@ -441,11 +460,17 @@ export class Room {
     const g = this.game;
     if (!g) return;
     r.seats.forEach((s, i) => {
-      if (!s.returning || (g.phase === 'playing' && g.turn.seat === i)) return; // 다음 턴부터 사람
+      if (!s.returning || (g.phase !== 'finished' && g.turn.seat === i)) return; // 다음 턴부터 사람(멈춘 차례도 그 사람 차례)
       s.returning = false;
       g.seats[i].isBot = false;
       this.dirty = true;
     });
+    // 멈춤(U14): 단계 키·마감·연출·봇 예정 시각을 그대로 둔다(재개 때 Δ 만큼 민다 — shiftResume). 새 로그(clock pause)만 훑은 것으로
+    if (g.phase === 'paused') {
+      r.cutsceneScan = g.log.length;
+      this.botPicked = false;
+      return;
+    }
     // 클라이언트는 컷씬이 끝날 때까지 문항을 띄우지 않으므로(알림 줄) 남은 컷씬 시간만큼 답할 시간을 돌려준다
     const lm = g.log.slice(r.cutsceneScan).reverse().find((e) => e.ev === 'build' && e.level === 4);
     if (lm?.ev === 'build') {
@@ -461,7 +486,6 @@ export class Room {
     // 로그 길이를 넣는 까닭: 더블 뒤 같은 자리·같은 roll 단계도 새 마감이어야 한다
     const key = g.phase === 'playing' ? stepKey(g.turn.seat, g.turn.step, g.log.length) : g.phase;
     if (key !== r.stepKey) {
-      const wasPlaying = r.stepKey.includes('|');
       r.stepKey = key;
       r.stepAt = now;
       r.shownWait = false;
@@ -479,7 +503,6 @@ export class Room {
       r.botAt = null;
       r.botStuck = '';
       if (g.phase !== 'playing') r.lastTickAt = null;
-      if (g.phase === 'paused' && wasPlaying) this.sendPins();
     }
     // 표시 순서가 없는 미션 단계(T05b 전에 저장된 방을 복원): 지금 시드·로그 길이로 한 번 만들어 저장한다
     if (g.phase === 'playing' && (g.turn.step === 'mission' || g.turn.step === 'tf') && g.turn.missionId && r.missionOrder?.id !== g.turn.missionId) {
@@ -498,7 +521,7 @@ export class Room {
       if (r.botAt !== null) at.push(r.botAt);
       if (r.lastTickAt !== null && g.clock.remainingMs > 0) at.push(r.lastTickAt + g.clock.remainingMs);
       const off = this.allOffSince();
-      if (off !== null && !g.clock.pauseBy) at.push(off + AUTO_PAUSE_MS);
+      if (off !== null) at.push(off + AUTO_PAUSE_MS);
       for (const s of r.seats) if (s.offSince !== null) at.push(s.offSince + OFFLINE_BOT_MS);
     }
     void this.ctx.storage.setAlarm(Math.min(...at));
@@ -593,18 +616,28 @@ export class Room {
       }
       case 'pause': {
         if (att.seat !== r.hostSeat) return 'notHost';
-        // 멈춤: 지금 턴을 마친 뒤 정지·PIN(남은 시간은 그대로 — 같은 코드로 이어 하기)
-        if (this.game?.phase === 'playing') this.act({ type: 'pause', by: 'host' });
+        // 멈춤(U14): 그 자리에서 정지·자리마다 PIN. 마감·연출·봇 시각은 그대로 두고 재개 때 Δ 만큼 민다
+        if (this.game?.phase === 'playing') this.pauseNow('host', now);
         return;
       }
       case 'resume': {
         if (this.game?.phase !== 'paused') return;
         const back = r.seats.filter((s) => s.claimed && s.connected).length;
         if (att.seat !== r.hostSeat && (att.seat === null || back < 2)) return 'notHost';
+        const pausedAt = this.game.clock.pausedAt ?? null; // 옛 저장본은 null → Δ=0
+        const prevKey = r.stepKey;
         this.act({ type: 'resume' }); // 남은 시간 0 이면 엔진이 바로 끝낸다(U123 L1)
         if ((this.game as GameState | null)?.phase !== 'playing') return;
+        this.shiftResume(prevKey, pausedAt === null ? 0 : Math.max(0, now - pausedAt), now);
         r.lastTickAt = now;
         r.seats.forEach((s, i) => { if (s.claimed && !s.connected && !this.game!.seats[i].isBot) s.offSince = now; });
+        return;
+      }
+      case 'end': return 'notHost'; // 방장은 webSocketMessage 에서 이미 끝냈다
+      case 'leave': {
+        if (att.seat === null) return 'notSeated';
+        if (!this.game || this.game.phase === 'finished') return; // 대기실 나가기는 범위 밖(PRD §15), 끝난 판은 할 일 없음
+        this.leaveSeat(ws, att.seat, now);
         return;
       }
       case 'act': {
@@ -614,6 +647,59 @@ export class Room {
         return;
       }
     }
+  }
+
+  /** 멈춤(방장·자동 한 길, U14): 엔진 paused + clock.pausedAt, 놀이 시계 기준점을 비우고 자리마다 자기 PIN */
+  private pauseNow(by: 'host' | 'auto', now: number) {
+    if (!this.act({ type: 'pause', by, at: now })) return;
+    this.rec!.lastTickAt = null;
+    this.sendPins();
+  }
+
+  /** 재개(U14): 멈춘 동안 Δ 를 단계 시각 전부에 더해 남은 마감·표시·봇 지연·컷씬이 멈춘 순간 값 그대로 이어지게 한다.
+   *  단계 키는 로그 길이를 품으므로(멈춤·재개 clock 로그 2개) 같은 단계의 새 키로 옮기고, 받은 shown·봇 막힘 표시도 따라 옮긴다.
+   *  옛 저장본(턴 시작에서 멈춰 키가 'paused')은 건드리지 않는다 → settle 이 그 단계 마감을 새로 건다 */
+  private shiftResume(prevKey: string, d: number, now: number) {
+    const r = this.rec!;
+    const g = this.game!;
+    r.lastTickAt = now;
+    if (!prevKey.includes('|')) return;
+    const key = stepKey(g.turn.seat, g.turn.step, g.log.length);
+    if (r.shownKey === prevKey) r.shownKey = key;
+    if (r.botStuck === prevKey) r.botStuck = key;
+    r.stepKey = key;
+    r.cutsceneScan = g.log.length;
+    if (d <= 0) return;
+    r.stepAt += d;
+    if (r.deadlineAt !== null) r.deadlineAt += d;
+    if (r.showUntil) r.showUntil += d;
+    if (r.botAt !== null) r.botAt += d;
+    if (r.lastCut) r.lastCut.at += d;
+    if (r.cutscene) r.cutscene.at += d;
+  }
+
+  /** 학생 나가기(U14): 그 자리는 바로 봇(끊김 30초 대체와 같은 값), claimed 유지(같은 PIN 으로 돌아올 수 있음). 그 소켓만 4002 */
+  private leaveSeat(ws: WebSocket, seat: Seat, now: number) {
+    const r = this.rec!;
+    const s = r.seats[seat];
+    ws.serializeAttachment({ seat: null } satisfies Att);
+    try { ws.close(LEFT_CLOSE, 'left'); } catch { /* 이미 닫힘 */ }
+    // 같은 자리에 다른 기기가 살아 있으면 그 기기도 함께 내보낸다(자리 하나 = 사람 하나)
+    for (const o of this.ctx.getWebSockets()) {
+      if (o !== ws && this.seatOf(o) === seat) {
+        o.serializeAttachment({ seat: null } satisfies Att);
+        try { o.close(LEFT_CLOSE, 'left'); } catch { /* 무시 */ }
+      }
+    }
+    Object.assign(s, { connected: false, offSince: null, returning: false, lastSeen: now });
+    this.act({ type: 'setConnected', seat, connected: false });
+    if (!this.game!.seats[seat].isBot) {
+      this.game!.seats[seat].isBot = true;
+      r.botAccuracy[seat] = drawAccuracy(this.botRand, this.game!.settings.totalMinutes); // 대체 봇과 같은 길(PRD §4.5)
+    }
+    // 이 자리가 지금 입력할 차례일 수 있다: 봇 막힘 표시를 풀어 settle 이 봇을 예약하게(이미 예약돼 있으면 그때 함께 움직인다)
+    r.botStuck = '';
+    this.dirty = true;
   }
 
   /** 자리에 앉힘. 처음 앉으면 겹치지 않는 별명을 뽑는다 */

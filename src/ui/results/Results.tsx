@@ -3,6 +3,9 @@
 // 목 메달·로제트·'나' 하트 링·마스킹 테이프 이름표·제목) + 펼친 여권(주인 자리색 표지, 초상·학습 도장 4·나라 도장 격자·랜드마크 스티커·3줄) +
 // 닫힌 여권 3(누르면 그 사람 여권이 펼쳐짐). 둘째 장 '자세히 보기' = END-passport-wide 그릇에 S9 학습 기록 전부(대번호별 정답·헷갈린 생각 번호·
 // 얻은 것·도장 도감·같은 기후·기념 자석). 그림은 전부 에셋(end.*·result.*), 글자·순위 숫자·수치만 코드. svg 0(세계 지도는 여권 도장 격자로 대체).
+// 2026-10-31 U13(§19.9): 글씨·메달을 그림과 하나로 — 메달은 포즈 그림(CHn-P20-gold·P21-silver/bronze/plain, 로봇 -s<자리> 목도리), 순위 숫자는
+// END-rosette-n, 제목은 END-photo-frame-v2, 여권 항목 이름은 END-passport-open-n-v2 그림에 든다. 가변 글자(이름·수치·도장 나라·3줄·독점)는 Gaegu 손글씨
+// (잉크색·기울기·multiply). 크기 = 머리 폭 기준, 발 기준선 한 줄. 메달 포즈·v2 여권·세운 여권·탭이 아직 없는 경우는 U12 그림으로 내려간다.
 // 보내는 것 없음: 로그에서 그 자리에서 계산해 그리기만 한다. 애니메이션 §19.6(약 6초), 움직임 줄이기 = 마지막 장면 한 번 페이드.
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { AssetImg, Pic } from '../../assets/AssetImg';
@@ -15,8 +18,7 @@ import { BUILDING } from '../overlays/ActionPanel';
 import { CONTINENT_NAME, won } from '../overlays/parts';
 import { STAGE, useStageScale } from '../overlays/PlankDialog';
 import {
-  BOOK, CLOSED, CLOSED_BOTTOM, CLOSED_SLOTS, CLOSED_W, FIRST_STEP, FOOT_Y, GROUP, LANDMARK, OPEN, ROSETTE_Y, TAPE_Y, TITLE_Y, WINDOW,
-  figure, footXs, landmarkX, stampName, toStage,
+  BALLOON, BOOK, FOOT_Y, GROUP, LANDMARK, OPEN_V2, RIGHT, ROSETTE, ROSETTE_Y, STAND, STAND_H, STAND_SLOTS, TAB, TAPE, TAPE_ROT, WINDOW, figure, footXs, landmarkX, medalPoseKey, stampName, toStage, type OpenV2,
 } from './end-geom';
 import { countryName, META } from './meta';
 import '../../styles/results.css';
@@ -36,7 +38,7 @@ const frac = (r: Rate) => `${r.ok}/${r.n}`;
 const PLACE = ['gold', 'silver', 'bronze', 'plain'] as const;
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** §19.6 시간표(초) */
-const T = { rosette: [2.55, 2.3, 2.05, 1.8], sparkle: 2.85, tape: 3.2, book: 3.5, portrait: 4.1, coin: 4.3, grid: 5.0, sticker: 5.5, lines: 5.8, closed: 6.0, heart: 6.2, done: 7.0 };
+const T = { rosette: [2.55, 2.3, 2.05, 1.8], sparkle: 2.85, tape: 3.2, book: 3.5, portrait: 4.1, coin: 4.3, grid: 5.0, sticker: 5.5, lines: 5.8, closed: 6.0, done: 7.0 };
 const px = (n: number) => `${Math.round(n * 10) / 10}px`;
 
 /** 1위가 세운 랜드마크 → 없으면 1위가 도장을 가장 높게 받은 나라의 랜드마크 → 그것도 없으면 빈 언덕 */
@@ -63,13 +65,15 @@ export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps
   const [moved, setMoved] = useState(false); // 주인을 한 번이라도 바꿨으면 펼친 여권이 바뀔 때 짧게 넘김
   const setPick = (s: Seat) => { setMoved(true); setPickRaw(s); };
   const [detail, setDetail] = useState(false);
+  /** 순위 n 자리의 포즈 = 메달을 그린 그림(1위 P20 금+트로피, 2·3·4위 P21 은·동·크림, 로봇은 자리색 목도리 .s<자리>) */
+  const heroOf = (seat: Seat, n: number) => medalPoseKey(seats[seat].charId, seat, order ? n : null);
   const scale = useStageScale();
   const calm = useMemo(reduced, []);
   // 그림을 받아(디코드까지) 둔 뒤 애니메이션을 시작한다(사진이 흰색에서 한 장처럼 떠오르게). 못 받아도 2.5초 뒤 시작
   const [phase, setPhase] = useState<'wait' | 'intro' | 'done'>('wait');
   useEffect(() => {
     let live = true;
-    const keys = ['end.photoBg', 'end.frame', `end.passport.open.${me + 1}`, ...ranks.flatMap((s, n) => [`char.${seats[s].charId}.${n === 0 && order ? 'p20' : 'p21'}.big`, `end.tape.${s + 1}`])];
+    const keys = ['end.photoBg', 'end.frame', `end.passport.open.${me + 1}`, 'end.tab.more', ...ranks.flatMap((s, n) => [heroOf(s, n), `end.tape.${s + 1}`, `end.rosette.${n + 1}`, `end.passport.stand.${s + 1}`])].filter(hasAsset);
     const go = () => { if (live) setPhase((p) => (p === 'wait' ? (calm ? 'done' : 'intro') : p)); };
     void preload(keys).then(go);
     const t = setTimeout(go, 2500);
@@ -113,76 +117,79 @@ export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps
         <Confetti on={phase !== 'wait'} calm={calm || phase === 'done'} />
         <span class="end-flash" aria-hidden="true" />
 
-        {/* ── 기념사진(그룹 −3°) ── */}
+        {/* ── 기념사진(그룹 −4.4°, 시안 실측) ── */}
         <figure class="end-photo" aria-label="기념사진" style={{ left: px(GROUP.x), top: px(GROUP.y), width: px(GROUP.w), height: px(GROUP.h) }}>
           <div class="end-window" style={{ left: px(WINDOW.x), top: px(WINDOW.y), width: px(WINDOW.w), height: px(WINDOW.h) }}>
             <Pic k="end.photoBg" class="end-bg" fallback={<span class="end-bg end-fb-sky" />} eager />
-            {lm && <Pic k={lm} class="end-lm" alt="" eager
-              style={{ left: px(landmarkX(ranks.length) - WINDOW.x - LANDMARK.h / 2), top: px(LANDMARK.base - WINDOW.y - LANDMARK.h), width: px(LANDMARK.h), height: px(LANDMARK.h) }} />}
+            {lm ? <Pic k={lm} class="end-lm" alt="" eager
+              style={{ left: px(landmarkX(ranks.length) - WINDOW.x - LANDMARK.h / 2), top: px(LANDMARK.base - WINDOW.y - LANDMARK.h), width: px(LANDMARK.h), height: px(LANDMARK.h) }} />
+              : <Pic k="end.balloon" class="end-lm end-balloon" alt="" eager
+                style={{ left: px(BALLOON.x - WINDOW.x - BALLOON.h / 2), top: px(BALLOON.base - WINDOW.y - BALLOON.h), width: px(BALLOON.h), height: px(BALLOON.h) }} />}
           </div>
           <ol class="end-people" data-k="rank" aria-label="순위">
             {ranks.map((seat, n) => {
               const first = n === 0 && !!order;
-              const fx = xs[n], fy = FOOT_Y + (first ? FIRST_STEP : 0);
-              const f = figure(info(seat).charId, first, fx, fy);
+              const fx = xs[n], fy = FOOT_Y;
+              const hero = heroOf(seat, n);
+              const f = figure(hero, info(seat).charId, fx, fy);
               const isMe = seat === me;
-              const medalH = f.body * 0.24; // 리본 V + 원판. 넓은 은 메달은 폭 상한(0.15 키)으로 줄어든다
+              const slot = [1, 0, 2, 3].filter((r) => r < ranks.length).indexOf(n); // 왼쪽부터 몇 번째 슬롯
               return (
                 <li key={seat} class={`end-person${first ? ' is-first' : ''}${isMe ? ' is-me' : ''}`} data-seat={seat} data-place={PLACE[n]} data-rank={order ? n + 1 : undefined}
                   aria-label={`${order ? `${n + 1}위 ` : ''}${info(seat).name}${info(seat).isBot ? ' 봇' : ''}${isMe ? ' (나)' : ''}${assets ? ` ${won(assets[seat])}원` : ''}`}>
-                  <span class="end-shadow" aria-hidden="true" style={{ left: px(fx), top: px(fy) }} />
-                  <span class="end-foot" aria-hidden="true" data-head={Math.round(f.head)} style={{ left: px(fx), top: px(fy) }} />
-                  <Pic k={`char.${info(seat).charId}.${first ? 'p20' : 'p21'}.big`} class="end-hero" eager
+                  <span class="end-shadow" aria-hidden="true" style={{ left: px(fx), top: px(fy), width: px(f.body * 0.4), marginLeft: px(-f.body * 0.17) }} />
+                  <span class="end-foot" aria-hidden="true" data-head={Math.round(f.head)} data-body={Math.round(f.body)} data-top={Math.round(fy - f.trim)} style={{ left: px(fx), top: px(fy) }} />
+                  <Pic k={hero} class="end-hero" eager
                     style={{ left: px(f.left), top: px(f.top), width: px(f.side), height: px(f.side) }}
                     fallback={<span class="end-face" style={{ left: px(fx), top: px(fy - 120) }}><AssetImg k={`char.${info(seat).charId}.f00`} class="end-face-img" alt="" /></span>} />
-                  <span class="end-chest" aria-hidden="true" style={{ left: px(f.chest.x), top: px(f.chest.y) }} />
-                  {order && <Pic k={`end.medalNeck.${PLACE[n]}`} class="end-neck" eager style={{ left: px(f.chest.x), top: px(f.chest.y), height: px(medalH), width: px(f.body * 0.15) }} />}
                   {first && [0, 1].map((i) => (
-                    <Pic key={i} k="result.dot.star" class={`end-spark end-spark--${i}`} style={{ left: px(f.trophy.x + (i ? 52 : -58)), top: px(f.trophy.y + (i ? 6 : -22)) }} />
+                    <Pic key={i} k="result.dot.star" class={`end-spark end-spark--${i}`} style={{ left: px(f.trophy.x + (i ? 0.2 : -0.22) * f.trim), top: px(f.trophy.y + (i ? 0.02 : -0.08) * f.trim) }} />
                   ))}
-                  <span class="end-rosette" style={{ left: px(fx), top: px(ROSETTE_Y), animationDelay: `${T.rosette[n] ?? 1.8}s` }}>
-                    {isMe && <Pic k={`end.heart.${seat + 1}`} class="end-heart" fallback={<span class="end-heart end-fb-ring" style={{ '--seat': `var(--seat-${seat + 1})` }} />} />}
-                    <Pic k={`result.medal.${order ? PLACE[n] : 'plain'}`} class="end-ro-img" fallback={<span class="end-ro-img end-fb-ring" />} eager />
-                    {order && <b class="end-ro-n" style={{ animationDelay: `${(T.rosette[n] ?? 1.8) + 0.15}s` }}>{n + 1}</b>}
+                  <span class="end-rosette" style={{ left: px(fx), top: px(ROSETTE_Y), width: px(ROSETTE), height: px(ROSETTE), margin: px(-ROSETTE / 2), animationDelay: `${T.rosette[n] ?? 1.8}s` }}>
+                    {order
+                      ? <Pic k={`end.rosette.${n + 1}`} class="end-ro-img" alt={`${n + 1}위`} eager fallback={<><span class="end-ro-img end-fb-ring" /><b class="end-fb-n">{n + 1}</b></>} />
+                      : <Pic k="result.medal.plain" class="end-ro-img" fallback={<span class="end-ro-img end-fb-ring" />} eager />}
                   </span>
-                  <span class="end-tape" style={{ left: px(fx), top: px(TAPE_Y), animationDelay: `${T.tape + (3 - n) * 0.06}s` }}>
+                  <span class="end-tape" style={{ left: px(fx), top: px(TAPE.y), width: px(TAPE.w), height: px(TAPE.h), marginLeft: px(-TAPE.w / 2), marginTop: px(-TAPE.h / 2), '--rot': `${TAPE_ROT[slot] ?? 0}deg`, animationDelay: `${T.tape + (3 - n) * 0.06}s` }}>
                     <Pic k={`end.tape.${seat + 1}`} class="end-tape-img" fallback={<span class="end-tape-img end-fb-tape" style={{ '--seat': `var(--seat-${seat + 1})` }} />} eager />
-                    <span class="end-name">{info(seat).name}</span>
+                    <FitName name={info(seat).name} />
                   </span>
                 </li>
               );
             })}
           </ol>
           <span class="end-develop" aria-hidden="true" style={{ left: px(WINDOW.x), top: px(WINDOW.y), width: px(WINDOW.w), height: px(WINDOW.h) }} />
-          <Pic k="end.frame" class="end-frame" fallback={<span class="end-frame end-fb-frame" />} eager />
-          <p class="end-title" style={{ top: px(TITLE_Y) }}>{END_TITLE}</p>
+          {/* 제목 '세계 여행 끝!' 은 틀 그림(END-photo-frame-v2) 아래 테에 들어 있다. 그림을 못 받을 때만 코드 손글씨 */}
+          <Pic k="end.frame" class="end-frame" alt={END_TITLE} fallback={<><span class="end-frame end-fb-frame" /><p class="end-fb-title">{END_TITLE}</p></>} eager />
         </figure>
 
         {/* ── 펼친 여권(주인 = pick) ── */}
-        <Passport key={pick} seat={pick} info={info(pick)} r={rep.seats[pick]} monopolies={rep.monopolies.filter((m) => m.seat === pick)} isMe={pick === me} swap={moved} />
+        <Passport2 key={pick} seat={pick} g={OPEN_V2[pick + 1]} info={info(pick)} r={rep.seats[pick]} monopolies={rep.monopolies.filter((m) => m.seat === pick)} isMe={pick === me} swap={moved} />
 
         {/* ── 닫힌 여권 3: 나머지 사람, 순위 차례(Tab 순서 = 순위) ── */}
         <div class="end-closed" role="group" aria-label="다른 친구 여권">
           {others.map((seat, i) => {
-            const g = CLOSED[seat + 1];
-            const slot = CLOSED_SLOTS[i] ?? CLOSED_SLOTS[2];
-            const h = CLOSED_W / g.a;
+            const st = STAND[seat + 1]; // 세운 닫힌 여권(시안 부채꼴, 바닥 중앙 기준 회전)
+            const slot = STAND_SLOTS[i] ?? STAND_SLOTS[2];
+            const w = STAND_H * st.a;
             return (
               <button key={seat} type="button" class="end-cp" data-k="owner" data-seat={seat} aria-label={`${info(seat).name} 여권 펼치기`} title={info(seat).name}
                 onClick={() => setPick(seat)}
-                style={{ left: px(slot.x), top: px(CLOSED_BOTTOM - h), width: px(CLOSED_W), height: px(h), '--rot': `${slot.rot}deg`, animationDelay: `${T.closed + i * 0.08}s` }}>
-                <span class="end-cp-win" style={{ left: `${g.w[0]}%`, top: `${g.w[1]}%`, width: `${g.w[2]}%`, height: `${g.w[3]}%`, '--seat': `var(--seat-${seat + 1})` }}>
+                style={{ left: px(slot.cx - w / 2), top: px(slot.top), width: px(w), height: px(STAND_H), '--rot': `${slot.rot}deg`, animationDelay: `${T.closed + i * 0.08}s` }}>
+                <span class="end-cp-win" style={{ left: `${st.w[0]}%`, top: `${st.w[1]}%`, width: `${st.w[2]}%`, height: `${st.w[3]}%`, '--seat': `var(--seat-${seat + 1})` }}>
                   <AssetImg k={`char.${info(seat).charId}.f00`} class="end-cp-face" alt="" />
                 </span>
-                <Pic k={`end.passport.closed.${seat + 1}`} class="end-cp-img" fallback={<span class="end-cp-img end-fb-cover" style={{ '--seat': `var(--seat-${seat + 1})` }} />} />
+                <Pic k={`end.passport.stand.${seat + 1}`} class="end-cp-img" fallback={<span class="end-cp-img end-fb-cover" style={{ '--seat': `var(--seat-${seat + 1})` }} />} />
               </button>
             );
           })}
         </div>
 
-        <button type="button" class="end-more" data-k="detail" aria-pressed={detail} onClick={() => setDetail(!detail)} style={detail ? undefined : { top: px(bookBox(pick).bottom - 16) }}>
-          <Pic k="result.btn-blue" class="end-more-img" fallback={<span class="end-more-img end-fb-btn" />} />
-          <span class="end-more-t">{detail ? '돌아가기' : '자세히 보기'}</span>
+        {/* '자세히 보기' / '돌아가기' = 책갈피 탭 그림(END-tab-more/back, 글자가 그림에 듦). 하나의 버튼(data-k="detail"), 자리·그림만 바뀜 */}
+        <button type="button" class="end-tab" data-k="detail" aria-pressed={detail} aria-label={detail ? '돌아가기' : '자세히 보기'} onClick={() => setDetail(!detail)}
+          style={detail ? { left: px(TAB.back.x), top: px(TAB.back.y), width: px(TAB.w), height: px(TAB.h) } : { left: px(TAB.x), top: px(BOOK.top + TAB.dy), width: px(TAB.w), height: px(TAB.h) }}>
+          <Pic key={detail ? 'back' : 'more'} k={detail ? 'end.tab.back' : 'end.tab.more'} class="end-tab-img"
+            fallback={<span class="end-tab-img end-fb-tab"><span class="end-fb-tab-t">{detail ? '돌아가기' : '자세히 보기'}</span></span>} />
         </button>
 
         {/* ── 둘째 장(S9 전부): 와이드 여권 그릇 ── */}
@@ -215,25 +222,45 @@ export function Results({ log, seats, mySeat = null, meta = META }: ResultsProps
   );
 }
 
-/** 펼친 여권 상자: 폭 460 고정, 높이 = 그림 비율, 오른쪽 띠(50~540) 세로 가운데 */
+/** 펼친 여권 상자: x·폭·위 고정(시안), 높이 = 그림 비율(가로형 v2 실측) */
 function bookBox(seat: Seat) {
-  const H = BOOK.w / OPEN[seat + 1].a;
-  const top = BOOK.top + (BOOK.bottom - BOOK.top - H) / 2;
-  return { W: BOOK.w, H, top, bottom: top + H };
+  const H = BOOK.w / OPEN_V2[seat + 1].a;
+  return { W: BOOK.w, H, top: BOOK.top, bottom: BOOK.top + H };
 }
 
-/** 펼친 여권: 그림 뒤에 초상·스티커(틀이 뚫려 있음), 그림 위에 학습 도장 4·나라 도장 격자·3줄 */
-function Passport({ seat, info, r, monopolies, isMe, swap }: { seat: Seat; info: SeatInfo; r: SeatReport; monopolies: { continent: string }[]; isMe: boolean; swap: boolean }) {
-  const g = OPEN[seat + 1];
+/** 테이프 이름(Gaegu 22px, 나 24px): 테이프 안에 안 들어가면 20px 로 한 번 줄인다(말줄임 0). 글꼴을 받은 뒤 잰다 */
+function FitName({ name }: { name: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [small, setSmall] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const check = () => { const el = ref.current; if (live && el && el.scrollWidth > el.clientWidth + 1) setSmall(true); };
+    check();
+    void document.fonts?.ready.then(check);
+    return () => { live = false; };
+  }, [name]);
+  return <span ref={ref} class={`end-name${small ? ' is-small' : ''}`}>{name}</span>;
+}
+
+/** U13 펼친 여권 v2: 항목 이름 4·학습 도장 4 는 그림, 코드는 손글씨 값만 — 초상(그림 뒤, 틀이 뚫림) · 수치 4(그림 밑줄 위) ·
+ *  오른쪽 면 위 주인 이름 · 나라 도장 격자 · 스티커 3 · 3줄(코드 연필선 위) · 독점 한 줄 */
+function Passport2({ seat, g, info, r, monopolies, isMe, swap }: { seat: Seat; g: OpenV2; info: SeatInfo; r: SeatReport; monopolies: { continent: string }[]; isMe: boolean; swap: boolean }) {
   const { W, H, top } = bookBox(seat);
   const box = (b: readonly number[]) => ({ left: `${b[0]}%`, top: `${b[1]}%`, width: `${b[2]}%`, height: `${b[3]}%` });
-  const pBottom = g.p[1] + g.p[3];
-  const sTop = Math.min(...g.s.map((s) => s[1]));
-  const sBottom = Math.max(...g.s.map((s) => s[1] + s[3]));
   const lms = r.landmarks.slice(0, 3);
+  const vals: [string, number | null, string][] = [
+    ['다녀온 곳', r.stamps.length, '곳'],
+    ['랜드마크', r.landmarks.length, '개'],
+    ['도착 퀴즈', r.isBot || !r.total.arrive.n ? null : Math.round((r.total.arrive.ok / r.total.arrive.n) * 100), '%'],
+    ['참/거짓', r.isBot || !r.total.tf.n ? null : Math.round((r.total.tf.ok / r.total.tf.n) * 100), '%'],
+  ];
+  const right = { left: `${g.right[0]}%`, width: `${g.right[1] - g.right[0]}%` };
+  // 3줄 기준선: 스티커 틀 아래 + 7% 부터 오른쪽 면 안 테(91.5%)까지 고르게
+  const sb = Math.max(...g.s.map((b) => b[1] + b[3]));
+  const lines = [0, 1, 2].map((i) => sb + 7 + (i * (RIGHT.linesEnd - sb - 7)) / 2);
   return (
-    <section class={`end-book${swap ? ' is-swap' : ''}`} data-k="learn" data-owner={seat} data-me={isMe ? '1' : undefined} aria-label={`${info.name} 여권`}
-      style={{ left: px(BOOK.x), top: px(top), width: px(W), height: px(H), '--H': `${H}`, '--seat': `var(--seat-${seat + 1})` }}>
+    <section class={`end-book end-book--v2${swap ? ' is-swap' : ''}`} data-k="learn" data-owner={seat} data-me={isMe ? '1' : undefined} aria-label={`${info.name} 여권`}
+      style={{ left: px(BOOK.x), top: px(top), width: px(W), height: px(H), '--H': `${H}`, '--seat': `var(--seat-${seat + 1})`, '--seat-text': `var(--seat-${seat + 1}-text)` }}>
       <span class="end-portrait" style={box(g.p)}>
         <AssetImg k={`char.${info.charId}.f00`} class="end-portrait-face" alt={`${info.name} 얼굴`} />
       </span>
@@ -244,39 +271,26 @@ function Passport({ seat, info, r, monopolies, isMe, swap }: { seat: Seat; info:
       ))}
       <Pic k={`end.passport.open.${seat + 1}`} class="end-book-img" fallback={<span class="end-book-img end-fb-book" />} eager />
       <div class="end-book-in">
-        <b class="end-owner" style={{ top: `${pBottom + 1.2}%` }}>{info.name}</b>
+        <b class="end-owner end-hand" style={{ ...right, top: `${RIGHT.owner}%` }}>{info.name}</b>
+        <ul class="end-vals" data-k="medals">
+          {vals.map(([label, v, unit], i) => (
+            <li key={label} class="end-coin" aria-label={`${label} ${v === null ? '-' : `${v}${unit}`}`}
+              style={{ left: `${g.v.x[i % 2]}%`, top: `${g.v.y[i >> 1]}%`, animationDelay: `${T.coin + i * 0.2}s` }}>
+              <span class="end-fb-label">{label}</span>
+              <b class="end-coin-v end-hand">{v === null ? '-' : <Roll to={v} delay={T.coin + i * 0.2} />}{v === null ? '' : unit}</b>
+            </li>
+          ))}
+        </ul>
+        <StampGrid r={r} top={monopolies.length ? RIGHT.gridMono : RIGHT.grid[0]} bottom={Math.min(RIGHT.grid[1], g.s[0][1] - 3)} left={RIGHT.gridX[0]} right={RIGHT.gridX[1]} />
+        {r.landmarks.length > 3 && <b class="end-sticker-more end-hand" style={{ left: `${g.s[2][0] + g.s[2][2] - 2}%`, top: `${g.s[2][1] - 4}%` }}>+{r.landmarks.length - 3}</b>}
+        <Lines r={r} lines={lines} hand style={right} />
         {monopolies.length > 0 && (
-          <p class="end-mono" data-k="monopoly" style={{ left: `${g.p[0] + g.p[2] - 4}%`, top: `${pBottom - 6}%` }}>
-            {monopolies.map((m) => <b key={m.continent} class="rs-mono-chip" data-continent={m.continent}>{CONTINENT_NAME[m.continent] ?? m.continent} 독점</b>)}
+          <p class="end-mono end-hand" data-k="monopoly" style={{ ...right, top: `${RIGHT.mono}%` }}>
+            {monopolies.map((m) => <b key={m.continent} class="end-mono-t" data-continent={m.continent}>{CONTINENT_NAME[m.continent] ?? m.continent} 독점!</b>)}
           </p>
         )}
-        <Coins r={r} top={pBottom + 9} />
-        <StampGrid r={r} top={6.5} bottom={sTop - 2.5} />
-        {r.landmarks.length > 3 && <b class="end-sticker-more" style={{ left: `${g.s[2][0] + g.s[2][2] - 1}%`, top: `${g.s[2][1] - 3}%` }}>+{r.landmarks.length - 3}</b>}
-        <Lines r={r} lines={g.lines.slice(1, 4)} />
       </div>
     </section>
-  );
-}
-
-/** 학습 도장 4(금 동전): 왼쪽 면 2×2, 동전 아래 수치·라벨. 수치는 롤링 */
-function Coins({ r, top }: { r: SeatReport; top: number }) {
-  const items: [string, string, number | null, string][] = [
-    ['plane', '다녀온 곳', r.stamps.length, '곳'],
-    ['mountain', '랜드마크', r.landmarks.length, '개'],
-    ['palm', '도착 퀴즈', r.isBot || !r.total.arrive.n ? null : Math.round((r.total.arrive.ok / r.total.arrive.n) * 100), '%'],
-    ['compass', '참/거짓', r.isBot || !r.total.tf.n ? null : Math.round((r.total.tf.ok / r.total.tf.n) * 100), '%'],
-  ];
-  return (
-    <ul class="end-coins" data-k="medals" style={{ top: `${top}%` }}>
-      {items.map(([ico, label, v, unit], i) => (
-        <li key={ico} class="end-coin" aria-label={`${label} ${v === null ? '-' : `${v}${unit}`}`} style={{ animationDelay: `${T.coin + i * 0.2}s` }}>
-          <Pic k={`result.stamp.${ico}`} class="end-coin-img" fallback={<span class="end-coin-img end-fb-coin" />} />
-          <b class="end-coin-v">{v === null ? '-' : <Roll to={v} delay={T.coin + i * 0.2} />}{v === null ? '' : unit}</b>
-          <span class="end-coin-l">{label}</span>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -302,11 +316,12 @@ function Roll({ to, delay }: { to: number; delay: number }) {
 }
 
 /** 나라 도장 격자 3×3(빈 도장 테 빨강·파랑 교대). 9 넘으면 마지막 칸 '+n' */
-function StampGrid({ r, top, bottom }: { r: SeatReport; top: number; bottom: number }) {
+function StampGrid({ r, top, bottom, left, right }: { r: SeatReport; top: number; bottom: number; left?: number; right?: number }) {
   const over = r.stamps.length > 9;
   const shown = over ? r.stamps.slice(0, 8) : r.stamps;
   return (
-    <ol class="end-grid" data-k="map" aria-label={`다녀온 나라 ${r.stamps.length}곳`} style={{ top: `${top}%`, height: `${bottom - top}%` }}>
+    <ol class={`end-grid${left !== undefined ? ' end-hand-grid' : ''}`} data-k="map" aria-label={`다녀온 나라 ${r.stamps.length}곳`}
+      style={{ top: `${top}%`, height: `${bottom - top}%`, ...(left !== undefined && right !== undefined ? { left: `${left}%`, width: `${right - left}%` } : {}) }}>
       {Array.from({ length: 9 }, (_, i) => {
         const s = shown[i];
         const more = over && i === 8;
@@ -326,7 +341,7 @@ function StampGrid({ r, top, bottom }: { r: SeatReport; top: number; bottom: num
 }
 
 /** 3줄(잉크): 도착 퀴즈·참/거짓·헷갈린 생각 번호 — 오른쪽 면 줄 선 위 */
-function Lines({ r, lines }: { r: SeatReport; lines: number[] }) {
+function Lines({ r, lines, hand, style }: { r: SeatReport; lines: number[]; hand?: boolean; style?: Record<string, string> }) {
   const a = r.total.arrive;
   const t = r.total.tf;
   const rows = r.isBot
@@ -337,8 +352,8 @@ function Lines({ r, lines }: { r: SeatReport; lines: number[] }) {
       r.wrongM.length ? `헷갈린 생각 ${r.wrongM.slice(0, 3).join(' ')}${r.wrongM.length > 3 ? ' …' : ''}` : '헷갈린 생각 번호 없음',
     ];
   return (
-    <ul class="end-lines" data-k="lines">
-      {rows.map((text, i) => <li key={i} data-line={lines[i]} style={{ top: `${lines[i] ?? 80 + i * 4}%`, animationDelay: `${T.lines + i * 0.12}s` }}>{text}</li>)}
+    <ul class={`end-lines${hand ? ' end-lines--hand' : ''}`} data-k="lines">
+      {rows.map((text, i) => <li key={i} data-line={lines[i]} style={{ ...style, top: `${lines[i] ?? 80 + i * 4}%`, animationDelay: `${T.lines + i * 0.12}s` }}>{hand ? <span class="end-hand">{text}</span> : text}</li>)}
     </ul>
   );
 }

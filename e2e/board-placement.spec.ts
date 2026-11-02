@@ -7,6 +7,7 @@ import { createServer, type ViteDevServer } from 'vite';
 
 let BASE = '';
 const SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/R4-TAD-shots/', import.meta.url));
+const U14_SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U14-shots/', import.meta.url));
 let server: ViteDevServer;
 
 test.describe.configure({ mode: 'serial' });
@@ -23,6 +24,7 @@ test.beforeAll(async () => {
   await server.listen();
   BASE = server.resolvedUrls!.local[0].replace(/\/$/, '');
   mkdirSync(SHOTS, { recursive: true });
+  mkdirSync(U14_SHOTS, { recursive: true });
   mkdirSync(fileURLToPath(new URL('../../harness/state/traveling-world/reports/U1-art-shots/', import.meta.url)), { recursive: true });
   mkdirSync(fileURLToPath(new URL('../../harness/state/traveling-world/reports/U4-rotate-shots/', import.meta.url)), { recursive: true });
 });
@@ -218,15 +220,17 @@ for (const [w, h] of [[360, 640], [390, 844], [768, 1024], [820, 1180]] as const
     // 형제 레이어(보드·메뉴)는 전부 inert, 덮개는 아님
     expect(await ov.evaluate((el) => [...el.parentElement!.children].filter((c) => c !== el).every((c) => c.hasAttribute('inert')))).toBe(true);
     expect(await ov.evaluate((el) => el.hasAttribute('inert'))).toBe(false);
-    // 덮개 아래 간판을 억지로 눌러도(force) 멈춤 확인 문구가 안 뜬다
-    await page.locator('.gm-btn[data-act=pause]').click({ force: true }).catch(() => {});
-    await expect(page.locator('.gm-ask')).toHaveCount(0);
+    // 덮개 아래 간판을 억지로 눌러도(force) 눌리지 않는다(inert = click 없음). U14: 멈춤은 1탭이라 눌림 자체를 센다
+    await page.evaluate(() => { (window as unknown as { __taps: number }).__taps = 0; document.addEventListener('click', (e) => { if ((e.target as Element).closest?.('[data-act=pause]')) (window as unknown as { __taps: number }).__taps++; }, true); });
+    await page.locator('.gm-btn[data-act=pause]').click({ force: true, timeout: 1000 }).catch(() => {});
+    expect(await page.evaluate(() => (window as unknown as { __taps: number }).__taps)).toBe(0);
     // 가로로 돌리면 덮개가 사라지고 inert 가 풀려 간판이 다시 눌린다
     await page.setViewportSize({ width: 1366, height: 768 });
     await expect(ov).toHaveCount(0);
     expect(await page.evaluate(() => document.querySelectorAll('[inert]').length)).toBe(0);
     await page.locator('.gm-btn[data-act=pause]').click();
-    await expect(page.locator('.gm-ask')).toHaveText('잠깐 쉴까요? 한 번 더 누르면 멈춰요');
+    expect(await page.evaluate(() => (window as unknown as { __taps: number }).__taps)).toBe(1);
+    await expect(page.locator('.gm-ask')).toHaveCount(0); // U14: 확인 1탭("잠깐 쉴까요?") 폐기
   });
 }
 
@@ -801,7 +805,7 @@ test('독점 띠 = 금 리본(결과 화면과 같은 부품), 화면 가운데'
   await page.screenshot({ path: `${TE}monopoly-ribbon.png` });
 });
 
-test('규칙·저장 = 매달린 간판(§16.9.2 U5 (573,235)·(793,235) 44×44): 칸 땅덩이·패널·이정표·타이머·주사위와 교차 0, 저장은 두 번 눌러야', async ({ browser }) => {
+test('규칙·저장 = 매달린 간판(§16.9.2 U5 (573,235)·(793,235) 44×44): 칸 땅덩이·패널·이정표·타이머·주사위와 교차 0, 멈춤은 1탭(U14)', async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 2, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/dev/board?menu=1`);
@@ -833,8 +837,76 @@ test('규칙·저장 = 매달린 간판(§16.9.2 U5 (573,235)·(793,235) 44×44)
   await page.screenshot({ path: `${TE}board-signs.png` });
   await page.screenshot({ path: `${TE}board-signs-crop.png`, clip: { x: 520, y: 160, width: 330, height: 110 } });
   const pause = page.locator('[data-act="pause"]');
+  await expect(pause).toHaveAttribute('aria-label', '멈춤');
   await pause.click();
-  await expect(page.locator('.gm-ask')).toHaveText('잠깐 쉴까요? 한 번 더 누르면 멈춰요');
-  await page.screenshot({ path: `${TE}board-signs-ask.png`, clip: { x: 600, y: 120, width: 400, height: 160 } });
+  await expect(page.locator('.gm-ask')).toHaveCount(0); // U14: 확인 1탭·"이 차례가 끝나면" 안내 폐기
   await ctx.close();
+});
+
+// U14(DESIGN §20.5): 학생 간판 = 나가기(문 아이콘), 방장 멈춤과 같은 자리 (793,235) 44×44
+test('U14 학생 나가기 간판: 멈춤 간판 자리(793,235) 44×44, 문 아이콘·aria-label "게임 나가기", 세로 안내 아래에선 안 눌림', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(`${BASE}/dev/board`);
+  await page.addScriptTag({ type: 'module', url: '/e2e/helpers/leave-sign-harness.tsx' });
+  await page.waitForSelector('[data-act="leave-sign"]');
+  const sign = page.locator('[data-act="leave-sign"]');
+  await expect(sign).toHaveAttribute('aria-label', '게임 나가기');
+  await expect(sign.locator('svg')).toHaveCount(1);
+  const c = await sign.evaluate((el) => {
+    const sr = document.querySelector('.ov-stage')!.getBoundingClientRect(), k = sr.width / 1366;
+    const b = el.getBoundingClientRect();
+    return [Math.round((b.left - sr.left) / k + b.width / k / 2), Math.round((b.top - sr.top) / k + b.height / k / 2), Math.round(b.width / k), Math.round(b.height / k)];
+  });
+  expect(c).toEqual([793, 235, 44, 44]);
+  await page.screenshot({ path: `${U14_SHOTS}leave-sign.png`, clip: { x: 520, y: 160, width: 330, height: 110 } });
+  await sign.click();
+  expect(await page.evaluate(() => (window as unknown as { __leaves: number }).__leaves)).toBe(1);
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.waitForSelector('.board-rotate');
+  await sign.click({ force: true, timeout: 1000 }).catch(() => {});
+  expect(await page.evaluate(() => (window as unknown as { __leaves: number }).__leaves)).toBe(1);
+});
+
+// U14(DESIGN §20.1): 세로 안내가 떠 있는 동안 멈춤 모달 — 세로 안내가 위(z 100), 모달·판은 inert. 가로로 돌리면 모달 조작 가능
+test('U14 세로 안내 + 멈춤 모달: 세로면 모달도 inert(안 눌림·Esc 무시), 가로로 돌리면 모달만 눌리고 판은 계속 inert', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(`${BASE}/dev/board`);
+  await page.addScriptTag({ type: 'module', url: '/e2e/helpers/pause-harness.tsx' });
+  await page.waitForSelector('.board-rotate');
+  await page.waitForSelector('.pm');
+  const st = await page.evaluate(() => {
+    const rot = document.querySelector('.board-rotate')!;
+    const host = document.querySelector('.pm-host')!;
+    return {
+      rotZ: getComputedStyle(rot).zIndex, pmZ: getComputedStyle(host.querySelector('.ov-layer--pause')!).zIndex,
+      last: rot.parentElement!.lastElementChild === rot, hostInert: host.hasAttribute('inert'), rotInert: rot.hasAttribute('inert'),
+      others: [...rot.parentElement!.children].filter((c) => c !== rot).every((c) => c.hasAttribute('inert')),
+    };
+  });
+  expect(st).toEqual({ rotZ: '100', pmZ: '50', last: true, hostInert: true, rotInert: false, others: true });
+  await page.locator('.pm [data-act="resume"]').click({ force: true, timeout: 1000 }).catch(() => {});
+  await page.keyboard.press('Escape');
+  expect(await page.evaluate(() => (window as unknown as { __pm: { resumes: number } }).__pm.resumes)).toBe(0);
+  await page.screenshot({ path: `${U14_SHOTS}portrait-over-modal.png` });
+  // 가로로: 세로 안내가 사라지고 모달만 살아난다(판·간판은 멈춤 모달 때문에 여전히 inert)
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await expect(page.locator('.board-rotate')).toHaveCount(0);
+  const after = await page.evaluate(() => {
+    const host = document.querySelector('.pm-host')!;
+    return { hostInert: host.hasAttribute('inert'), others: [...host.parentElement!.children].filter((c) => c !== host).every((c) => c.hasAttribute('inert')) };
+  });
+  expect(after).toEqual({ hostInert: false, others: true });
+  await page.locator('.fake-board-btn').click({ force: true, timeout: 1000 }).catch(() => {});
+  await page.locator('.pm [data-act="resume"]').click();
+  expect(await page.evaluate(() => (window as unknown as { __pm: { resumes: number } }).__pm.resumes)).toBe(1);
+  await expect(page.locator('.pm')).toHaveCount(0);
+  expect(await page.evaluate(() => document.querySelectorAll('[inert]').length)).toBe(0);
+  // 다시 멈춘 뒤 세로 → 가로 → 모달을 내려도(재개) 세로 안내가 다시 뜨면 그쪽이 inert 를 잇는다
+  await page.locator('[data-act="pause"]').click();
+  await expect(page.locator('.pm')).toBeVisible();
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.waitForSelector('.board-rotate');
+  expect(await page.evaluate(() => [...document.querySelector('.board-rotate')!.parentElement!.children].filter((c) => !c.classList.contains('board-rotate')).every((c) => c.hasAttribute('inert')))).toBe(true);
 });

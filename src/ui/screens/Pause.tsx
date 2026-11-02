@@ -1,6 +1,8 @@
 // 멈춤(PRD §8-11) → 이어 하기(§8-12), 끝 = 최종 결과(§8-14, T09 Results). 2026-10-28 U1: 중간 결과(§8-13)는 없어졌고
-// 그 순위 한 줄은 멈춤 화면 아래로 왔다. 멈춤 화면은 남은 시간 칩 + 자리 PIN 4자리(화면 폭 20% 이상) + 순위 한 줄 — 사진으로 찍어 두게 한다.
-import { useState } from 'preact/hooks';
+// 그 순위 한 줄은 멈춤 화면 아래로 왔다. 자리 번호 화면은 남은 시간 칩 + 자리 PIN 4자리(화면 폭 20% 이상) + 순위 한 줄 — 사진으로 찍어 두게 한다.
+// 2026-11-02 U14(DESIGN §20): 멈춘 순간 판에 있던 기기는 판 위 멈춤 모달(Game.tsx)이고, 자리 번호 화면은 그 모달의 작은 글자로 연다.
+// 이 파일의 Paused 는 다시 들어온 기기(PIN 없음) 전용 이어 하기 화면 — 방장 [게임 끝내기]·학생 [게임 나가기] 작은 글자 + 확인 창(C-E·C-L).
+import { useRef, useState } from 'preact/hooks';
 import { AssetImg } from '../../assets/AssetImg';
 import { assetsOf } from '../../engine/pay';
 import { BOARD, countryNameOf } from '../../shared/board';
@@ -16,19 +18,14 @@ import { metaWith } from '../results/meta';
 import { Results } from '../results/Results';
 import '../../styles/screens.css';
 import { NOTICE_TEXT, type NoticeKind } from './notice';
+import { mmss, PauseLayer, PauseModal, useInertSiblings } from '../overlays/PauseModal';
 
+export { mmss };
+
+/** 멈춘 방에 다시 들어온 기기(PIN 없음): 이어 하기 화면 */
 export function Paused({ client, s }: { client: GameClient; s: ClientState }) {
-  // 이번 접속에서 막 멈췄으면(PIN 이 왔으면) 멈춤 화면, 나중에 같은 코드로 다시 들어왔으면 바로 이어 하기 화면
-  const [stage, setStage] = useState<'save' | 'resume'>('save');
-  if (s.pins && stage === 'save') return <SaveScreen s={s} onDone={() => setStage('resume')} />;
   return <ResumeScreen client={client} s={s} />;
 }
-
-/** 남은 시간 mm:ss */
-export const mmss = (ms: number) => {
-  const sec = Math.max(0, Math.ceil(ms / 1000));
-  return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
-};
 
 /** 결과 화면에 넘길 자리 정보(seatViews 그대로) */
 const resultSeats = (s: ClientState) => seatViews(s.room!).map(({ seat, charId, name, isBot }) => ({ seat, charId, name, isBot }));
@@ -56,7 +53,8 @@ function TimeLeft({ ms }: { ms: number }) {
   return <p class="pause-time" data-k="time-left" aria-label={`남은 시간 ${mmss(ms)}`}><Hourglass /> 남은 시간 <b>{mmss(ms)}</b></p>;
 }
 
-function SaveScreen({ s, onDone }: { s: ClientState; onDone: () => void }) {
+/** 자리 번호 화면(§8-11): 방 코드 + 자기 PIN + 순위. [사진 찍었어요] → 멈춤 모달로(U14) */
+export function SaveScreen({ s, onDone }: { s: ClientState; onDone: () => void }) {
   const seats = seatViews(s.room!);
   const mine = s.pins!.find((p) => p.seat === s.seat); // 자기 자리 PIN 하나만 보인다(PRD §8-11 QA8)
   return (
@@ -89,6 +87,12 @@ function ResumeScreen({ client, s }: { client: GameClient; s: ClientState }) {
   const lands = (seat: Seat) => g.tiles.flatMap((t, i) => (t.owner === seat ? [{ i, level: t.level }] : []));
   const cards = g.revealedCards.flatMap((id) => cardIn(room.cards, id) ?? []); // 카드 글은 서버가 정지 때 보낸다
   const canStart = s.seat !== null;
+  const host = s.seat !== null && s.seat === room.hostSeat;
+  // 작은 글자 [게임 끝내기]·[게임 나가기] → 확인 창(C-E·C-L, 멈춤 모달과 같은 상자)
+  const [ask, setAsk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const layer = useRef<HTMLDivElement>(null);
+  useInertSiblings(ask, layer);
   return (
     <main class="sc sc--resume">
       <AssetImg k="ui.boardBg" class="sc-bg" />
@@ -129,9 +133,17 @@ function ResumeScreen({ client, s }: { client: GameClient; s: ClientState }) {
           <div class="resume-go">
             <button type="button" class="start-btn" data-act="resume" onClick={() => client.send({ t: 'resume' })}><span class="start-tri" aria-hidden="true" />이어서 하기</button>
             {s.error === 'notHost' && <p class="sc-msg" role="alert">방장이 들어오거나 친구가 두 명 넘게 모이면 이어서 할 수 있어요.</p>}
+            <button type="button" class="ov-link" data-act={host ? 'ask-end' : 'ask-leave'} onClick={() => setAsk(true)}>{host ? '게임 끝내기' : '게임 나가기'}</button>
           </div>
         )}
       </section>
+      {ask && (
+        <PauseLayer layerRef={layer}>
+          <PauseModal kind={host ? 'C-E' : 'C-L'} busy={busy} onBack={() => setAsk(false)}
+            onEnd={() => { if (client.endGame()) setBusy(true); }}
+            onLeave={() => { setBusy(true); client.leaveGame(); }} />
+        </PauseLayer>
+      )}
     </main>
   );
 }

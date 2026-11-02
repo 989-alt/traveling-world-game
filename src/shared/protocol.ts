@@ -29,6 +29,10 @@ export const CUTSCENE_MS = CUT_MS + HOLD_MS;
 /** 컷씬 시작 뒤 이만큼 동안 상태에 cutscene 을 싣는다: 컷씬 4초 + 배너 2초(DESIGN §12.3 재접속 복구) */
 export const CUT_RESUME_MS = CUT_MS + 2000;
 
+/** 소켓 닫힘 코드(PRD §9.4 U14). 둘 다 4000 'replaced' 처럼 다시 잇지 않는다 */
+export const ENDED_CLOSE = 4001;
+export const LEFT_CLOSE = 4002;
+
 /** 미션 답은 글자가 아니라 번호로 보낸다. 연결·블록·순서는 서버가 내려 준 표시 목록(PublicTurn.mission)의 번호,
  *  사진·그래프는 선지 번호. 서버가 원래 내용으로 바꿔 엔진에 넘긴다 */
 export type ClientAct =
@@ -54,9 +58,13 @@ export type ClientMsg =
   | { t: 'hello'; charId: number }
   | { t: 'rejoin'; seat: Seat; pin: string }
   | { t: 'start' }
-  /** 방장: 멈춤(수업 종). 지금 턴을 마친 뒤 시계 정지 → 멈춤 화면(PRD §3.7) */
+  /** 방장: 멈춤(수업 종). 그 자리에서 시계·마감 정지 → 멈춤 모달(PRD §3.7 U14) */
   | { t: 'pause' }
   | { t: 'resume' }
+  /** 방장: 게임 끝내기. 전원에게 ended → 소켓 4001 → 방 저장본 삭제(PRD §9.4 U14) */
+  | { t: 'end' }
+  /** 게임 나가기: 그 자리는 바로 봇(claimed 유지), 그 소켓만 4002. 방장이면 end 와 같다(PRD §9.4 U14) */
+  | { t: 'leave' }
   | { t: 'sync' }
   /** 이 기기가 해설 카드를 표시 시간(§3.1)만큼 그렸다. 자동 전송(버튼 없음). stepKey = 그 해설 단계 */
   | { t: 'shown'; stepKey: string }
@@ -103,6 +111,8 @@ export type ServerMsg =
   | { t: 'welcome'; seat: Seat; pin: string } // 그 자리 하나에게만
   | { t: 'pins'; pins: { seat: Seat; pin: string }[] } // 일시 정지 때 자리마다 따로
   | { t: 'error'; code: ErrorCode }
+  /** 방장이 게임을 끝냈다(U14). 뒤이어 소켓이 ENDED_CLOSE 로 닫힌다 */
+  | { t: 'ended'; by: 'host' }
   | {
       t: 'state';
       code: string;
@@ -180,6 +190,8 @@ export const MSG_SPEC: Record<ClientMsg['t'], Record<string, F>> = {
   start: {},
   pause: {},
   resume: {},
+  end: {},
+  leave: {},
   sync: {},
   shown: { stepKey: match(SHOWN_KEY_RE) },
   pickPreview: { tile: either(TILE, oneOf(null)) },

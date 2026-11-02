@@ -461,7 +461,7 @@ describe('놀이 시계 (2026-10-28 U1)', () => {
   it('놀이 시간 = settings.totalMinutes, 시작 로그 clock start', () => {
     for (const m of [40, 60, 80] as const) {
       const s = createGame({ seed: 1, settings: { totalMinutes: m } });
-      expect(s.clock).toEqual({ remainingMs: m * 60_000, pauseBy: null });
+      expect(s.clock).toEqual({ remainingMs: m * 60_000, pausedAt: null });
       expect(s.log[0]).toEqual({ ev: 'clock', kind: 'start', remainingMs: m * 60_000, by: 'host' });
     }
   });
@@ -477,43 +477,59 @@ describe('놀이 시계 (2026-10-28 U1)', () => {
     expect(last(s, 'clock')).toMatchObject({ kind: 'end', by: 'timeout' });
   });
 
-  it('멈춤: 턴 중이면 그 턴을 마친 뒤 paused, 남은 시간 그대로 이어 하기', () => {
+  it('(U14) 멈춤: 문항 단계 한가운데서도 그 자리에서 paused + pausedAt, 턴 상태 그대로 → 재개하면 같은 단계부터', () => {
     let s = apply(arrive(newGame(), 0, 2), T, full); // 문항 단계
+    expect(s.turn.step).toBe('question');
+    const q = s.turn.question;
     s = apply(s, { type: 'tick', ms: 10 * 60_000 }, full);
-    s = apply(s, { type: 'pause', by: 'host' }, full);
-    expect(s.phase).toBe('playing');
-    expect(s.clock.pauseBy).toBe('host');
-    expect(apply(s, { type: 'pause', by: 'host' }, full)).toBe(s); // 두 번 눌러도 한 번
-    s = answerAndSkip(s, true);
-    s = apply(s, { type: 'pass', seat: 0 }, full);
+    s = apply(s, { type: 'pause', by: 'host', at: 123_456 }, full);
     expect(s.phase).toBe('paused');
-    expect(s.turn).toMatchObject({ seat: 1, step: 'roll' });
+    expect(s.clock).toEqual({ remainingMs: 30 * 60_000, pausedAt: 123_456 });
+    expect(s.turn.step).toBe('question'); // 턴 끝을 기다리지 않는다
+    expect(s.turn.question).toEqual(q);
     expect(last(s, 'clock')).toEqual({ ev: 'clock', kind: 'pause', remainingMs: 30 * 60_000, by: 'host' });
-    expect(apply(s, { type: 'roll', seat: 1 }, full)).toBe(s);
+    expect(apply(s, { type: 'pause', by: 'host', at: 200_000 }, full)).toBe(s); // 두 번 눌러도 한 번
+    expect(apply(s, { type: 'answer', seat: 0, choice: 0, ms: 100 }, full)).toBe(s); // 멈춘 동안 입력 거부
+    expect(apply(s, T, full)).toBe(s); // 마감도 없다
     expect(apply(s, { type: 'tick', ms: 60_000 }, full)).toBe(s); // 멈춘 동안 시계 안 줄어듦
     s = apply(s, { type: 'resume' }, full);
     expect(s.phase).toBe('playing');
-    expect(s.clock).toEqual({ remainingMs: 30 * 60_000, pauseBy: null });
+    expect(s.clock).toEqual({ remainingMs: 30 * 60_000, pausedAt: null });
     expect(last(s, 'clock')).toEqual({ ev: 'clock', kind: 'resume', remainingMs: 30 * 60_000, by: 'host' });
+    expect(s.turn.step).toBe('question');
+    s = answerAndSkip(s, true); // 같은 문항에 그대로 답한다
     expect(s.revealedCards).toEqual(['th-1']);
   });
 
-  it('멈춤: 턴 시작(굴리기 전)이면 바로, auto 도 같은 길', () => {
+  it('(U14) 멈춤: 턴 시작(굴리기 전)도 같은 길, auto 도 같은 길. at 이 없으면 pausedAt null', () => {
     const s = apply(newGame(), { type: 'pause', by: 'auto' }, full);
     expect(s.phase).toBe('paused');
+    expect(s.clock.pausedAt).toBeNull();
     expect(last(s, 'clock')).toEqual({ ev: 'clock', kind: 'pause', remainingMs: 40 * 60_000, by: 'auto' });
+    expect(apply(newGame(), { type: 'pause', by: 'x' as 'host' }, full).phase).toBe('playing'); // 모르는 by 는 거부
   });
 
-  it('멈춤 요청 중에 시간이 다 되면 끝이 먼저', () => {
+  it('(U14) 끝난 판·멈춘 판에서 pause 는 무시, 끊김·복귀(setConnected)는 멈춤과 무관', () => {
     let s = apply(arrive(newGame(), 0, 2), T, full);
-    s = apply(s, { type: 'pause', by: 'host' }, full);
-    s = apply(s, { type: 'tick', ms: 40 * 60_000 }, full);
-    s = answerAndSkip(s, true);
-    s = apply(s, { type: 'pass', seat: 0 }, full);
-    expect(s.phase).toBe('finished');
+    s = apply(s, { type: 'setConnected', seat: 1, connected: false }, full);
+    expect(s.phase).toBe('playing'); // 옛 '자동 멈춤 대기' 없음
+    s = apply(s, { type: 'pause', by: 'auto', at: 5 }, full);
+    s = apply(s, { type: 'setConnected', seat: 1, connected: true }, full);
+    expect(s.phase).toBe('paused'); // 사람이 돌아와도 멈춘 채(재개는 서버 resume 만)
+    expect(s.clock.pausedAt).toBe(5);
   });
 
-  it('(U123 L1) 멈춘 채 남은 시간이 0 이면 이어 하기 = 바로 시간 끝(자산승), 멈춤에 갇히지 않는다', () => {
+  it('(U123 L1·U14) 남은 놀이 시간 0 에서 멈춤·계속하기 = 바로 시간 끝(자산승), 멈춤에 갇히지 않는다', () => {
+    // 턴 중간(문항)에 시계가 0 이 된 채 멈춤 → 재개 즉시 끝
+    let m = apply(arrive(newGame(), 0, 2), T, full);
+    m = apply(m, { type: 'tick', ms: 40 * 60_000 }, full);
+    expect(m.phase).toBe('playing'); // 턴 중이면 그 턴을 마칠 때 끝(PRD §3.7)
+    m = apply(m, { type: 'pause', by: 'host', at: 1 }, full);
+    expect(m.phase).toBe('paused');
+    m = apply(m, { type: 'resume' }, full);
+    expect(m.phase).toBe('finished');
+    expect(m.winner?.kind).toBe('assets');
+    expect(m.clock).toEqual({ remainingMs: 0, pausedAt: null });
     let s = apply(newGame(), { type: 'pause', by: 'host' }, full);
     expect(s.phase).toBe('paused');
     s = JSON.parse(JSON.stringify(s)) as GameState;
@@ -521,7 +537,7 @@ describe('놀이 시계 (2026-10-28 U1)', () => {
     s = apply(s, { type: 'resume' }, full);
     expect(s.phase).toBe('finished');
     expect(s.winner?.kind).toBe('assets');
-    expect(s.clock).toEqual({ remainingMs: 0, pauseBy: null });
+    expect(s.clock).toEqual({ remainingMs: 0, pausedAt: null });
     expect(last(s, 'clock')).toEqual({ ev: 'clock', kind: 'end', remainingMs: 0, by: 'timeout' });
     expect(s.log.some((e) => e.ev === 'clock' && e.kind === 'resume')).toBe(false);
     expect(last(s, 'result')).toBeTruthy();
@@ -531,28 +547,6 @@ describe('놀이 시계 (2026-10-28 U1)', () => {
     n = apply(n, { type: 'resume' }, full);
     expect(n.phase).toBe('finished');
     expect(n.clock.remainingMs).toBe(0);
-  });
-
-  it('(U123 L2) 자동 멈춤 대기 중: 시계는 계속 줄고, 사람이 돌아오면(setConnected true) 취소. 방장 멈춤은 그대로', () => {
-    let s = apply(arrive(newGame(), 0, 2), T, full); // 문항 단계(턴 중)
-    s = apply(s, { type: 'setConnected', seat: 0, connected: false }, full);
-    s = apply(s, { type: 'pause', by: 'auto' }, full);
-    expect(s.phase).toBe('playing');
-    expect(s.clock.pauseBy).toBe('auto');
-    s = apply(s, { type: 'tick', ms: 30_000 }, full); // 대기 중에도 시계는 준다(멈춤은 턴을 마친 뒤)
-    expect(s.clock.remainingMs).toBe(40 * 60_000 - 30_000);
-    s = apply(s, { type: 'setConnected', seat: 0, connected: true }, full);
-    expect(s.clock.pauseBy).toBeNull();
-    s = answerAndSkip(s, true);
-    s = apply(s, { type: 'pass', seat: 0 }, full);
-    expect(s.phase).toBe('playing'); // 취소됐으니 턴 끝에 멈추지 않는다
-    expect(s.log.some((e) => e.ev === 'clock' && e.kind === 'pause')).toBe(false);
-    // 방장 멈춤 대기는 사람이 돌아와도 남는다
-    let h = apply(arrive(newGame(), 0, 2), T, full);
-    h = apply(h, { type: 'setConnected', seat: 1, connected: false }, full);
-    h = apply(h, { type: 'pause', by: 'host' }, full);
-    h = apply(h, { type: 'setConnected', seat: 1, connected: true }, full);
-    expect(h.clock.pauseBy).toBe('host');
   });
 
   it('저장·복원: JSON 왕복 뒤 같은 입력 → 같은 결과', () => {

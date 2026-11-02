@@ -48,17 +48,19 @@ describe('놀이 시계·멈춤 (2026-10-28 U1)', () => {
     expect(ctx.alarmAt).toBe(room.rec!.expiresAt);
   });
 
-  it('멈춤: 턴 중이면 그 턴을 마친 뒤 멈춘다', async () => {
+  it('(U14) 멈춤: 턴 중이어도 그 자리에서 멈춘다(턴 끝 대기 없음), pausedAt = 서버 시각', async () => {
     const { ctx, room, ws } = started(1); // 자리 1~3 봇
     room.game = withDice(game(room), 1, 2); // 더블 아님 → 나라 칸
     say(room, ws[0], { t: 'act', a: { type: 'roll' } });
-    expect(game(room).turn.step).not.toBe('roll');
+    const step = game(room).turn.step;
+    expect(step).not.toBe('roll');
     say(room, ws[0], { t: 'pause' });
-    expect(game(room).phase).toBe('playing');
-    expect(game(room).clock.pauseBy).toBe('host');
-    await runUntil(room, ctx, () => game(room).phase === 'paused');
-    expect(game(room).turn.step).toBe('roll'); // 턴 경계에서 멈춤
-    expect(game(room).clock.remainingMs).toBeGreaterThan(0);
+    expect(game(room).phase).toBe('paused');
+    expect(game(room).clock.pausedAt).toBe(Date.now());
+    expect(game(room).turn.step).toBe(step); // 턴 중간 상태 그대로
+    expect(stored(ctx).game!.clock.pausedAt).toBe(Date.now());
+    expect(ctx.alarmAt).toBe(room.rec!.expiresAt); // 멈춘 동안 남는 알람은 만료뿐
+    void ctx;
   });
 
   it('사람 자리 전원이 60초 끊기면 서버가 멈춘다(by auto), 한 명이라도 있으면 안 멈춘다', async () => {
@@ -94,7 +96,7 @@ describe('놀이 시계·멈춤 (2026-10-28 U1)', () => {
     say(room, b, { t: 'rejoin', seat: 2, pin: pins[2] });
     say(room, b, { t: 'resume' });
     expect(game(room).phase).toBe('playing');
-    expect(game(room).clock).toEqual({ remainingMs: left, pauseBy: null });
+    expect(game(room).clock).toEqual({ remainingMs: left, pausedAt: null });
     expect(game(room).log.at(-1)).toMatchObject({ ev: 'clock', kind: 'resume', remainingMs: left });
     // 안 돌아온 자리 0·3 은 30초 뒤 봇, 시계는 재개 뒤만 줄어든다
     await advance(room, ctx, 30_000);
@@ -113,7 +115,7 @@ describe('놀이 시계·멈춤 (2026-10-28 U1)', () => {
     await advance(room, ctx, 3_000);
     say(room, ws[0], { t: 'pause' });
     expect(game(room).phase).toBe('paused');
-    room.game = { ...game(room), clock: { remainingMs: 0, pauseBy: null } };
+    room.game = { ...game(room), clock: { ...game(room).clock, remainingMs: 0 } };
     say(room, ws[0], { t: 'resume' });
     expect(game(room).phase).toBe('finished');
     expect(game(room).winner?.kind).toBe('assets');
@@ -122,23 +124,31 @@ describe('놀이 시계·멈춤 (2026-10-28 U1)', () => {
     expect(ws[0].last('state')!.phase).toBe('finished');
   });
 
-  it('(U123 L2) 자동 멈춤 대기 중(턴 중)에 사람이 돌아오면 취소된다 — 턴이 끝나도 멈추지 않는다', async () => {
+  it('(U14) 자동 멈춤(전원 60초 끊김)도 턴 중간에 즉시, 턴 상태 그대로 → 다시 들어와 재개하면 남은 마감 그대로', async () => {
     const { ctx, room, ws } = started(1); // 자리 1~3 봇
     room.game = withDice(game(room), 1, 2); // 더블 아님 → 나라 칸(턴 중)
     say(room, ws[0], { t: 'act', a: { type: 'roll' } });
-    expect(game(room).turn.step).not.toBe('roll');
+    const step = game(room).turn.step;
+    expect(step).not.toBe('roll');
     const pin = room.rec!.seats[0].pin;
     drop(room, ws[0]);
-    const left0 = game(room).clock.remainingMs;
-    room.game = { ...game(room), clock: { ...game(room).clock, pauseBy: 'auto' } }; // 60초 뒤 자동 멈춤 요청이 대기 중인 상태
-    await advance(room, ctx, 1_000);
+    const offAt = Date.now();
+    await runUntil(room, ctx, () => game(room).phase !== 'playing');
+    expect(game(room).phase).toBe('paused');
+    expect(Date.now() - offAt).toBe(60_000);
+    expect(game(room).log.filter((e) => e.ev === 'clock').at(-1)).toMatchObject({ kind: 'pause', by: 'auto' });
+    expect(game(room).clock.pausedAt).toBe(Date.now());
+    // 자동 멈춤 순간의 단계·남은 마감을 적어 둔다(1번 자리는 끊긴 채 30초가 지나 봇이 이 차례를 이어 갔을 수 있다)
+    const at = { seat: game(room).turn.seat, step: game(room).turn.step, left: room.rec!.deadlineAt! - Date.now(), clock: game(room).clock.remainingMs };
+    await advance(room, ctx, 3_600_000);
     const back = connect(room, ctx);
     say(room, back, { t: 'rejoin', seat: 0, pin });
-    expect(game(room).clock.remainingMs).toBe(left0 - 1_000); // 대기 중에도 시계는 줄었다(멈춤은 턴을 마친 뒤)
-    expect(game(room).clock.pauseBy).toBeNull();
-    await advance(room, ctx, 5 * 60_000);
+    expect(back.last('state')!.phase).toBe('paused'); // pins 없음 → 이어 하기 화면
+    say(room, back, { t: 'resume' });
     expect(game(room).phase).toBe('playing');
-    expect(game(room).log.some((e) => e.ev === 'clock' && e.kind === 'pause')).toBe(false);
+    expect(game(room).turn).toMatchObject({ seat: at.seat, step: at.step });
+    expect(room.rec!.deadlineAt! - Date.now()).toBe(at.left); // Δ 보정: 남은 마감 그대로
+    expect(game(room).clock.remainingMs).toBe(at.clock);
   });
 });
 

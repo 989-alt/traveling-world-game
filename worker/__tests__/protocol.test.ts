@@ -31,7 +31,7 @@ const ACTS: Record<ClientAct['type'], ClientAct> = {
 const MSGS: ClientMsg[] = [
   { t: 'hello', charId: 5 },
   { t: 'rejoin', seat: 2, pin: '0429' },
-  { t: 'start' }, { t: 'pause' }, { t: 'resume' }, { t: 'sync' }, { t: 'shown', stepKey: '1|explanation|42' },
+  { t: 'start' }, { t: 'pause' }, { t: 'resume' }, { t: 'end' }, { t: 'leave' }, { t: 'sync' }, { t: 'shown', stepKey: '1|explanation|42' },
   { t: 'pickPreview', tile: 14 },
   ...Object.values(ACTS).map((a) => ({ t: 'act', a }) as ClientMsg),
 ];
@@ -295,5 +295,42 @@ describe('U10 고르기 미리보기 pickPreview (PRD §3.6.1)', () => {
     say(room, watcher, { t: 'pickPreview', tile: 5 });
     expect(watcher.last('error')?.code).toBe('notSeated');
     expect(JSON.stringify(game(room))).toBe(b3);
+  });
+});
+
+describe('U14 end · leave (PRD §9.4)', () => {
+  it('방장이 leave 를 보내면 end 와 같다(전원 ended·4001·방 삭제)', async () => {
+    const { ctx, room } = setup();
+    const ws = join(room, ctx, 2);
+    say(room, ws[0], { t: 'start' });
+    say(room, ws[0], { t: 'leave' });
+    expect(room.rec).toBeNull();
+    for (const w of ws) { expect(w.last('ended')).toEqual({ t: 'ended', by: 'host' }); expect(w.closeCode).toBe(4001); }
+    await Promise.resolve();
+    expect(ctx.data.size).toBe(0);
+  });
+
+  it('대기실: 방장 end = 방 삭제(전원 첫 화면), leave 는 무시(상태 재전송), 자리 없는 소켓의 leave = notSeated', () => {
+    const { ctx, room } = setup();
+    const ws = join(room, ctx, 2);
+    const watcher = connect(room, ctx);
+    say(room, ws[1], { t: 'leave' });
+    expect(ws[1].closed).toBe(false);
+    expect(room.rec!.seats[1].claimed).toBe(true);
+    expect(ws[1].last('state')!.phase).toBe('lobby');
+    say(room, watcher, { t: 'leave' });
+    expect(watcher.last('error')?.code).toBe('notSeated');
+    say(room, watcher, { t: 'end' });
+    expect(watcher.last('error')?.code).toBe('notHost');
+    expect(room.rec).not.toBeNull();
+    say(room, ws[0], { t: 'end' });
+    expect(room.rec).toBeNull();
+    for (const w of [...ws, watcher]) expect(w.closeCode).toBe(4001);
+  });
+
+  it('end·leave 에 다른 키를 붙이면 거부(자유 입력 0)', () => {
+    expect(parseClient(JSON.stringify({ t: 'end', why: 'x' }))).toBeNull();
+    expect(parseClient(JSON.stringify({ t: 'leave', seat: 1 }))).toBeNull();
+    expect(parseClient(JSON.stringify({ t: 'end' }))).toEqual({ t: 'end' });
   });
 });

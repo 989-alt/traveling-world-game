@@ -106,6 +106,8 @@ export const gameStartKeys = () => Object.keys(entries).filter(k => /^(char\.\d+
 
 /** U12 엔딩 포즈 실측(manifest.poses, 키잉 때 잼): h = 트림 높이 ÷ 정사각 한 변, body = 발~정수리 ÷ 트림 높이(P20 은 트로피 포함이라 < 1),
  *  chest = 목 메달 중심(트림 상자 x·y 비율). 없는 키는 P21 평균값 */
-export interface Pose { h: number; body: number; chest: [number, number] }
+/** 엔딩 메달 포즈(char.n.p20gold·p21silver·p21bronze·p21plain · 로봇 .s<자리>) 실측(키잉 때 잼): h = 트림 높이 ÷ 정사각 한 변,
+ *  body = 발~정수리 ÷ 트림 높이(P20 은 트로피 아래 정수리, 로봇은 안테나 뺀 돔 위). 없는 키는 P21 평균값 */
+export interface Pose { h: number; body: number }
 const POSES = (raw as unknown as { poses?: Record<string, Pose> }).poses ?? {};
-export const poseOf = (key: string): Pose => POSES[key] ?? { h: 0.9615, body: 1, chest: [0.5, 0.5] };
+export const poseOf = (key: string): Pose => POSES[key] ?? { h: 0.9615, body: 1 };

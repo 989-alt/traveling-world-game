@@ -23,9 +23,12 @@ export function newRoom(ctx: FakeCtx) {
 export class FakeWS {
   sent: ServerMsg[] = [];
   closed = false;
+  /** 서버가 닫은 코드·이유(U14: 4001 ended · 4002 left) */
+  closeCode: number | undefined;
+  closeReason: string | undefined;
   private att: unknown = null;
   send(s: string) { if (this.closed) throw new Error('closed'); this.sent.push(JSON.parse(s)); }
-  close() { this.closed = true; }
+  close(code?: number, reason?: string) { if (!this.closed) { this.closeCode = code; this.closeReason = reason; } this.closed = true; }
   serializeAttachment(a: unknown) { this.att = structuredClone(a); }
   deserializeAttachment() { return structuredClone(this.att); }
   of<T extends ServerMsg['t']>(t: T) { return this.sent.filter((m) => m.t === t) as Extract<ServerMsg, { t: T }>[]; }

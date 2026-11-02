@@ -12,6 +12,9 @@
 }
 .ov-layer.is-dim { background: color-mix(in srgb, var(--foreground) 35%, transparent); pointer-events: auto; }
 .ov-layer--menu { z-index: 9; }
+/* U14: 방장은 언제든 멈출 수 있어야 한다(PRD §3.7 "그 자리에서") — 문항·해설·문화 카드 같은 어두운 단계 창(.is-dim, z 10)이
+   떠 있어도 간판 줄은 그 위(11)에 둔다. 알림(20)·컷씬(40)·멈춤 모달(50)·세로 안내(100) 아래 */
+.game:has(> .ov-layer.is-dim) > .ov-layer--menu { z-index: 11; }
 .ov-layer--top { z-index: 40; }
 /* U10(DESIGN §18.5): 알림 카드(이벤트·통행료) 고정 레이어 — HUD·오버레이 위, 컷씬·세로 안내 아래 */
 .ov-layer--notice { z-index: var(--z-notice); }
@@ -564,6 +567,61 @@
 
 @keyframes ov-rise { from { opacity: 0; transform: translate(-50%, 24px); } }
 
+/* ── U14 멈춤 모달(DESIGN §20): 행동 패널 두루마리 560×280, 가운데 (683,384). z 50, 단색 35% 어둡게(.is-dim), backdrop 흐림 없음 ── */
+.ov-layer--pause { z-index: var(--z-pause); animation: pm-dim var(--modal-fade) linear both; }
+.ap.pm {
+  top: 50%;
+  bottom: auto;
+  width: var(--modal-w);
+  min-height: var(--modal-h);
+  display: flex;
+  flex-direction: column;
+  transform: translate(-50%, -50%);
+  animation-name: ov-pop;
+  animation-duration: var(--duration-scroll-open);
+  pointer-events: auto;
+  filter: drop-shadow(0 18px 18px rgb(0 0 0 / 0.3));
+}
+.pm .ap-bar { min-height: 44px; }
+.pm-paper { flex: 1; justify-content: center; gap: 14px; padding: 24px 28px 14px; }
+.pm-line { font-size: 22px; line-height: 1.45; max-width: 504px; }
+.pm-time { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.pm-time .board-timer-ico { width: 16px; height: 16px; }
+.pm-time b { font: var(--weight-regular) 22px / 1 var(--font-display); }
+.pm-btns { gap: 16px; flex-wrap: nowrap; }
+.pm-btn { min-width: 200px; min-height: 56px; padding: 0 var(--space-5); }
+.pm-btn[aria-busy='true'] { cursor: progress; }
+.pm-note { font-size: 14px; }
+/* 작은 글자 줄: 단추처럼 보이지 않는 글자형 단추(높이 44 = 터치 타깃) */
+.ov-link {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  background: none;
+  color: var(--foreground);
+  font: var(--weight-bold) 16px / 1 var(--font-body);
+  text-decoration: underline 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.ov-link:disabled { cursor: default; opacity: 0.55; }
+.ov-link:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; border-radius: var(--radius); }
+/* 화면(이어 하기)에 얹을 때 */
+.sc .ov-link { align-self: center; }
+@keyframes pm-dim { from { opacity: 0; } }
+/* 확인 창 빨강 단추(DESIGN §20.4): primary 와 같은 2단 광택 + 밑단. 쓰는 곳은 C-E·C-L 단추 하나뿐 */
+.ov-btn--danger {
+  background: linear-gradient(var(--destructive-hover), var(--destructive) 46%);
+  color: var(--destructive-foreground);
+  box-shadow: inset 0 -5px 0 var(--destructive-edge), var(--shadow-button);
+}
+/* 멈춘 판: 그 프레임에서 정지(CSS 애니메이션). WAAPI·컷씬은 Game.tsx 가 pause/play */
+.game.is-paused > :not(.pm-host):not(.board-rotate) *,
+.game.is-paused > :not(.pm-host):not(.board-rotate) { animation-play-state: paused !important; }
+/* 자리 번호 화면을 모달 위치(z 50)에 띄운다 */
+.pm-host > .sc { z-index: var(--z-pause); }
+
 /* ── 이벤트 카드 ── */
 .evc { top: 50%; width: 560px; transform: translate(-50%, -50%); animation-name: ov-pop; cursor: pointer; }
 .evc-band { padding: 10px var(--space-6); border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--event); box-shadow: inset 0 -4px 0 var(--continent-europe-ink); }
@@ -584,22 +642,7 @@
 /* 규칙·멈춤 간판(HangSign, 자리는 HUD 표) */
 .gm { position: absolute; inset: 0; pointer-events: none; }
 .gm-btn { width: 100%; }
-.gm-ask {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 10px);
-  margin: 0;
-  padding: 6px 12px;
-  transform: translateX(-50%);
-  border-radius: var(--radius-full);
-  background: var(--popover);
-  color: var(--popover-foreground);
-  box-shadow: 0 0 0 2px var(--foreground), 0 4px 0 color-mix(in srgb, var(--foreground) 30%, transparent);
-  font: var(--weight-regular) var(--text-caption) / 1.3 var(--font-display);
-  white-space: nowrap;
-}
-.gm-sign.is-ask .hang-plate { color: var(--accent); }
-.gm-sign.is-pending .hang-plate { opacity: .7; cursor: default; transform: none; }
+.gm-btn:disabled { opacity: .7; cursor: default; transform: none; }
 
 /* ── 연결 끊김 ── */
 .net-banner {
@@ -669,6 +712,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cc-wrap, .qs, .qs-peek, .ex, .ap, .rules, .evc, .ov-sparkles i { animation: none; }
+  .ov-layer--pause, .ap.pm { animation: none; }
   .qs-peek-img { transition: none; }
   .ov-btn, .ov-ans { transition: none; }
 }

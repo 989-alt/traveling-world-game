@@ -1,7 +1,7 @@
 // 화면 ↔ 서버 사이 하나뿐인 연결 관리자. 상태는 reduce() 로만 바뀌고, 자리 정보는 기기에 저장해 끊겨도 돌아온다.
 import { useEffect, useState } from 'preact/hooks';
 import { RoomSocket, roomUrl, type RoomSocketOpts } from '../net/socket';
-import { PIN_TRY_MS, type ClientAct, type ClientMsg, type ServerMsg } from '../shared/protocol';
+import { ENDED_CLOSE, PIN_TRY_MS, type ClientAct, type ClientMsg, type ServerMsg } from '../shared/protocol';
 import type { Seat } from '../shared/types';
 import { loadSeat, saveSeat, type SavedSeat } from './seat-store';
 import { initialState, reduce, type ClientState } from './store';
@@ -18,6 +18,10 @@ export class GameClient {
   private fromSaved = false;
   /** 'locked' 뒤 같은 PIN 을 다시 보낼 타이머 */
   private retry: ReturnType<typeof setTimeout> | undefined;
+  /** 이 기기(방장)가 끝내기를 보냈다 → ended 를 받아도 안내 띠 없이 첫 화면(DESIGN §20.3) */
+  private ending = false;
+  /** 소켓 세대: 닫거나 떠난 소켓의 늦은 메시지·닫힘이 새 화면을 건드리지 않게 */
+  private gen = 0;
 
   constructor(private make?: Make, private urlOf: (code: string) => string = roomUrl) {}
 
@@ -39,16 +43,21 @@ export class GameClient {
     this.rejoin = rejoin;
     this.hello = null;
     this.set({ ...initialState(code), conn: 'connecting' });
+    const gen = ++this.gen;
+    const live = () => gen === this.gen;
     this.sock = new RoomSocket({
       url: this.urlOf(code),
       make: this.make,
       greet: () => (this.rejoin ? { t: 'rejoin', ...this.rejoin } : this.hello !== null ? { t: 'hello', charId: this.hello } : null),
-      onStatus: (conn) => this.set({ ...this.state, conn }),
-      onMsg: (m) => this.onMsg(m),
+      onStatus: (conn) => { if (live()) this.set({ ...this.state, conn }); },
+      onMsg: (m) => { if (live()) this.onMsg(m); },
+      // 4001 ended(메시지를 못 받았어도) · 4002 left: 다시 잇지 않고 첫 화면
+      onFinal: (c) => { if (live()) this.finish(c === ENDED_CLOSE && !this.ending ? 'ended' : null); },
     });
   }
 
   close() {
+    this.gen++;
     clearTimeout(this.retry);
     this.sock?.close();
     this.sock = null;
@@ -62,7 +71,39 @@ export class GameClient {
     this.set(initialState());
   }
 
+  /** 방장: 게임 끝내기(U14). 서버가 ended 를 보내고 소켓을 4001 로 닫으면 첫 화면으로. 못 보냈으면 false */
+  endGame(): boolean {
+    this.ending = true;
+    const ok = this.send({ t: 'end' });
+    if (!ok) this.ending = false;
+    return ok;
+  }
+
+  /** 학생: 게임 나가기(U14). 보내고 바로 첫 화면·저장 자리 삭제. 소켓은 서버가 4002 로 닫을 때까지(최대 3초) 두어 메시지가 닿게 한다 */
+  leaveGame() {
+    const sock = this.sock;
+    this.sock = null;
+    sock?.send({ t: 'leave' });
+    if (sock) setTimeout(() => sock.close(), 3_000);
+    this.finish(null);
+  }
+
+  /** 판에서 첫 화면으로: 다시 잇지 않고 저장 자리를 지운다(PRD §9.4). bye = 첫 화면 안내 띠 */
+  private finish(bye: ClientState['bye']) {
+    this.close();
+    saveSeat(null);
+    this.rejoin = null;
+    this.hello = null;
+    this.fromSaved = false;
+    this.ending = false;
+    this.set({ ...initialState(), bye });
+  }
+
+  /** 첫 화면 안내 띠를 내린다 */
+  dismissBye() { if (this.state.bye) this.set({ ...this.state, bye: null }); }
+
   private onMsg(m: ServerMsg) {
+    if (m.t === 'ended') { this.finish(this.ending ? null : 'ended'); return; }
     const s = reduce(this.state, m);
     if (m.t === 'welcome') {
       this.rejoin = { seat: m.seat, pin: m.pin };

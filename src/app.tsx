@@ -13,6 +13,8 @@ import { Lobby, PinEntry } from './ui/screens/Lobby';
 import { Finished, OldBoardNotice, Paused } from './ui/screens/Pause';
 
 export const client = new GameClient();
+/** 끝낸 뒤 첫 화면 띠 시간(tokens duration.banner-end) */
+const BANNER_END_MS = 4_000;
 
 export function App() {
   const s = useClient(client);
@@ -42,6 +44,12 @@ export function App() {
     const h = setTimeout(() => rerender((x) => x + 1), holdUntil.current - Date.now() + 20);
     return () => clearTimeout(h);
   }, [monoHold]);
+  // U14: 방장이 끝내서 첫 화면으로 온 기기는 띠 "방장이 게임을 끝냈어요" 4초(DESIGN §20.3, 토큰 duration.banner-end)
+  useEffect(() => {
+    if (!s.bye) return;
+    const h = setTimeout(() => client.dismissBye(), BANNER_END_MS);
+    return () => clearTimeout(h);
+  }, [s.bye]);
   const started = useRef(false);
   useEffect(() => {
     // U4: 세로 안내 가로판은 ui.rotate 와 같이 첫 로드에 받되, 움직임을 줄인 기기는 요청하지 않는다(DESIGN §4.2)
@@ -58,6 +66,7 @@ export function App() {
       {s.room && (s.conn === 'connecting' || s.conn === 'retrying') && (
         <p class="net-banner" role="alert">연결이 잠깐 끊겼어요. 다시 잇는 중이에요…</p>
       )}
+      {s.bye === 'ended' && <p class="net-banner net-banner--bye" role="status" data-bye="ended">방장이 게임을 끝냈어요</p>}
     </div>
   );
 
@@ -67,7 +76,8 @@ export function App() {
     if (!s.room) return <Connecting retrying={s.conn === 'retrying'} onBack={() => client.leave()} />;
     if (s.room.phase === 'lobby') return <>{s.room.notice && <OldBoardNotice kind={s.room.notice} />}<Lobby client={client} s={s} /></>;
     if (s.seat === null) return <PinEntry client={client} s={s} />;
-    if (s.room.phase === 'paused') return <Paused client={client} s={s} />;
+    // U14: 멈춘 순간 판에 있던 기기(자리 PIN 을 받음)는 판 위 멈춤 모달, 다시 들어온 기기는 이어 하기 화면
+    if (s.room.phase === 'paused' && !s.pins) return <Paused client={client} s={s} />;
     if (s.room.phase === 'finished' && !monoHold) return <Finished s={s} />;
     return <Game client={client} s={s} ending={monoHold} />;
   }

@@ -29,6 +29,9 @@
   --accent-light: #5AA8F5;
   --destructive: #B42318;
   --destructive-foreground: #FFFFFF;
+  /* U14(DESIGN §20.4): 확인 창 [네, 끝낼래요]·[네, 나갈래요] 단추 하나에만 — hover = red.800 + 흰 12%, edge = red.900 */
+  --destructive-hover: #BD3D34;
+  --destructive-edge: #7F1A12;
   --border: #E7C66A;
   --border-strong: #1F6FD8;
   --input: #9EC3E8;
@@ -141,6 +144,8 @@
   /* typography */
   --font-display: 'Jua', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
   --font-body: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  /* U13 §19.9.2: 손글씨(펜·마커) — 엔딩 첫 장 가변 글자. Gaegu 700, 최소 16px */
+  --font-hand: 'Gaegu', 'Jua', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
   --text-tile: 12px;
   --text-tile-sub: 9px;
   --text-caption: 13px;
@@ -274,4 +279,10 @@
   --pick-bubble-tail: 10px;
   --opacity-pick-dim: 0.45;
   --z-notice: 20;
+  /* U14(DESIGN §20.1·§20.2·§20.6): 멈춤 모달 레이어(HUD 9 · 오버레이 10 · 알림 20 · 컷씬 40 위, 세로 안내 100 아래) · 상자 · 끝낸 뒤 띠 */
+  --z-pause: 50;
+  --modal-w: 560px;
+  --modal-h: 280px;
+  --modal-fade: 150ms;
+  --duration-banner-end: 4000ms;
 }

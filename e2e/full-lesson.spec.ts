@@ -234,14 +234,13 @@ test('40분 놀이 전체: 사람 4명 동시 입장 → 가속 시계 → 앞 2
     clock.setRate(SPEED);
     await expect.poll(() => srv.g.clock.remainingMs <= 20 * 60_000 || srv.g.phase !== 'playing', { timeout: 240_000, intervals: [500] }).toBe(true);
     expect(srv.g.phase).toBe('playing');
-    // ── 방장 멈춤(수업 종): 손을 멈추고 주사위 단계에서 시계를 세운 뒤 간판 두 번(확인 1탭) → 바로 멈춤 ──
+    // ── 방장 멈춤(수업 종): 손을 멈추고 주사위 단계에서 시계를 세운 뒤 간판 1탭(U14: 확인 1탭 폐기) → 그 자리에서 멈춤 ──
     await setAuto(ps, false);
     await settled(srv, ps);
     await expect.poll(() => { if (srv.g.turn.step !== 'roll') return false; clock.setRate(0); return true; }, { timeout: 30_000, intervals: [5] }).toBe(true);
     await settled(srv, ps);
     const lessonMs = Date.now() - t0;
     await expect(host.page.locator('.ov-layer.is-dim')).toHaveCount(0, { timeout: 10_000 });
-    await host.page.locator('[data-act="pause"]').click();
     await host.page.locator('[data-act="pause"]').click();
     await expect.poll(() => srv.g.phase, { timeout: 10_000 }).toBe('paused');
     const leftAtPause = srv.g.clock.remainingMs;
@@ -278,9 +277,12 @@ test('40분 놀이 전체: 사람 4명 동시 입장 → 가속 시계 → 앞 2
     expect(stats.botAnswers).toBe(0); // 사람 4명
     expect(stats.answeredByUi).toBeGreaterThan(0); // 화면 버튼으로 실제로 답이 갔다
 
-    // ── 멈춤 화면: 4명 모두 자기 PIN + 남은 시간 + 순위 한 줄, "차시" 없음 ──
+    // ── 멈춤 모달(U14) → 작은 글자로 자리 번호 화면: 4명 모두 자기 PIN + 남은 시간 + 순위 한 줄, "차시" 없음 ──
     for (const p of ps) {
+      await expect(p.page.locator('.pm')).toHaveAttribute('data-kind', p === host ? 'P-H' : 'P-S', { timeout: 15_000 });
+      await p.page.locator('.pm .ov-link').click();
       await expect(p.page.locator('.save')).toBeVisible({ timeout: 15_000 });
+      await p.page.waitForTimeout(400); // 화면 글 표본(__tw.seen)에 자리 번호 화면이 잡히게
       await expect(p.page.locator('.save-pin')).toHaveText(srv.room.rec!.seats[seatOf.get(p.tag)!].pin);
       await expect(p.page.locator('.pause-rank-item')).toHaveCount(4);
       await expect(p.page.locator('[data-k="time-left"]')).toBeVisible();
@@ -306,11 +308,13 @@ test('40분 놀이 전체: 사람 4명 동시 입장 → 가속 시계 → 앞 2
     seatOf.set(fresh.tag, goneSeat);
     expect(srv.seatOf(fresh.tag)).toBe(goneSeat);
 
-    // 방장: 사진 찍었어요 → 여기까지 왔어요(중간 결과 없음) → 이어서 하기 — 남은 시간 그대로
+    // 방장: 사진 찍었어요 → 멈춤 모달(U14, 중간 결과 없음) → 게임 계속하기 — 남은 시간 그대로.
+    // 서버 시계를 세운 채 누른다: 재개 뒤 알람 한 번이라도 돌면 놀이 시계가 몇 ms 줄어 '그대로' 비교가 흔들렸다(옛 ~316 흔들림)
     await host.page.getByRole('button', { name: '사진 찍었어요' }).click();
-    await expect(host.page.locator('.resume .save-title')).toHaveText('여기까지 왔어요');
+    await expect(host.page.locator('.pm')).toHaveAttribute('data-kind', 'P-H');
     await expect(host.page.locator('.rs')).toHaveCount(0);
-    await host.page.locator('[data-act="resume"]').click();
+    clock.setRate(0);
+    await host.page.locator('.pm [data-act="resume"]').click();
     for (const p of ps) await expect(p.page.locator('.board-root')).toBeVisible();
     expect(srv.g.phase).toBe('playing');
     expect(srv.g.clock.remainingMs).toBe(leftAtPause);

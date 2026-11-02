@@ -1,6 +1,8 @@
 // 시험용 하네스(앱 라우트 아님). e2e 가 /dev/results 를 연 뒤 이 모듈을 주입한다. 주소 인자:
 //   scenario=full|empty   — 로그는 아래에서 합성한다. (중간 결과는 2026-10-28 U1 에 없어졌다)
 //   U12 엔딩 조합: ranks=0,1,3,2(최종 순위 자리 순서) · me=0|none(나 자리, none = 관전자) · n=2|3|4(인원) · stamps=12(자리 0 도장 수) · bare=1(자리 0 기록 없음)
+//   chars=1,2,3,4(자리별 캐릭터, 7 = 봇)
+//   U13 표본: solo=1 — 혼자 + 봇 3(사용자 반려 캡처 user-feedback-2 와 같은 판). 나 = CH4 자리 4(4위), 봇 CH7 자리 2 1위 · 자리 1 2위 · 자리 3 3위, 랜드마크 0
 import { render } from 'preact';
 import type { LogEvent, Seat } from '../../shared/types';
 import { Results, type SeatInfo } from './Results';
@@ -41,12 +43,34 @@ function fullLog(): LogEvent[] {
   return log;
 }
 
-const seats: SeatInfo[] = ([
-  { seat: 0, charId: 1, name: '용감한 호랑이', isBot: false },
-  { seat: 1, charId: 2, name: '느긋한 거북이', isBot: false },
-  { seat: 2, charId: 3, name: '빠른 토끼', isBot: false },
-  { seat: 3, charId: 7, name: '로봇 4', isBot: true },
-] as SeatInfo[]).slice(0, N);
-const log = q.get('scenario') === 'empty' ? [] : fullLog();
+// chars=1,2,3,4 — 자리별 캐릭터(7 = 봇). 기본은 사람 3 + 봇 1
+const CHARS = (q.get('chars') ?? '1,2,3,7').split(',').map(Number);
+const NAMES = ['용감한 호랑이', '느긋한 거북이', '빠른 토끼', '명랑한 너구리'];
+const seats: SeatInfo[] = CHARS.slice(0, N).map((c, i) => ({ seat: i as Seat, charId: c, name: c === 7 ? `로봇 ${i + 1}` : NAMES[i], isBot: c === 7 }));
+/** U13 표본: 나(자리 4, CH4)만 문제를 풀고(도착 퀴즈 1/19 · 참/거짓 3/3), 이탈리아 도장 1, 랜드마크 0. 봇 셋은 기록 0(botstamps=1 이면 도장) */
+function soloLog(): LogEvent[] {
+  const log: LogEvent[] = [{ ev: 'clock', kind: 'start', remainingMs: 40 * 60_000, by: 'host' }, { ev: 'dice', seat: 3, d1: 2, d2: 5 }];
+  for (let i = 0; i < 19; i++) {
+    const qid = `q${i}`, correct = i === 4;
+    log.push({ ev: 'question', seat: 3, qid, country: 'it', level: 1, kind: 'initial', topics: [MAJORS[i % MAJORS.length]], mTags: ['M7', 'M14', 'M3'], review: false });
+    log.push({ ev: 'answer', seat: 3, qid, choice: correct ? 0 : 1, correct, ms: 900, isBot: false });
+    if (i < 3) {
+      log.push({ ev: 'tf', cardId: `it-${i + 1}`, stmtId: `s${i}`, mTag: 'M9', topics: [MAJORS[i]] });
+      log.push({ ev: 'tf_answer', seat: 3, stmtId: `s${i}`, value: true, correct: true, isBot: false });
+    }
+  }
+  log.push({ ev: 'stamp', seat: 3, country: 'it', level: 1 });
+  if (q.get('botstamps') === '1') for (const [s, c] of [[0, 'fr'], [1, 'th'], [1, 'kr'], [2, 'eg']] as const) log.push({ ev: 'stamp', seat: s, country: c, level: 1 }); // 기본 = 봇 기록 0(사용자 캡처처럼 랜드마크 0 → 열기구)
+  log.push({ ev: 'result', finalRanks: (q.get('ranks') ?? '1,0,2,3').split(',').map(Number) as Seat[], assets: [6100, 8800, 4200, 3900] });
+  return log;
+}
+const solo = q.get('solo') === '1';
+const soloSeats: SeatInfo[] = [
+  { seat: 0, charId: 7, name: '로봇 1', isBot: true },
+  { seat: 1, charId: 7, name: '로봇 2', isBot: true },
+  { seat: 2, charId: 7, name: '로봇 3', isBot: true },
+  { seat: 3, charId: 4, name: q.get('name') ?? '명랑한 너구리', isBot: false },
+];
+const log = q.get('scenario') === 'empty' ? [] : solo ? soloLog() : fullLog();
 const me = q.get('me');
-render(<Results log={log} seats={seats} mySeat={me === 'none' ? null : me ? (Number(me) as Seat) : 0} />, document.getElementById('app')!);
+render(<Results log={log} seats={solo ? soloSeats : seats} mySeat={me === 'none' ? null : me ? (Number(me) as Seat) : solo ? 3 : 0} />, document.getElementById('app')!);

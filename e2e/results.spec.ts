@@ -7,8 +7,10 @@ import { createServer, type ViteDevServer } from 'vite';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SHOTS = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U12-end-shots/', import.meta.url));
+const SHOTS13 = fileURLToPath(new URL('../../harness/state/traveling-world/reports/U13-end-shots/', import.meta.url));
 
 let BASE = '';
+const GAEGU = 'https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&family=Gaegu:wght@400;700&display=swap';
 let server: ViteDevServer;
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => {
@@ -22,6 +24,7 @@ test.beforeAll(async () => {
   await server.listen();
   BASE = server.resolvedUrls!.local[0].replace(/\/$/, '');
   mkdirSync(SHOTS, { recursive: true });
+  mkdirSync(SHOTS13, { recursive: true });
 });
 test.afterAll(async () => { await server?.close(); });
 
@@ -30,6 +33,7 @@ async function open(page: Page, query: string) {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(`${BASE}/dev/results?${query}`);
+  await page.addStyleTag({ url: GAEGU }).catch(() => {}); // 하네스 페이지는 index.html 링크가 없다 — 같은 Google Fonts 주소(망이 막혀도 시험은 계산값만 본다)
   await page.addScriptTag({ type: 'module', url: '/src/ui/results/harness.tsx' });
   await page.waitForSelector('.rs');
   await page.waitForSelector('.end-done', { state: 'attached', timeout: 5000 }).catch(() => {}); // 빈 기록은 사진이 없다
@@ -52,7 +56,9 @@ async function fits(page: Page) {
 
 test('final: 엔딩 요소 전부 + 둘째 장 학습 기록(S9)', async ({ page }) => {
   const errors = await open(page, 'kind=final');
-  await expect(page.locator('.end-title')).toHaveText('세계 여행 끝!');
+  // U13: 제목은 틀 그림(END-photo-frame-v2) 안 — 코드 제목 0, 그림 alt 로만
+  await expect(page.locator('.end-frame')).toHaveAttribute('alt', '세계 여행 끝!');
+  await expect(page.locator('.end-fb-title')).toHaveCount(0);
   await expect(page.locator('[data-k="rank"] li')).toHaveCount(4);
   await expect(page.locator('[data-k="rank"] li').first()).toHaveAttribute('data-seat', '0');
   await expect(page.locator('[data-k="tab"]')).toHaveCount(4);
@@ -127,7 +133,7 @@ test('final: 한 화면에 들어가고(스크롤 없음) 글자 ≥ 14px, 출�
 });
 
 // §19.7: svg 0 · END-* 그림 · 로제트 x = 발 x ±4 · 목 메달 = chest 앵커 ±4 · 1위·2위 머리 위 y 차 ≤ 12 · 랜드마크 필터 0 · results.css gradient 0
-test('U12 §19.7: 그림 에셋 엔딩 — svg 0, 로제트·목 메달 앵커, 키 맞춤', async ({ page }) => {
+test('U12 §19.7 → U13: 그림 에셋 엔딩 — svg 0, 로제트 x = 발 x, 코드 목 메달 0', async ({ page }) => {
   await open(page, 'kind=final');
   const r = await page.evaluate(() => {
     const c = (e: Element) => { const b = e.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; };
@@ -136,21 +142,20 @@ test('U12 §19.7: 그림 에셋 엔딩 — svg 0, 로제트·목 메달 앵커, 
     const end = new Set(imgs.filter((i) => /\/webp\/(hi\/)?(END-|CH\d-P2[01])/.test(i.src) && i.naturalWidth > 0).map((i) => i.src.replace(/.*\/webp\/(hi\/)?/, '')));
     const people = [...document.querySelectorAll<HTMLElement>('.end-person')].map((li) => {
       const foot = c(li.querySelector('.end-foot')!), ro = c(li.querySelector('.end-rosette')!);
-      const chest = c(li.querySelector('.end-chest')!), neck = c(li.querySelector('.end-neck')!);
-      return { seat: li.dataset.seat, head: Number(li.querySelector<HTMLElement>('.end-foot')!.dataset.head), dx: Math.abs(foot.x - ro.x), mx: Math.abs(chest.x - neck.x), my: Math.abs(chest.y - neck.y) };
+      return { seat: li.dataset.seat, dx: Math.abs(foot.x - ro.x), neck: li.querySelectorAll('.end-neck').length };
     });
     const lmFilter = [...document.querySelectorAll<HTMLElement>('.end-lm, .end-sticker-lm')].map((e) => getComputedStyle(e).filter);
     return { svgs: document.querySelectorAll('.rs svg').length, broken, end: [...end], people, lmFilter };
   });
   expect(r.svgs).toBe(0);
   expect(r.broken).toEqual([]);
-  // 사진 배경·틀·펼친 여권·닫힌 여권 3·목 메달 4·테이프 4·하트·도장 테 2·포즈 4
+  // 사진 배경·틀·펼친 여권·세운 여권 3·로제트 4·테이프 4·도장 테 2·메달 포즈 4·탭
   expect(r.end.length).toBeGreaterThanOrEqual(20);
   for (const p of r.people) {
     expect(p.dx, `로제트 x 자리 ${p.seat}`).toBeLessThanOrEqual(4);
-    expect(Math.max(p.mx, p.my), `목 메달 자리 ${p.seat}`).toBeLessThanOrEqual(4);
+    expect(p.neck, `코드 목 메달 0(메달은 포즈 그림) 자리 ${p.seat}`).toBe(0);
   }
-  expect(Math.abs(r.people[0].head - r.people[1].head)).toBeLessThanOrEqual(12); // 1위(P20, 트로피 포함 상자)와 2위 머리 위
+  // (2026-11-01 시안 배치: 키 350 한 줄, 트로피가 창 위로 나가면 1위만 줄임 — 트로피 위끝은 U13 시험에서 본다)
   expect(r.lmFilter.length).toBeGreaterThan(0);
   expect(r.lmFilter.every((f) => f === 'none')).toBe(true);
   const css = readFileSync(`${ROOT}src/styles/results.css`, 'utf8');
@@ -163,8 +168,12 @@ test('U12 키잉: 포즈·엔딩 그림 안쪽에 뚫린(반투명) 곳 없음',
   await page.goto(`${BASE}/dev/results?kind=final`);
   const files = [...[1, 2, 3, 4, 5, 6, 7].flatMap((n) => [`CH${n}-P20@1024`, `CH${n}-P21@1024`]),
     'END-photo-frame', 'END-passport-wide', 'END-stamp-ring-red', 'END-stamp-ring-blue',
-    ...[1, 2, 3, 4].flatMap((n) => [`END-passport-open-${n}`, `END-passport-closed-${n}`, `END-tape-${n}`, `END-heart-ring-${n}`]),
-    ...['gold', 'silver', 'bronze', 'plain'].map((m) => `END-medal-neck-${m}`)];
+    ...[1, 2, 3, 4].flatMap((n) => [`END-passport-open-${n}`, `END-passport-closed-${n}`, `END-tape-${n}`]),
+    ...['gold', 'silver', 'bronze', 'plain'].map((m) => `END-medal-neck-${m}`),
+    // U13 56: 메달 포즈 40 · 로제트 4 · 펼친 여권 v2 4 · 세운 여권 4 · 탭 2 · 틀 v2 · 열기구
+    ...[1, 2, 3, 4, 5, 6].flatMap((n) => [`CH${n}-P20-gold`, `CH${n}-P21-silver`, `CH${n}-P21-bronze`, `CH${n}-P21-plain`]),
+    ...[1, 2, 3, 4].flatMap((n) => [`CH7-P20-gold-s${n}`, `CH7-P21-silver-s${n}`, `CH7-P21-bronze-s${n}`, `CH7-P21-plain-s${n}`, `END-rosette-${n}`, `END-passport-open-${n}-v2`, `END-passport-stand-${n}`]),
+    'END-photo-frame-v2', 'END-balloon', 'END-tab-more', 'END-tab-back']
   const bad = await page.evaluate(async (fs) => {
     const out: Record<string, number> = {};
     for (const f of fs) {
@@ -214,30 +223,31 @@ test('U12: 닫힌 여권 누르면 주인이 바뀌고, Tab 순서 = 순위', as
   await expect(page.locator('.end-book-img')).toHaveAttribute('src', /END-passport-open-2/);
 });
 
-test('U12: 사람이 4위여도 나 요소 3(테이프 1.2배·하트 링·내 여권)이 보인다 · 관전자는 1위가 나', async ({ page }) => {
+test('U12→U13: 사람이 4위여도 내 여권이 펼쳐진다(하트 링 없음, 테이프 같은 크기) · 관전자는 1위가 나', async ({ page }) => {
   await open(page, 'ranks=1,3,2,0&me=0');
   const me = page.locator('.end-person.is-me');
   await expect(me).toHaveAttribute('data-seat', '0');
   await expect(me).toHaveAttribute('data-rank', '4');
-  await expect(me.locator('.end-heart')).toBeVisible();
-  const tw = await page.locator('.end-tape').evaluateAll((ts) => ts.map((t) => t.getBoundingClientRect().width));
-  expect(Math.max(...tw) / Math.min(...tw)).toBeGreaterThan(1.15);
+  // 2026-11-01 사용자 "자신의 캐릭터를 표시하는 하트는 없었으면 해" — 하트 링 0, 테이프는 넷 다 같은 크기(시안)
+  await expect(page.locator('.end-heart, img[src*="END-heart-ring"]')).toHaveCount(0);
+  const tw = await page.locator('.end-tape').evaluateAll((ts) => ts.map((t) => (t as HTMLElement).offsetWidth));
+  expect(Math.max(...tw)).toBe(Math.min(...tw));
   await expect(page.locator('[data-k="learn"]')).toHaveAttribute('data-owner', '0');
   await shot(page, 'final-human4th');
-  // 관전자(자리 없음): 하트 링·내 여권 주인 = 1위
+  // 관전자(자리 없음): 내 여권 주인 = 1위
   await open(page, 'me=none&ranks=3,1,2,0');
   await expect(page.locator('.end-person.is-me')).toHaveAttribute('data-seat', '3');
-  await expect(page.locator('.end-person.is-me .end-heart')).toBeVisible();
+  await expect(page.locator('.end-heart')).toHaveCount(0);
   await expect(page.locator('[data-k="learn"]')).toHaveAttribute('data-owner', '3');
   await shot(page, 'spectator');
 });
 
-test('U12: 2인 게임 가운데 정렬(간격 유지) · 도장 12곳 +n · 기록 빈 1위는 빈 언덕', async ({ page }) => {
+test('U12: 2인 게임 가운데 정렬(간격 유지) · 도장 12곳 +n · 기록 빈 1위는 열기구(U13)', async ({ page }) => {
   await open(page, 'n=2&ranks=1,0');
   await expect(page.locator('[data-k="rank"] li')).toHaveCount(2);
   const xs = await page.locator('.end-foot').evaluateAll((fs) => fs.map((f) => f.getBoundingClientRect().left));
   const k = await page.evaluate(() => { const s = document.querySelector<HTMLElement>('.rs-stage')!; return s.getBoundingClientRect().width / s.offsetWidth; });
-  expect(Math.abs(Math.abs(xs[0] - xs[1]) / k - 180)).toBeLessThan(2); // 슬롯 간격(cos 3° 포함 ≈ 179.8)
+  expect(Math.abs(Math.abs(xs[0] - xs[1]) / k - 171.5)).toBeLessThan(2); // 슬롯 간격 172(시안, cos 4.4° 포함 ≈ 171.5)
   await expect(page.locator('.end-cp')).toHaveCount(1);
   await shot(page, 'two-players');
   await open(page, 'stamps=12');
@@ -253,7 +263,8 @@ test('U12: 2인 게임 가운데 정렬(간격 유지) · 도장 12곳 +n · 기
   }
   await shot(page, 'stamps12');
   await open(page, 'bare=1&ranks=0,1,2,3');
-  await expect(page.locator('.end-lm')).toHaveCount(0);
+  await expect(page.locator('.end-lm:not(.end-balloon)')).toHaveCount(0); // U13: 랜드마크 0 → 열기구
+  await expect(page.locator('.end-balloon')).toBeVisible();
   const broken = await page.evaluate(() => [...document.querySelectorAll<HTMLImageElement>('.rs img')].filter((i) => i.offsetParent !== null && !(i.complete && i.naturalWidth > 0)).length);
   expect(broken).toBe(0);
 });
@@ -263,7 +274,8 @@ test('U12: 그림 미로드(END-·엔딩 포즈 404) — 흰 틀·F00 얼굴·�
   const errors = await open(page, 'kind=final');
   await expect(page.locator('.end-fb-frame')).toBeVisible();
   await expect(page.locator('.end-face')).toHaveCount(4);
-  await expect(page.locator('.end-title')).toBeVisible();
+  await expect(page.locator('.end-fb-title')).toBeVisible(); // 틀 그림이 없을 때만 코드 손글씨 제목
+  await expect(page.locator('.end-fb-n')).toHaveCount(4); // 로제트 그림이 없을 때만 코드 숫자
   await expect(page.locator('.end-name').first()).toBeVisible();
   for (const sel of ['[data-k="rank"]', '[data-k="learn"]', '[data-k="rates"]', '[data-k="row"]', '[data-k="level4"]', '[data-k="mtags"]', '[data-k="stamps"]', '[data-k="gains"]', '[data-k="magnets"]', '[data-k="map"]', '[data-k="tab"]', '[data-k="pin"]']) {
     expect(await page.locator(sel).count(), sel).toBeGreaterThanOrEqual(1);
@@ -285,7 +297,6 @@ test('U12 §19.6: 움직임 줄이기 = 1초 안에 전부, 기본 = 약 6초 �
   await page.waitForSelector('.end-calm.end-done');
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.end-stage')!).opacity === '1' && getComputedStyle(document.querySelector('.end-cp')!).opacity === '1');
   expect(Date.now() - t0).toBeLessThan(1000);
-  expect(await page.locator('.end-heart').evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
   // 기본: 소개 중(end-intro) → 7초 뒤 정지 장면(end-done), 하트 링 맥동
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.reload();
@@ -293,7 +304,6 @@ test('U12 §19.6: 움직임 줄이기 = 1초 안에 전부, 기본 = 약 6초 �
   await page.waitForSelector('.end-intro');
   expect(await page.locator('.end-cp').first().evaluate((e) => getComputedStyle(e).opacity)).toBe('0'); // 닫힌 여권은 맨 끝(6초)
   await page.waitForSelector('.end-done', { timeout: 9000 });
-  expect(await page.locator('.end-heart').evaluate((e) => getComputedStyle(e).animationName)).toBe('end-pulse');
   expect(await page.locator('.end-cp').first().evaluate((e) => getComputedStyle(e).opacity)).toBe('1');
 });
 
@@ -325,4 +335,81 @@ test('빈 로그: 빈 상태 문구, 예외 0', async ({ page }) => {
   await expect(page.locator('[data-k="empty"]')).toContainText('아직 한 번도 주사위를 굴리지 않았어요');
   await expect(page.locator('[data-k="tab"]')).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+// ── U13 §19.9.6: 혼자 + 봇 3(사용자 반려 캡처와 같은 판) — 표본 16 으로 그리는 경로 ──
+const groupBox = (sel: string) => `(() => { const out = []; for (const e of document.querySelectorAll('${sel}')) { let x = 0, y = 0, n = e; while (n && !n.classList.contains('end-photo')) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; } out.push({ x, y, w: e.offsetWidth, h: e.offsetHeight }); } return out; })()`;
+
+test('U13 시안 배치: 혼자+봇3 — 메달 포즈·그림 글자·손글씨(Gaegu ≥16 multiply)·발 기준선·아래 테', async ({ page }) => {
+  const errors = await open(page, 'solo=1');
+  // 포즈 = 메달 그린 그림(1위 봇 자리 2 금+트로피, 2위 자리 1 은, 3위 자리 3 동, 4위 나 CH4 크림), 코드 목 메달 0
+  const heroes = await page.locator('.end-hero').evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.replace(/.*\/webp\/(hi\/)?/, '')));
+  expect(heroes).toEqual(['CH7-P20-gold-s2.webp', 'CH7-P21-silver-s1.webp', 'CH7-P21-bronze-s3.webp', 'CH4-P21-plain.webp']);
+  await expect(page.locator('.end-neck')).toHaveCount(0);
+  // 그림 글자: 로제트 숫자 4 · 틀 제목 · 여권 v2 · 탭 — 코드 숫자·제목 0
+  expect(await page.locator('.end-ro-img').evaluateAll((is) => is.map((i) => (i as HTMLImageElement).src.replace(/.*\//, '')))).toEqual(['END-rosette-1.webp', 'END-rosette-2.webp', 'END-rosette-3.webp', 'END-rosette-4.webp']);
+  await expect(page.locator('.end-frame')).toHaveAttribute('src', /END-photo-frame-v2/);
+  await expect(page.locator('.end-book-img')).toHaveAttribute('src', /END-passport-open-4-v2/);
+  await expect(page.locator('.end-fb-title, .end-fb-n')).toHaveCount(0);
+  await expect(page.locator('.end-fb-label').first()).toBeHidden();
+  // 랜드마크 0 → 열기구, 깨진 그림 0, 세운 여권 3
+  await expect(page.locator('.end-balloon')).toBeVisible();
+  expect(await page.evaluate(() => [...document.querySelectorAll<HTMLImageElement>('.rs img')].filter((i) => i.offsetParent !== null && !(i.complete && i.naturalWidth > 0)).length)).toBe(0);
+  await expect(page.locator('.end-cp')).toHaveCount(3);
+  // 첫 장 코드 글자 전수: Gaegu · ≥ 16px · 700 · multiply(자기 또는 손글씨 조상)
+  const bad = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.end-photo *, .end-book *, .end-closed *')]
+    .filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim()) && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden')
+    .map((e) => { const cs = getComputedStyle(e); const ink = e.closest<HTMLElement>('.end-hand, .end-name') ?? e; return { t: e.textContent!.trim().slice(0, 10), fam: cs.fontFamily.split(',')[0].replace(/["']/g, '').trim(), size: parseFloat(cs.fontSize), w: cs.fontWeight, blend: getComputedStyle(ink).mixBlendMode }; })
+    .filter((x) => x.fam !== 'Gaegu' || x.size < 16 || x.w !== '700' || x.blend !== 'multiply'));
+  expect(bad).toEqual([]);
+  // 시안 배치(2026-11-01): 발 기준선 한 줄(그룹 y 차 ≤ 3) · 사람 키 350 · 로봇 = 0.63배(아이와 덩치 비슷) · 트로피 위끝 ≥ 창 위 + 10 · 하트 링 0
+  const feet = await page.locator('.end-foot').evaluateAll((fs) => fs.map((f) => ({ seat: (f as HTMLElement).closest('li')!.dataset.seat, body: Number((f as HTMLElement).dataset.body), top: Number((f as HTMLElement).dataset.top), y: parseFloat((f as HTMLElement).style.top) })));
+  expect(Math.max(...feet.map((f) => f.y)) - Math.min(...feet.map((f) => f.y))).toBeLessThanOrEqual(3);
+  expect(feet.find((f) => f.seat === '3')!.body).toBe(350);
+  for (const f of feet.filter((x) => x.seat !== '3')) expect(f.body).toBe(Math.round(350 * 0.63));
+  for (const f of feet) expect(f.top).toBeGreaterThanOrEqual(38);
+  await expect(page.locator('.end-heart')).toHaveCount(0);
+  // 아래 테(그룹 좌표): 로제트 → 테이프 → 제목(틀 그림) 순서로 겹침 0, 테이프 아래변 ≤ 630
+  const ros = await page.evaluate(groupBox('.end-rosette')) as { y: number; h: number }[];
+  const tapes = await page.evaluate(groupBox('.end-tape')) as { y: number; h: number }[];
+  for (const t of tapes) expect(t.y + t.h).toBeLessThanOrEqual(632);
+  expect(Math.max(...ros.map((r) => r.y + r.h))).toBeLessThanOrEqual(Math.min(...tapes.map((t) => t.y)));
+  // 세운 여권(시안처럼 아래로 조금 나감 — 얼굴 창은 화면 안)·탭이 오른쪽 띠 안, 펼친 여권이 사진 오른쪽 끝에 걸침
+  const k = await page.evaluate(() => { const s = document.querySelector<HTMLElement>('.rs-stage')!; const b = s.getBoundingClientRect(); return { k: b.width / s.offsetWidth, x: b.left, y: b.top }; });
+  const st = await page.locator('.end-cp, .end-tab').evaluateAll((es) => es.map((e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right }; }));
+  for (const b of st) {
+    expect((b.r - k.x) / k.k).toBeLessThanOrEqual(1366);
+    expect((b.l - k.x) / k.k).toBeGreaterThanOrEqual(760);
+  }
+  const wins = await page.locator('.end-cp .end-cp-win').evaluateAll((es) => es.map((e) => e.getBoundingClientRect().top));
+  for (const t of wins) expect((t - k.y) / k.k).toBeLessThan(768 - 40);
+  const overlap = await page.evaluate(() => document.querySelector('.end-book')!.getBoundingClientRect().left < document.querySelector('.end-frame')!.getBoundingClientRect().right);
+  expect(overlap).toBe(true);
+  await fits(page);
+  await page.screenshot({ path: `${SHOTS13}sample-solo-bots-${test.info().project.name}.png` });
+  // 탭: 접근성 이름 · 클릭 → 둘째 장 → 돌아가기 → 첫 장 · Enter 도 같음
+  const tab = page.getByRole('button', { name: '자세히 보기' });
+  await expect(tab).toHaveClass(/end-tab/);
+  await tab.click();
+  await expect(page.locator('[data-k="detail-page"]')).toBeVisible();
+  await page.locator('[data-k="detail"]').click();
+  await expect(page.locator('[data-k="detail-page"]')).toBeHidden();
+  await page.getByRole('button', { name: '자세히 보기' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-k="detail-page"]')).toBeVisible();
+  await page.locator('[data-k="detail"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.end-book')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('U13: 이름 7자(형용사+동물)가 테이프 안에 22px(넘치면 20px) — 말줄임 0', async ({ page }) => {
+  for (const name of ['씩씩한 고슴도치', '명랑한 너구리']) {
+    await open(page, `solo=1&name=${encodeURIComponent(name)}`);
+    const r = await page.locator('.end-person.is-me .end-name').evaluate((e) => ({ f: parseFloat(getComputedStyle(e).fontSize), over: e.scrollWidth > e.clientWidth + 1, ell: getComputedStyle(e).textOverflow, t: e.textContent }));
+    expect(r.t).toBe(name);
+    expect(r.f).toBeGreaterThanOrEqual(20);
+    expect(r.over, name).toBe(false);
+    expect(r.ell).not.toBe('ellipsis');
+  }
 });

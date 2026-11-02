@@ -102,8 +102,10 @@ export interface GameState {
   settings: Settings;
   seats: { isBot: boolean; connected: boolean }[];
   phase: 'playing' | 'paused' | 'finished';
-  /** 남은 놀이 시간. playing 일 때만 준다(서버 tick). pauseBy = 멈춤 요청이 와서 이 턴이 끝나면 멈춘다 */
-  clock: { remainingMs: number; pauseBy: 'host' | 'auto' | null };
+  /** 남은 놀이 시간. playing 일 때만 준다(서버 tick).
+   *  pausedAt = 멈춘 서버 시각(paused 동안만 값, PRD §9.1 U14). 재개 때 서버가 Δ = now − pausedAt 로 마감·연출 시각을 민다.
+   *  옛 저장본(pauseBy, pausedAt 없음)은 서버 migrate 가 null 로 맞춘다 */
+  clock: { remainingMs: number; pausedAt: number | null };
   tiles: TileState[];
   players: PlayerState[];
   turn: TurnState;
@@ -147,8 +149,9 @@ export type Action =
   | { type: 'timeout'; shown?: Seat[] }
   | { type: 'tick'; ms: number }
   | { type: 'resume' }
-  /** 멈춤: 턴 시작 단계면 바로, 아니면 지금 턴을 마친 뒤 paused(PRD §3.7). auto = 사람 자리 전원 60초 끊김 */
-  | { type: 'pause'; by: 'host' | 'auto' }
+  /** 멈춤: 어느 단계든 그 자리에서 paused(PRD §3.7 U14 — 턴 끝 대기 폐기). auto = 사람 자리 전원 60초 끊김.
+   *  at = 멈춘 서버 시각(clock.pausedAt). 엔진은 시간을 읽지 않으므로 서버가 넣는다(시뮬·시험은 생략 가능 = null) */
+  | { type: 'pause'; by: 'host' | 'auto'; at?: number }
   | { type: 'setConnected'; seat: Seat; connected: boolean };
 
 /** fund = 미션 보상 "기금 받기" 수령(기금 칸은 없어졌다). climate = 남극 도착 뒤 기후 위기 발생. korea = 출발·한국 탐험 결과.

@@ -65,6 +65,25 @@ describe('RoomSocket', () => {
     expect(r.timers).toHaveLength(0);
   });
 
+  it('(U14) 4001 ended · 4002 left 로 닫히면 다시 잇지 않고 onFinal 로 알린다', () => {
+    for (const code of [4001, 4002]) {
+      const finals: number[] = [];
+      const socks: FakeSock[] = [];
+      const timers: unknown[] = [];
+      const rs = new RoomSocket({
+        url: 'ws://x', greet: () => null, onMsg: () => {}, onStatus: () => {}, onFinal: (c) => finals.push(c),
+        make: () => { const s = new FakeSock(); socks.push(s); return s; },
+        timers: { set: (f) => { timers.push(f); return timers.length; }, clear: () => {} },
+      });
+      socks[0].open();
+      socks[0].close(code);
+      expect(finals).toEqual([code]);
+      expect(timers).toHaveLength(0);
+      expect(socks).toHaveLength(1);
+      void rs;
+    }
+  });
+
   it('close() 뒤에는 다시 잇지 않는다', () => {
     const r = rig();
     r.socks[0].open();

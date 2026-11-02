@@ -350,20 +350,41 @@ describe('해설 shown (T05c): 기기가 카드를 다 그렸다는 신호', () 
     expect(lastEx(room)!.shownTo).toEqual([true, false, true, true]);
   });
 
-  it('같은 해설 단계로 돌아오면(정지·재개처럼 stepKey 가 잠깐 바뀜) 받은 shown 이 남는다', async () => {
+  it('(U14) 해설 중 멈춤 → 재개: 받은 shown 이 새 단계 키로 남고, 남은 표시 시간·shown 최소 시간이 멈춘 시간을 세지 않는다', async () => {
     const { ctx, room, ws } = await atExplanation();
-    const key = room.rec!.stepKey;
     await advance(room, ctx, 6_000);
     ack(room, ws.slice(0, 2));
-    inject(room, ws[0], (d) => { d.phase = 'paused'; });
-    expect(room.rec!.stepKey).toBe('paused');
-    inject(room, ws[0], (d) => { d.phase = 'playing'; });
-    expect(room.rec!.stepKey).toBe(key);
-    expect(room.rec!.deadlineAt! - Date.now()).toBe(7_000); // 단계는 새로 시작
-    await advance(room, ctx, 6_000);
-    ack(room, ws.slice(2));
+    say(room, ws[0], { t: 'pause' });
+    expect(game(room).phase).toBe('paused');
+    await advance(room, ctx, 30_000); // 멈춘 동안 마감이 지나도 넘어가지 않는다
+    expect(game(room).phase).toBe('paused');
+    say(room, ws[0], { t: 'resume' });
+    expect(game(room).turn.step).toBe('explanation');
+    expect(room.rec!.stepKey).toBe(`${game(room).turn.seat}|explanation|${game(room).log.length}`); // clock 로그 2개만큼 새 키
+    expect(room.rec!.deadlineAt! - Date.now()).toBe(1_000); // 7초 중 남은 1초 그대로
+    expect(room.rec!.shown).toEqual([0, 1]);
+    expect(room.rec!.shownKey).toBe(room.rec!.stepKey);
+    ack(room, ws.slice(2)); // 실제 표시 6초가 지났으므로 받는다(멈춘 30초는 세지 않음 — stepAt 도 밀림)
+    expect(room.rec!.shown).toEqual([0, 1, 2, 3]);
     await advance(room, ctx, 1_000);
     expect(game(room).turn.step).toBe('tf');
+    expect(lastEx(room)!.shownTo).toEqual([true, true, true, true]);
+  });
+
+  it('(U14) 해설 shown 대기(SHOWN_WAIT_MS) 중 멈춤: 재개 뒤 남은 대기 그대로, 멈춘 시간 동안 일찍 온 shown 은 여전히 거부', async () => {
+    const { ctx, room, ws } = await atExplanation();
+    const t0 = Date.now();
+    await advance(room, ctx, 7_000); // 마감 → 아무도 shown 을 안 보냄 → 2초 더 기다림
+    expect(room.rec!.shownWait).toBe(true);
+    expect(room.rec!.deadlineAt! - Date.now()).toBe(SHOWN_WAIT_MS);
+    await advance(room, ctx, 500);
+    say(room, ws[0], { t: 'pause' });
+    await advance(room, ctx, 60_000);
+    say(room, ws[0], { t: 'resume' });
+    expect(room.rec!.deadlineAt! - Date.now()).toBe(SHOWN_WAIT_MS - 500);
+    expect(room.rec!.stepAt).toBe(t0 + 60_000); // 단계 시작도 멈춘 만큼 밀림
+    ack(room, ws);
+    expect(game(room).turn.step).toBe('tf'); // 기다리던 마지막 기기 → 닫힘
     expect(lastEx(room)!.shownTo).toEqual([true, true, true, true]);
   });
 });
